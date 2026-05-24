@@ -9,7 +9,7 @@ type AuthState = {
   user: { id: string; name: string; role: string; hotelIds: string[] };
 };
 
-export function ReceptionApp() {
+export function ReceptionApp({ basePath = "" }: { basePath?: string }) {
   const [auth, setAuth] = useState<AuthState | null>(() => {
     const raw = localStorage.getItem("reception-auth");
     return raw ? JSON.parse(raw) as AuthState : null;
@@ -24,22 +24,22 @@ export function ReceptionApp() {
         <h1 className="text-lg font-semibold">Reception</h1>
         <p className="text-sm text-slate-400">{auth.user.name}</p>
         <nav className="mt-6 space-y-2 text-sm">
-          <NavItem to="/reception/inbox" icon={<Inbox className="h-4 w-4" />} label="Messages" />
-          <NavItem to="/reception/requests" icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
-          <NavItem to="/reception/guests" icon={<Users className="h-4 w-4" />} label="CRM clients" />
-          <NavItem to="/reception/reviews" icon={<Star className="h-4 w-4" />} label="Avis" />
+          <NavItem to={`${basePath}/inbox`} icon={<Inbox className="h-4 w-4" />} label="Messages" />
+          <NavItem to={`${basePath}/requests`} icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
+          <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="CRM clients" />
+          <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
         </nav>
         <button onClick={() => { localStorage.removeItem("reception-auth"); setAuth(null); }} className="mt-8 inline-flex items-center gap-2 text-sm text-slate-300"><LogOut className="h-4 w-4" /> Deconnexion</button>
       </aside>
       <main className="min-w-0 flex-1 p-6">
         <Routes>
-          <Route index element={<Navigate to="inbox" replace />} />
-          <Route path="inbox" element={<InboxView hotelId={hotelId} token={auth.token} />} />
-          <Route path="requests" element={<RequestsView hotelId={hotelId} token={auth.token} />} />
-          <Route path="guests" element={<DataView title="CRM clients" loader={() => api.hotelGuests(hotelId, auth.token)} />} />
-          <Route path="reviews" element={<DataView title="Avis clients" loader={() => api.hotelReviews(hotelId, auth.token)} />} />
-          <Route path="analytics" element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
-          <Route path="settings" element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
+          <Route path={basePath || "/"} element={<Navigate to={`${basePath}/inbox`} replace />} />
+          <Route path={`${basePath}/inbox`} element={<InboxView hotelId={hotelId} token={auth.token} />} />
+          <Route path={`${basePath}/requests`} element={<RequestsView hotelId={hotelId} token={auth.token} />} />
+          <Route path={`${basePath}/guests`} element={<DataView title="CRM clients" loader={() => api.hotelGuests(hotelId, auth.token)} />} />
+          <Route path={`${basePath}/reviews`} element={<DataView title="Avis clients" loader={() => api.hotelReviews(hotelId, auth.token)} />} />
+          <Route path={`${basePath}/analytics`} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
+          <Route path={`${basePath}/settings`} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
         </Routes>
       </main>
     </div>
