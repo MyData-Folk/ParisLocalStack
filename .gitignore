@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+uploads/
+*.log
+apps/*/dist/
+packages/*/dist/
