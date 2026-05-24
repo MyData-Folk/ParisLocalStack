@@ -35,7 +35,7 @@ export function ReceptionApp() {
         <Routes>
           <Route index element={<Navigate to="inbox" replace />} />
           <Route path="inbox" element={<InboxView hotelId={hotelId} token={auth.token} />} />
-          <Route path="requests" element={<DataView title="Demandes service" loader={() => api.hotelRequests(hotelId, auth.token)} />} />
+          <Route path="requests" element={<RequestsView hotelId={hotelId} token={auth.token} />} />
           <Route path="guests" element={<DataView title="CRM clients" loader={() => api.hotelGuests(hotelId, auth.token)} />} />
           <Route path="reviews" element={<DataView title="Avis clients" loader={() => api.hotelReviews(hotelId, auth.token)} />} />
           <Route path="analytics" element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
@@ -125,6 +125,62 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
             </>
           ) : <p className="text-slate-400">Selectionnez un message.</p>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    setError("");
+
+    Promise.all([api.hotelRequests(hotelId, token), api.hotelMessages(hotelId, token)])
+      .then(([requests, messages]) => {
+        if (!mounted) return;
+        const normalized = [
+          ...requests.map((item) => ({ ...item, source: "request" })),
+          ...messages
+            .filter((item) => item.senderType === "guest")
+            .map((item) => ({
+              ...item,
+              source: "message",
+              title: "Message client",
+              description: item.content
+            }))
+        ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+        setItems(normalized);
+      })
+      .catch((err) => {
+        if (mounted) setError(err instanceof Error ? err.message : "Erreur de chargement");
+      });
+
+    return () => { mounted = false; };
+  }, [hotelId, token]);
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Demandes reception</h1>
+      <div className="mt-5 rounded-lg border border-white/10 bg-slate-900">
+        {error && <p className="p-4 text-sm text-red-300">{error}</p>}
+        {!error && items.length === 0 && <p className="p-4 text-sm text-slate-400">Aucune demande.</p>}
+        {items.map((item) => (
+          <div key={`${item.source}:${item.id}`} className="border-b border-white/10 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded border border-white/10 px-2 py-1 text-xs uppercase text-amber-300">
+                {item.source === "message" ? "message" : item.type}
+              </span>
+              <p className="font-medium">{item.title}</p>
+            </div>
+            <p className="mt-2 text-sm text-slate-300">{item.description}</p>
+            <p className="mt-2 text-xs text-slate-500">
+              {item.guest?.firstName} {item.guest?.lastName} - Chambre {item.stay?.roomNumber ?? "-"} - {item.status}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
