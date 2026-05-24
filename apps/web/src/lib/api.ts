@@ -24,6 +24,9 @@ export const api = {
   createGuest: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/guests`, { method: "POST", body: JSON.stringify(body) }),
   createStay: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/stays`, { method: "POST", body: JSON.stringify(body) }),
   createMessage: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/messages`, { method: "POST", body: JSON.stringify(body) }),
+  guestMessages: (slug: string, session: { guestId: string; stayId: string }) => request<any[]>(
+    `/api/public/${slug}/messages?${new URLSearchParams(session).toString()}`
+  ),
   createRequest: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/requests`, { method: "POST", body: JSON.stringify(body) }),
   createReview: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/reviews`, { method: "POST", body: JSON.stringify(body) }),
   hotelMessages: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/messages`, { token }),

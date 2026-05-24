@@ -55,6 +55,11 @@ export const messageCreateSchema = z.object({
   priority: z.enum(priorities).default("medium")
 });
 
+export const publicMessagesQuerySchema = z.object({
+  guestId: z.string().uuid(),
+  stayId: z.string().uuid()
+});
+
 export const replyCreateSchema = z.object({
   content: z.string().min(1).max(4000)
 });

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Request } from "express";
 import type { Server } from "socket.io";
-import { messageCreateSchema, replyCreateSchema } from "@paris-local/shared";
+import { messageCreateSchema, publicMessagesQuerySchema, replyCreateSchema } from "@paris-local/shared";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
@@ -25,6 +25,26 @@ publicMessagesRouter.post("/", validateBody(messageCreateSchema), asyncHandler(a
   });
   emitMessage(req, hotel.id, message);
   return sendCreated(res, message);
+}));
+
+publicMessagesRouter.get("/", asyncHandler(async (req, res) => {
+  const query = publicMessagesQuerySchema.safeParse(req.query);
+  if (!query.success) return res.status(400).json({ error: "Validation failed", details: query.error.flatten() });
+
+  const hotel = await prisma.hotel.findUnique({ where: { slug: req.params.hotelSlug } });
+  if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
+
+  const stay = await prisma.stay.findFirst({
+    where: { id: query.data.stayId, guestId: query.data.guestId, hotelId: hotel.id }
+  });
+  if (!stay) return res.status(404).json({ error: "Conversation not found" });
+
+  const messages = await prisma.message.findMany({
+    where: { hotelId: hotel.id, guestId: query.data.guestId, stayId: query.data.stayId },
+    include: { guest: true, stay: true },
+    orderBy: { createdAt: "asc" }
+  });
+  return sendOk(res, messages);
 }));
 
 messagesRouter.get("/hotels/:hotelId/messages", authenticate, requireHotelAccess("hotelId"), asyncHandler(async (req, res) => {

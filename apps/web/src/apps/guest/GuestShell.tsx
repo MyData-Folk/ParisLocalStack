@@ -114,12 +114,27 @@ function Onboarding({ hotelSlug, onReady }: { hotelSlug: string; onReady: (sessi
 
 function GuestActions({ hotelSlug, session }: { hotelSlug: string; session: Session }) {
   const [message, setMessage] = useState("");
+  const [conversation, setConversation] = useState<any[]>([]);
   const [review, setReview] = useState(5);
   const [status, setStatus] = useState("");
 
+  async function loadConversation() {
+    const messages = await api.guestMessages(hotelSlug, session);
+    setConversation(messages);
+  }
+
+  useEffect(() => {
+    void loadConversation();
+    const timer = window.setInterval(() => void loadConversation(), 5000);
+    return () => window.clearInterval(timer);
+  }, [hotelSlug, session.guestId, session.stayId]);
+
   async function sendMessage(kind: "message" | "taxi" | "restaurant") {
     setStatus("");
-    if (kind === "message") await api.createMessage(hotelSlug, { ...session, content: message, priority: "medium" });
+    if (kind === "message") {
+      await api.createMessage(hotelSlug, { ...session, content: message, priority: "medium" });
+      await loadConversation();
+    }
     if (kind !== "message") await api.createRequest(hotelSlug, {
       ...session,
       type: kind,
@@ -139,6 +154,17 @@ function GuestActions({ hotelSlug, session }: { hotelSlug: string; session: Sess
   return (
     <div className="rounded-lg border border-white/10 bg-slate-900 p-4">
       <h2 className="text-lg font-semibold">Chambre {session.roomNumber}</h2>
+      <div className="mt-4 max-h-72 space-y-3 overflow-y-auto rounded-md border border-white/10 bg-slate-950 p-3">
+        {conversation.length === 0 && <p className="text-sm text-slate-400">Aucun message pour le moment.</p>}
+        {conversation.map((item) => (
+          <div key={item.id} className={`flex ${item.senderType === "reception" ? "justify-start" : "justify-end"}`}>
+            <div className={`max-w-[82%] rounded-lg px-3 py-2 text-sm ${item.senderType === "reception" ? "bg-white/10 text-slate-100" : "bg-amber-400 text-slate-950"}`}>
+              <p className="text-xs opacity-70">{item.senderType === "reception" ? "Reception" : "Vous"}</p>
+              <p>{item.content}</p>
+            </div>
+          </div>
+        ))}
+      </div>
       <textarea className="mt-4 min-h-28 w-full rounded-md border border-white/10 bg-slate-950 p-3" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Message, demande ou commentaire" />
       <div className="mt-3 flex flex-wrap gap-2">
         <button onClick={() => void sendMessage("message")} className="inline-flex items-center gap-2 rounded-md bg-amber-400 px-3 py-2 text-slate-950"><MessageSquare className="h-4 w-4" /> Message</button>
