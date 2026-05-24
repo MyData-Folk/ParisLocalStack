@@ -22,6 +22,7 @@ export function createApp() {
   const app = express();
   const publicLimiter = rateLimit({ windowMs: 60_000, limit: 120 });
 
+  app.set("trust proxy", 1);
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigin.split(","), credentials: true }));
   app.use(express.json({ limit: "1mb" }));
