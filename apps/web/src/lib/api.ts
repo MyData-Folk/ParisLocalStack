@@ -38,5 +38,15 @@ export const api = {
     method: "POST",
     token,
     body: JSON.stringify({ content })
+  }),
+  updateMessageStatus: (messageId: string, status: string, token: string) => request<any>(`/api/messages/${messageId}/status`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ status })
+  }),
+  updateRequestStatus: (requestId: string, status: string, token: string) => request<any>(`/api/requests/${requestId}/status`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ status })
   })
 };
