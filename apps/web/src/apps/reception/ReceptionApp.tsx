@@ -44,19 +44,24 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
 
   const hotelId = currentUser.hotelIds[0];
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <aside className="w-64 border-r border-white/10 bg-slate-900 p-4">
-        <h1 className="text-lg font-semibold">Reception</h1>
-        <p className="text-sm text-slate-400">{currentUser.name}</p>
-        <nav className="mt-6 space-y-2 text-sm">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_34%),linear-gradient(180deg,#020617,#0f172a)] text-slate-100 lg:flex">
+      <aside className="border-b border-white/10 bg-slate-950/80 p-4 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r lg:bg-slate-900/85 lg:p-5">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Paris Local</p>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight">Reception</h1>
+          <p className="mt-1 truncate text-sm text-slate-400">{currentUser.name}</p>
+        </div>
+        <nav className="mt-4 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-2">
           <NavItem to={`${basePath}/inbox`} icon={<Inbox className="h-4 w-4" />} label="Messages" />
           <NavItem to={`${basePath}/requests`} icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
           <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="CRM clients" />
           <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
         </nav>
-        <button onClick={() => void logout()} className="mt-8 inline-flex items-center gap-2 text-sm text-slate-300"><LogOut className="h-4 w-4" /> Deconnexion</button>
+        <button onClick={() => void logout()} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white focus:outline-none focus:ring-4 focus:ring-white/10 lg:mt-8">
+          <LogOut className="h-4 w-4" /> Deconnexion
+        </button>
       </aside>
-      <main className="min-w-0 flex-1 p-6">
+      <main className="min-w-0 flex-1 p-4 md:p-6 xl:p-8">
         <Routes>
           <Route path={basePath || "/"} element={<Navigate to={`${basePath}/inbox`} replace />} />
           <Route path={`${basePath}/inbox`} element={<InboxView hotelId={hotelId} token={token} />} />
@@ -74,7 +79,11 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
 function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
   const location = useLocation();
   const active = location.pathname === to;
-  return <Link to={to} className={`flex items-center gap-2 rounded-md px-3 py-2 ${active ? "bg-white/10" : "text-slate-300 hover:bg-white/5"}`}>{icon}{label}</Link>;
+  return (
+    <Link to={to} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-amber-300/10 ${active ? "border border-amber-300/20 bg-amber-300/10 text-amber-100 shadow-sm" : "border border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white"}`}>
+      {icon}{label}
+    </Link>
+  );
 }
 
 function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
@@ -121,31 +130,34 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-lg shadow-black/20">
+        <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Messages clients</h1>
-          <p className="mt-1 text-sm text-slate-400">{pendingCount} conversation{pendingCount > 1 ? "s" : ""} a traiter</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Inbox operationnelle</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Messages clients</h1>
+          <p className="mt-2 text-sm text-slate-400">{pendingCount} conversation{pendingCount > 1 ? "s" : ""} a traiter</p>
         </div>
-        <div className="flex rounded-lg border border-white/10 bg-slate-900 p-1 text-sm">
+        <div className="flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/70 p-1 text-sm">
           {([
             ["all", "Tous"],
             ["new", "Nouveaux"],
             ["urgent", "Urgents"],
             ["answered", "Repondus"]
           ] as const).map(([key, label]) => (
-            <button key={key} onClick={() => setFilter(key)} className={`rounded-md px-3 py-2 ${filter === key ? "bg-amber-400 text-slate-950" : "text-slate-300 hover:bg-white/5"}`}>
+            <button key={key} onClick={() => setFilter(key)} className={`rounded-lg px-3 py-2 font-medium transition focus:outline-none focus:ring-4 focus:ring-amber-300/10 ${filter === key ? "bg-amber-300 text-slate-950" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}>
               {label}
             </button>
           ))}
         </div>
+        </div>
       </div>
-      {error && <p className="mt-4 rounded-md border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</p>}
-      <div className="mt-5 grid gap-4 xl:grid-cols-[420px_1fr]">
-        <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-900">
+      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      <div className="grid gap-5 xl:grid-cols-[430px_minmax(0,1fr)]">
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
           {filtered.length === 0 && <p className="p-4 text-sm text-slate-400">Aucun message.</p>}
           {filtered.map((conversation) => (
-            <button key={conversation.id} onClick={() => setActiveId(conversation.id)} className={`block w-full border-b border-white/10 p-4 text-left hover:bg-white/5 ${active?.id === conversation.id ? "bg-white/10" : ""}`}>
+            <button key={conversation.id} onClick={() => setActiveId(conversation.id)} className={`block w-full border-b border-white/10 p-4 text-left transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-inset focus:ring-amber-300/10 ${active?.id === conversation.id ? "bg-amber-300/10" : ""}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium">{conversation.guestName}</p>
@@ -163,10 +175,10 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
             </button>
           ))}
         </div>
-        <div className="rounded-lg border border-white/10 bg-slate-900">
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
           {active ? (
             <>
-              <div className="border-b border-white/10 p-4">
+              <div className="border-b border-white/10 bg-white/[0.02] p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">{active.guestName}</p>
@@ -175,10 +187,10 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                   <StatusBadge status={active.status} />
                 </div>
               </div>
-              <div className="max-h-[52vh] space-y-3 overflow-y-auto p-4">
+              <div className="max-h-[52vh] space-y-3 overflow-y-auto p-5">
                 {active.messages.map((item) => (
                   <div key={item.id} className={`flex ${item.senderType === "reception" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[78%] rounded-lg px-4 py-3 text-sm ${item.senderType === "reception" ? "bg-amber-400 text-slate-950" : "bg-slate-800 text-slate-100"}`}>
+                    <div className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm ${item.senderType === "reception" ? "bg-amber-300 text-slate-950" : "bg-slate-800 text-slate-100"}`}>
                       <div className="mb-1 flex items-center justify-between gap-4 text-xs opacity-70">
                         <span>{item.senderType === "reception" ? "Reception" : "Client"}</span>
                         <span>{formatTime(item.createdAt)}</span>
@@ -188,15 +200,15 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                   </div>
                 ))}
               </div>
-              <div className="border-t border-white/10 p-4">
-                <textarea className="min-h-28 w-full rounded-md border border-white/10 bg-slate-950 p-3" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reponse reception" />
+              <div className="border-t border-white/10 p-5">
+                <textarea className="min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-4 outline-none transition placeholder:text-slate-600 focus:border-amber-300/60 focus:ring-4 focus:ring-amber-300/10" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reponse reception" />
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button onClick={() => void sendReply()} className="rounded-md bg-amber-400 px-4 py-2 font-medium text-slate-950">Repondre</button>
-                  <button onClick={() => void markConversationDone()} className="rounded-md border border-white/10 px-4 py-2 text-slate-200 hover:bg-white/5">Marquer comme traite</button>
+                  <button onClick={() => void sendReply()} className="rounded-xl bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20">Repondre</button>
+                  <button onClick={() => void markConversationDone()} className="rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Marquer comme traite</button>
                 </div>
               </div>
             </>
-          ) : <p className="text-slate-400">Selectionnez un message.</p>}
+          ) : <p className="p-5 text-slate-400">Selectionnez un message.</p>}
         </div>
       </div>
     </div>
@@ -241,14 +253,17 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-lg shadow-black/20">
+        <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Demandes reception</h1>
-          <p className="mt-1 text-sm text-slate-400">{items.length} element{items.length > 1 ? "s" : ""} operationnel{items.length > 1 ? "s" : ""}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">File operationnelle</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Demandes reception</h1>
+          <p className="mt-2 text-sm text-slate-400">{items.length} element{items.length > 1 ? "s" : ""} operationnel{items.length > 1 ? "s" : ""}</p>
+        </div>
         </div>
       </div>
-      <div className="mt-5 overflow-hidden rounded-lg border border-white/10 bg-slate-900">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
         {error && <p className="p-4 text-sm text-red-300">{error}</p>}
         {!error && items.length === 0 && <p className="p-4 text-sm text-slate-400">Aucune demande.</p>}
         {items.map((item) => (
@@ -268,9 +283,9 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-md border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/5">En cours</button>
-                <button onClick={() => void updateStatus(item, "done")} className="rounded-md border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/5">Traite</button>
-                <button onClick={() => void updateStatus(item, "urgent")} className="rounded-md border border-red-400/30 px-3 py-2 text-xs text-red-200 hover:bg-red-500/10">Urgent</button>
+                <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
+                <button onClick={() => void updateStatus(item, "done")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Traite</button>
+                <button onClick={() => void updateStatus(item, "urgent")} className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-medium text-red-200 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">Urgent</button>
               </div>
             </div>
           </div>
@@ -323,7 +338,7 @@ function StatusBadge({ status }: { status: Conversation["status"] }) {
   }[status];
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs ${config.className}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${config.className}`}>
       {config.icon}
       {config.label}
     </span>
@@ -340,8 +355,8 @@ function DataView({ title, loader }: { title: string; loader: () => Promise<any[
   useEffect(() => { void loader().then(setItems); }, [loader]);
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <div className="mt-5 rounded-lg border border-white/10 bg-slate-900">
+      <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+      <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
         {items.length === 0 && <p className="p-4 text-sm text-slate-400">Aucune donnee.</p>}
         {items.map((item) => (
           <div key={item.id} className="border-b border-white/10 p-4">
