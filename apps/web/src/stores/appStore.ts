@@ -100,7 +100,6 @@ export const useAppStore = create<AppState>()(
         try {
           const auth = await api.login(email.trim().toLowerCase(), password);
           const user = toAuthUser(auth.user);
-          localStorage.removeItem('reception-auth');
           set({
             token: auth.token,
             currentUser: user,
@@ -127,7 +126,6 @@ export const useAppStore = create<AppState>()(
       logout: async () => {
         const token = get().token;
         if (token) await api.logout(token).catch(() => undefined);
-        localStorage.removeItem('reception-auth');
         set({
           token: null,
           currentUser: null,
@@ -155,7 +153,6 @@ export const useAppStore = create<AppState>()(
           });
           return true;
         } catch {
-          localStorage.removeItem('reception-auth');
           set({
             token: null,
             currentUser: null,
