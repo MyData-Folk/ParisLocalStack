@@ -2,13 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CheckCircle, Clock, MapPin, MessageSquare, Phone, Send, Sparkles, Star, Utensils, Wifi } from "lucide-react";
 import { api } from "../../lib/api";
-import { routeHotelSlug } from "../../lib/tenant";
+import { resolveTenantFromHostname, routeHotelSlug } from "../../lib/tenant";
 
 type Session = { guestId: string; stayId: string; roomNumber: string };
 
 export function GuestShell() {
   const { hotelSlug: pathSlug } = useParams();
   const hotelSlug = routeHotelSlug(pathSlug);
+  const tenant = resolveTenantFromHostname();
+  const basePath = tenant.kind === "guest" ? "" : `/h/${hotelSlug}`;
   const [hotel, setHotel] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
@@ -70,7 +72,7 @@ export function GuestShell() {
       <nav className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur md:px-8">
         <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto text-sm">
           {navigation.map((item) => (
-            <Link key={item.id} to={`/h/${hotelSlug}/${item.id}`} className="shrink-0 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 font-medium text-slate-200 transition hover:border-amber-300/30 hover:bg-amber-300/10 hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300/10">
+            <Link key={item.id} to={`${basePath}/${item.id}`} className="shrink-0 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 font-medium text-slate-200 transition hover:border-amber-300/30 hover:bg-amber-300/10 hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300/10">
               {item.label}
             </Link>
           ))}

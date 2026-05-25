@@ -3,24 +3,29 @@ import { AdminApp } from "./apps/admin/AdminApp";
 import { GeneratorApp } from "./apps/generator/GeneratorApp";
 import { GuestShell } from "./apps/guest/GuestShell";
 import { ReceptionApp } from "./apps/reception/ReceptionApp";
-import { extractHotelSlug } from "./lib/tenant";
+import { canonicalGuestUrl, resolveTenantFromHostname } from "./lib/tenant";
 
 export default function App() {
-  const slug = extractHotelSlug();
-  const isReceptionSubdomain = window.location.hostname.startsWith("admin.");
+  const tenant = resolveTenantFromHostname();
+  const canonicalUrl = canonicalGuestUrl();
 
-  if (isReceptionSubdomain) return <ReceptionApp basePath="" />;
-  if (slug && !window.location.hostname.includes("localhost")) return <GuestShell />;
+  if (canonicalUrl) {
+    window.location.replace(canonicalUrl);
+    return null;
+  }
+
+  if (tenant.kind === "reception") return <ReceptionApp basePath="" />;
+  if (tenant.kind === "guest") return <GuestShell />;
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/h/vendome/welcome" replace />} />
+      <Route path="/" element={<AdminApp />} />
       <Route path="/h/:hotelSlug" element={<GuestShell />} />
       <Route path="/h/:hotelSlug/:section" element={<GuestShell />} />
       <Route path="/reception/*" element={<ReceptionApp basePath="/reception" />} />
       <Route path="/admin/*" element={<AdminApp />} />
       <Route path="/generator/*" element={<GeneratorApp />} />
-      <Route path="*" element={<Navigate to="/h/vendome/welcome" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
