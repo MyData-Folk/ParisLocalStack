@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, AlertTriangle, BedDouble, CheckCircle, Clock, Inbox, ListChecks, LogOut, MessageSquare, Radio, Search, ShieldCheck, Star, Users } from "lucide-react";
+import { Activity, AlertTriangle, BedDouble, CalendarDays, CheckCircle, Clock, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, ShieldCheck, Star, Users } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
@@ -44,6 +44,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
   if (!currentUser || !token) return null;
 
   const hotelId = currentUser.hotelIds[0];
+  const routePath = (path: string) => basePath ? path.replace(/^\//, "") : path;
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_34%),linear-gradient(180deg,#020617,#0f172a_42%,#111827)] text-slate-100 lg:flex">
       <aside className="border-b border-white/10 bg-slate-950/85 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen lg:w-80 lg:border-b-0 lg:border-r lg:border-white/10 lg:p-5">
@@ -81,13 +82,13 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
       </aside>
       <main className="min-w-0 flex-1 p-4 md:p-6 xl:p-8">
         <Routes>
-          <Route path={basePath || "/"} element={<Navigate to={`${basePath}/inbox`} replace />} />
-          <Route path={`${basePath}/inbox`} element={<InboxView hotelId={hotelId} token={token} />} />
-          <Route path={`${basePath}/requests`} element={<RequestsView hotelId={hotelId} token={token} />} />
-          <Route path={`${basePath}/guests`} element={<DataView title="CRM clients" loader={() => api.hotelGuests(hotelId, token)} />} />
-          <Route path={`${basePath}/reviews`} element={<ReviewsView hotelId={hotelId} token={token} />} />
-          <Route path={`${basePath}/analytics`} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
-          <Route path={`${basePath}/settings`} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
+          <Route index element={<Navigate to={`${basePath}/inbox`} replace />} />
+          <Route path={routePath("/inbox")} element={<InboxView hotelId={hotelId} token={token} />} />
+          <Route path={routePath("/requests")} element={<RequestsView hotelId={hotelId} token={token} />} />
+          <Route path={routePath("/guests")} element={<GuestsView hotelId={hotelId} token={token} />} />
+          <Route path={routePath("/reviews")} element={<ReviewsView hotelId={hotelId} token={token} />} />
+          <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
+          <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
         </Routes>
       </main>
     </div>
@@ -485,6 +486,110 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   );
 }
 
+function GuestsView({ hotelId, token }: { hotelId: string; token: string }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    void loadGuests();
+  }, [hotelId, token]);
+
+  async function loadGuests() {
+    setError("");
+    try {
+      setItems(await api.hotelGuests(hotelId, token));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur de chargement");
+    }
+  }
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter((guest) => {
+      const fullName = `${guest.firstName ?? ""} ${guest.lastName ?? ""}`.toLowerCase();
+      return fullName.includes(query)
+        || String(guest.email ?? "").toLowerCase().includes(query)
+        || String(guest.phone ?? "").toLowerCase().includes(query)
+        || String(guest.language ?? "").toLowerCase().includes(query);
+    });
+  }, [items, search]);
+
+  const consentCount = items.filter((guest) => Boolean(guest.marketingConsent)).length;
+  const todayCount = items.filter((guest) => isToday(guest.createdAt)).length;
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="CRM sejour"
+        title="Clients hotel"
+        description={`${items.length} profil${items.length > 1 ? "s" : ""} client centralise${items.length > 1 ? "s" : ""}`}
+      />
+      <div className="grid gap-3 md:grid-cols-3">
+        <MetricCard icon={<Users className="h-4 w-4" />} label="Clients" value={items.length} tone="blue" />
+        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Consentements" value={consentCount} tone="emerald" />
+        <MetricCard icon={<CalendarDays className="h-4 w-4" />} label="Aujourd'hui" value={todayCount} tone="amber" />
+      </div>
+
+      <section className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg shadow-black/20">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight text-white">Base clients</h2>
+            <p className="mt-1 text-sm text-slate-500">Recherche rapide par nom, email, telephone ou langue.</p>
+          </div>
+          <label className="relative block w-full md:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Rechercher un client..."
+              aria-label="Rechercher un client"
+              className="w-full rounded-xl border border-white/10 bg-slate-950/70 py-2.5 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10"
+            />
+          </label>
+        </div>
+      </section>
+
+      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      {!error && filtered.length === 0 && (
+        <EmptyState icon={<Users className="h-6 w-6" />} title="Aucun client trouve" description="Les clients apparaitront ici apres l'onboarding de l'app sejour." />
+      )}
+      <div className="grid gap-4 xl:grid-cols-2">
+        {filtered.map((guest) => {
+          const fullName = `${guest.firstName ?? ""} ${guest.lastName ?? ""}`.trim() || guest.email || "Client";
+          return (
+            <article key={guest.id} className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 shadow-lg shadow-black/20 transition hover:border-white/15 hover:bg-slate-900">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-sm font-semibold text-amber-100">
+                  {initials(fullName)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-lg font-semibold tracking-tight text-white">{fullName}</h2>
+                      <p className="mt-1 text-xs text-slate-500">Cree le {formatDate(guest.createdAt)}</p>
+                    </div>
+                    <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${guest.marketingConsent ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-200" : "border-white/10 bg-white/[0.04] text-slate-400"}`}>
+                      {guest.marketingConsent ? "RGPD accepte" : "Sans consentement"}
+                    </span>
+                  </div>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <InfoPill icon={<Mail className="h-4 w-4" />} label="Email" value={guest.email || "Non renseigne"} />
+                    <InfoPill icon={<Phone className="h-4 w-4" />} label="Telephone" value={guest.phone || "Non renseigne"} />
+                    <InfoPill icon={<Languages className="h-4 w-4" />} label="Langue" value={String(guest.language || "Non renseignee").toUpperCase()} />
+                    <InfoPill icon={<CalendarDays className="h-4 w-4" />} label="Arrivee CRM" value={formatDate(guest.createdAt)} />
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function buildConversations(messages: MessageItem[]): Conversation[] {
   const groups = new Map<string, MessageItem[]>();
   for (const message of messages) {
@@ -538,6 +643,28 @@ function StatusBadge({ status }: { status: Conversation["status"] }) {
 function formatTime(value?: string) {
   if (!value) return "";
   return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }).format(new Date(value));
+}
+
+function formatDate(value?: string) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(value));
+}
+
+function isToday(value?: string) {
+  if (!value) return false;
+  const date = new Date(value);
+  const today = new Date();
+  return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+}
+
+function initials(value: string) {
+  return value
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "C";
 }
 
 function PageHeader({ eyebrow, title, description, live = false }: { eyebrow: string; title: string; description: string; live?: boolean }) {
@@ -595,6 +722,36 @@ function EmptyState({ icon, title, description }: { icon: React.ReactNode; title
   );
 }
 
+function InfoPill({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-xl border border-white/10 bg-slate-950/55 p-3">
+      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+        <span className="text-slate-400">{icon}</span>
+        {label}
+      </div>
+      <p className="mt-2 truncate text-sm font-medium text-slate-200">{value}</p>
+    </div>
+  );
+}
+
+function DataView({ title, loader }: { title: string; loader: () => Promise<any[]> }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setError("");
+    void loader().then(setItems).catch((err) => setError(err instanceof Error ? err.message : "Erreur de chargement"));
+  }, [title]);
+
+  return (
+    <div className="space-y-5">
+      <PageHeader eyebrow="Module reception" title={title} description="Espace operationnel en preparation" />
+      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      {!error && items.length === 0 && <EmptyState icon={<Activity className="h-6 w-6" />} title="Aucune donnee" description="Ce module sera enrichi dans les prochaines iterations produit." />}
+    </div>
+  );
+}
+
 function upsertById<T extends { id: string }>(items: T[], next: T) {
   return items.some((item) => item.id === next.id)
     ? items.map((item) => item.id === next.id ? { ...item, ...next } : item)
@@ -613,23 +770,4 @@ function sortMessagesDesc(left: MessageItem, right: MessageItem) {
 
 function sortOperationalDesc(left: any, right: any) {
   return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
-}
-
-function DataView({ title, loader }: { title: string; loader: () => Promise<any[]> }) {
-  const [items, setItems] = useState<any[]>([]);
-  useEffect(() => { void loader().then(setItems); }, [loader]);
-  return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-      <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
-        {items.length === 0 && <p className="p-4 text-sm text-slate-400">Aucune donnee.</p>}
-        {items.map((item) => (
-          <div key={item.id} className="border-b border-white/10 p-4">
-            <p className="font-medium">{item.title || item.name || `${item.firstName ?? ""} ${item.lastName ?? ""}` || `Note ${item.rating}/5`}</p>
-            <p className="text-sm text-slate-400">{item.description || item.comment || item.email || item.status}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
