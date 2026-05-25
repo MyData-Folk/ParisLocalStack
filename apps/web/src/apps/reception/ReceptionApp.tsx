@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, AlertTriangle, Archive, BedDouble, CheckCircle, Clock, Download, Edit3, Eye, FileJson, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, Send, ShieldCheck, Star, Users, X } from "lucide-react";
+import { Activity, AlertTriangle, Archive, BarChart3, BedDouble, CheckCircle, Clock, Download, Edit3, Eye, FileJson, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, Send, Settings, ShieldCheck, Star, Users, X } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
@@ -46,44 +46,67 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
   const hotelId = currentUser.hotelIds[0];
   const routePath = (path: string) => basePath ? path.replace(/^\//, "") : path;
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.08),transparent_32%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_34%),linear-gradient(180deg,#020617,#0f172a_42%,#111827)] text-slate-100 lg:flex">
-      <aside className="border-b border-white/10 bg-slate-950/85 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen lg:w-80 lg:border-b-0 lg:border-r lg:border-white/10 lg:p-5">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 lg:flex">
+      <aside className="border-b border-white/[0.07] bg-[#111115]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[280px] lg:flex-col lg:border-b-0 lg:border-r lg:p-5">
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 shadow-lg shadow-black/20">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-300 text-slate-950 shadow-lg shadow-amber-950/20">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-sky-400/25 bg-sky-400/10 text-sky-300 shadow-lg shadow-black/20">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Paris Local</p>
-              <h1 className="mt-1 truncate text-xl font-semibold tracking-tight">Reception</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-300">Paris Local</p>
+              <h1 className="mt-1 truncate text-xl font-bold tracking-tight">Reception</h1>
             </div>
           </div>
-          <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/55 p-3">
+          <div className="mt-4 rounded-xl border border-white/[0.07] bg-[#09090b] p-3">
             <p className="truncate text-sm font-medium text-white">{currentUser.name}</p>
-            <p className="mt-1 text-xs text-slate-500">Centre operationnel hotelier</p>
+            <p className="mt-1 text-xs text-zinc-500">Centre operationnel hotelier</p>
           </div>
         </div>
-        <nav className="mt-4 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-2">
-          <NavItem to={`${basePath}/inbox`} icon={<Inbox className="h-4 w-4" />} label="Messages" />
-          <NavItem to={`${basePath}/requests`} icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
-          <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="Clients presents" />
-          <NavItem to={`${basePath}/history`} icon={<Archive className="h-4 w-4" />} label="Historique" />
-          <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
+        <nav className="mt-4 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-5">
+          <ReceptionNavGroup label="Operations">
+            <NavItem to={`${basePath}/dashboard`} icon={<Activity className="h-4 w-4" />} label="Dashboard" />
+            <NavItem to={`${basePath}/inbox`} icon={<Inbox className="h-4 w-4" />} label="Messagerie" />
+            <NavItem to={`${basePath}/requests`} icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
+          </ReceptionNavGroup>
+          <ReceptionNavGroup label="Clients">
+            <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="Clients presents" />
+            <NavItem to={`${basePath}/history`} icon={<Archive className="h-4 w-4" />} label="Historique CRM" />
+            <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
+          </ReceptionNavGroup>
+          <ReceptionNavGroup label="Pilotage">
+            <NavItem to={`${basePath}/analytics`} icon={<BarChart3 className="h-4 w-4" />} label="Analytics" />
+            <NavItem to={`${basePath}/settings`} icon={<Settings className="h-4 w-4" />} label="Parametres" />
+          </ReceptionNavGroup>
         </nav>
-        <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-300/10 p-4 text-sm text-emerald-100">
+        <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-300/10 p-4 text-sm text-emerald-100 lg:mt-auto">
           <div className="flex items-center gap-2 font-semibold">
             <Radio className="h-4 w-4" />
             Synchronisation active
           </div>
           <p className="mt-2 leading-5 text-emerald-100/70">Messages, demandes et avis sont mis a jour en direct.</p>
         </div>
-        <button onClick={() => void logout()} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white focus:outline-none focus:ring-4 focus:ring-white/10 lg:mt-8">
+        <button onClick={() => void logout()} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-zinc-300 transition hover:bg-white/[0.05] hover:text-white focus:outline-none focus:ring-4 focus:ring-white/10">
           <LogOut className="h-4 w-4" /> Deconnexion
         </button>
       </aside>
-      <main className="min-w-0 flex-1 p-4 md:p-6 xl:p-8">
+      <main className="min-w-0 flex-1">
+        <div className="sticky top-0 z-10 border-b border-white/[0.07] bg-[#09090b]/85 px-4 py-3 backdrop-blur-xl md:px-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Front desk</p>
+              <p className="text-sm font-medium text-zinc-200">Messages, demandes, CRM et satisfaction</p>
+            </div>
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100 sm:flex">
+              <Radio className="h-3.5 w-3.5" />
+              Live
+            </div>
+          </div>
+        </div>
+        <div className="space-y-6 p-4 md:p-6 xl:p-8">
         <Routes>
-          <Route index element={<Navigate to={`${basePath}/inbox`} replace />} />
+          <Route index element={<Navigate to={`${basePath}/dashboard`} replace />} />
+          <Route path={routePath("/dashboard")} element={<ReceptionHome hotelId={hotelId} token={token} basePath={basePath} />} />
           <Route path={routePath("/inbox")} element={<InboxView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/requests")} element={<RequestsView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/guests")} element={<GuestsView hotelId={hotelId} token={token} />} />
@@ -92,7 +115,17 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
           <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
           <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
         </Routes>
+        </div>
       </main>
+    </div>
+  );
+}
+
+function ReceptionNavGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-2 hidden px-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 lg:block">{label}</p>
+      <div className="space-y-1">{children}</div>
     </div>
   );
 }
@@ -101,11 +134,86 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
   const location = useLocation();
   const active = location.pathname === to;
   return (
-    <Link to={to} className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-amber-300/10 ${active ? "border border-amber-300/25 bg-amber-300/12 text-amber-100 shadow-sm" : "border border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white"}`}>
-      <span className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${active ? "bg-amber-300 text-slate-950" : "bg-white/[0.04] text-slate-400 group-hover:text-white"}`}>
+    <Link to={to} className={`group flex items-center gap-3 rounded-xl border px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-sky-400/15 ${active ? "border-sky-400/25 bg-sky-400/10 text-sky-100 shadow-sm" : "border-transparent text-zinc-400 hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-white"}`}>
+      <span className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${active ? "bg-sky-400 text-zinc-950" : "bg-white/[0.04] text-zinc-500 group-hover:text-white"}`}>
         {icon}
       </span>
       <span className="truncate">{label}</span>
+    </Link>
+  );
+}
+
+function ReceptionHome({ hotelId, token, basePath }: { hotelId: string; token: string; basePath: string }) {
+  const [stays, setStays] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setError("");
+    void Promise.all([
+      api.hotelStays(hotelId, token, "active"),
+      api.hotelMessages(hotelId, token),
+      api.hotelRequests(hotelId, token),
+      api.hotelReviews(hotelId, token)
+    ])
+      .then(([loadedStays, loadedMessages, loadedRequests, loadedReviews]) => {
+        const activeStayIds = new Set(loadedStays.map((stay) => stay.id));
+        setStays(loadedStays);
+        setMessages(loadedMessages.filter((message) => message.stayId && activeStayIds.has(message.stayId)));
+        setRequests(loadedRequests.filter((request) => request.stayId && activeStayIds.has(request.stayId)));
+        setReviews(loadedReviews.filter((review) => review.stayId && activeStayIds.has(review.stayId)));
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Erreur de chargement"));
+  }, [hotelId, token]);
+
+  const openMessages = messages.filter((item) => openStatuses.has(item.status)).length;
+  const openRequests = requests.filter((item) => openStatuses.has(item.status)).length;
+  const urgentRequests = requests.filter((item) => item.status === "urgent" || item.priority === "urgent").length;
+  const negativeReviews = reviews.filter((item) => item.rating <= 3 || item.status === "negative_alert").length;
+  const path = (target: string) => `${basePath}${target}`;
+
+  return (
+    <div className="space-y-5">
+      <PageHeader eyebrow="Reception" title="Dashboard operationnel" description="Vue live des sejours, demandes et alertes du jour" live />
+      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Link to={path("/guests")} className="focus:outline-none focus:ring-4 focus:ring-sky-400/15"><MetricCard icon={<BedDouble className="h-4 w-4" />} label="Clients presents" value={stays.length} tone="blue" /></Link>
+        <Link to={path("/inbox")} className="focus:outline-none focus:ring-4 focus:ring-sky-400/15"><MetricCard icon={<Inbox className="h-4 w-4" />} label="Messages ouverts" value={openMessages} tone="amber" /></Link>
+        <Link to={path("/requests")} className="focus:outline-none focus:ring-4 focus:ring-sky-400/15"><MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Demandes urgentes" value={urgentRequests + openRequests} tone={urgentRequests ? "red" : "blue"} /></Link>
+        <Link to={path("/reviews")} className="focus:outline-none focus:ring-4 focus:ring-sky-400/15"><MetricCard icon={<Star className="h-4 w-4" />} label="Avis a suivre" value={negativeReviews} tone={negativeReviews ? "red" : "emerald"} /></Link>
+      </div>
+      <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+          <h2 className="text-lg font-semibold tracking-tight text-white">Priorites reception</h2>
+          <div className="mt-4 space-y-3">
+            <ActionRow to={path("/inbox")} icon={<Inbox className="h-4 w-4" />} title="Traiter la messagerie" meta={`${openMessages} message(s) ouvert(s)`} />
+            <ActionRow to={path("/requests")} icon={<ListChecks className="h-4 w-4" />} title="Suivre les demandes" meta={`${openRequests} demande(s) en cours`} />
+            <ActionRow to={path("/reviews")} icon={<Star className="h-4 w-4" />} title="Verifier les avis" meta={`${negativeReviews} alerte(s) satisfaction`} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-sky-400/15 bg-sky-400/10 p-5 shadow-lg shadow-black/20">
+          <Radio className="h-6 w-6 text-sky-300" />
+          <h2 className="mt-4 text-lg font-semibold tracking-tight text-white">Centre live</h2>
+          <p className="mt-2 text-sm leading-6 text-sky-50/75">Le dashboard reception reste synchronise avec les messages, demandes, avis et statuts actifs.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ActionRow({ to, icon, title, meta }: { to: string; icon: React.ReactNode; title: string; meta: string }) {
+  return (
+    <Link to={to} className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-sky-400/15">
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/10 text-sky-300">{icon}</span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold text-white">{title}</span>
+          <span className="block truncate text-xs text-zinc-500">{meta}</span>
+        </span>
+      </span>
+      <Eye className="h-4 w-4 text-zinc-500" />
     </Link>
   );
 }
@@ -281,9 +389,17 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                 ))}
               </div>
               <div className="border-t border-white/10 bg-slate-900/95 p-5">
-                <textarea className="min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-4 outline-none transition placeholder:text-slate-600 focus:border-amber-300/60 focus:ring-4 focus:ring-amber-300/10" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reponse reception" />
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20"><MessageSquare className="h-4 w-4" /> Repondre</button>
+              <textarea
+                className="min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-4 outline-none transition placeholder:text-slate-600 focus:border-sky-300/60 focus:ring-4 focus:ring-sky-300/10"
+                value={reply}
+                onChange={(event) => setReply(event.target.value)}
+                onKeyDown={(event) => {
+                  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void sendReply();
+                }}
+                placeholder="Reponse reception"
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                  <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-sky-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-300/20"><MessageSquare className="h-4 w-4" /> Repondre</button>
                   <button onClick={() => setProfileTarget({ guestId: active.lastMessage.guestId, stayId: active.lastMessage.stayId })} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10"><Eye className="h-4 w-4" /> Voir fiche</button>
                   <button onClick={() => void markConversationDone()} className="rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Marquer comme traite</button>
                 </div>
@@ -391,34 +507,48 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
         <MetricCard icon={<Clock className="h-4 w-4" />} label="En cours" value={items.filter((item) => item.status === "in_progress").length} tone="amber" active={requestFilter === "in_progress"} onClick={() => setRequestFilter("in_progress")} />
         <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Urgentes" value={items.filter((item) => normalizeStatus(item.status, item.priority, item.senderType) === "urgent").length} tone="red" active={requestFilter === "urgent"} onClick={() => setRequestFilter("urgent")} />
       </div>
-      <div className="grid gap-3">
+      <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#111115] shadow-lg shadow-black/20">
         {error && <p className="p-4 text-sm text-red-300">{error}</p>}
         {!error && visibleItems.length === 0 && <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Aucune demande" description="Les demandes client apparaitront ici instantanement." />}
-        {visibleItems.map((item) => (
-          <div key={`${item.source}:${item.id}`} className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg shadow-black/20 transition hover:border-white/15 hover:bg-slate-900">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-300">
-                    {item.source === "message" ? "message" : item.type}
-                  </span>
-                  <StatusBadge status={normalizeStatus(item.status, item.priority, item.senderType)} />
-                </div>
-                <p className="mt-3 text-lg font-semibold tracking-tight text-white">{item.title}</p>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{item.description}</p>
-                <p className="mt-3 text-xs text-slate-500">
-                  {item.guest?.firstName} {item.guest?.lastName} - Chambre {item.stay?.roomNumber ?? "-"} - {formatTime(item.createdAt)}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
-                <button onClick={() => setProfileTarget({ guestId: item.guestId, stayId: item.stayId })} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Voir fiche</button>
-                <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
-                <button onClick={() => void updateStatus(item, "completed")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Traite</button>
-                <button onClick={() => void updateStatus(item, "urgent")} className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-medium text-red-200 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">Urgent</button>
-              </div>
-            </div>
+        {visibleItems.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-[1120px] w-full text-left text-sm">
+              <thead className="bg-[#09090b] text-[11px] uppercase tracking-wider text-zinc-500">
+                <tr>
+                  {["Type / Demande", "Client", "Chambre", "Statut", "Priorite", "Cree le", "Actions"].map((header) => <th key={header} className="px-4 py-3 font-semibold">{header}</th>)}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.07]">
+                {visibleItems.map((item) => (
+                  <tr key={`${item.source}:${item.id}`} className="transition hover:bg-white/[0.04]">
+                    <td className="px-4 py-4">
+                      <div className="max-w-md">
+                        <span className="rounded-full border border-sky-300/20 bg-sky-300/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-200">
+                          {item.source === "message" ? "message" : item.type}
+                        </span>
+                        <p className="mt-2 font-semibold text-white">{item.title}</p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-400">{item.description}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-zinc-200">{item.guest?.firstName} {item.guest?.lastName || "Client"}</td>
+                    <td className="px-4 py-4 font-semibold text-sky-100">{item.stay?.roomNumber ?? "-"}</td>
+                    <td className="px-4 py-4"><StatusBadge status={normalizeStatus(item.status, item.priority, item.senderType)} /></td>
+                    <td className="px-4 py-4 text-zinc-300">{item.priority ?? "-"}</td>
+                    <td className="px-4 py-4 text-zinc-400">{formatTime(item.createdAt)}</td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => setProfileTarget({ guestId: item.guestId, stayId: item.stayId })} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">Fiche</button>
+                        <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
+                        <button onClick={() => void updateStatus(item, "completed")} className="rounded-lg border border-emerald-300/25 px-2.5 py-1.5 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/10 focus:outline-none focus:ring-4 focus:ring-emerald-400/10">Traite</button>
+                        <button onClick={() => void updateStatus(item, "urgent")} className="rounded-lg border border-red-400/30 px-2.5 py-1.5 text-xs font-medium text-red-200 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">Urgent</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
+        ) : null}
       </div>
       {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
     </div>

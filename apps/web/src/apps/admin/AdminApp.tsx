@@ -1,22 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowLeft,
   ArrowRight,
+  BarChart3,
   Building2,
   CheckCircle2,
   Copy,
   ExternalLink,
+  Home,
   Hotel,
   Loader2,
   LogOut,
   Palette,
   Plus,
+  QrCode,
   RefreshCw,
+  Rocket,
   Search,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Users
 } from "lucide-react";
@@ -38,13 +43,15 @@ export function AdminApp() {
   return (
     <AuthGate title="Connexion admin" subtitle="Acces securise a l'administration plateforme" defaultEmail="admin@paris-local.test" allowedRoles={["super_admin"]}>
       <Routes>
-        <Route path="/" element={<AdminHotelsPage />} />
+        <Route path="/" element={<AdminDashboardPage />} />
         <Route path="/hotels" element={<AdminHotelsPage />} />
         <Route path="/hotels/new" element={<CreateHotelPage />} />
         <Route path="/hotels/:hotelId" element={<HotelDetailsPage />} />
         <Route path="/users" element={<AdminPlaceholder title="Utilisateurs" description="Gestion des comptes plateforme et acces hotel. La creation d'utilisateurs reception sera branchee dans un ticket dedie." icon={<Users className="h-5 w-5" />} />} />
+        <Route path="/qr-codes" element={<AdminPlaceholder title="QR Codes" description="Centralisation des supports QR hotels. Les exports PDF restent disponibles dans chaque fiche hotel." icon={<QrCode className="h-5 w-5" />} />} />
         <Route path="/deployments" element={<AdminPlaceholder title="Deploiements" description="Suivi Coolify et releases multi-tenant. Les domaines restent geres dans Coolify." icon={<Sparkles className="h-5 w-5" />} />} />
         <Route path="/settings" element={<AdminPlaceholder title="Parametres" description="Preferences globales de plateforme et gouvernance operationnelle." icon={<Settings className="h-5 w-5" />} />} />
+        <Route path="/integrations" element={<AdminPlaceholder title="Integrations" description="Connecteurs DNS, stockage, monitoring et outils externes de la plateforme." icon={<SlidersHorizontal className="h-5 w-5" />} />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </AuthGate>
@@ -54,49 +61,154 @@ export function AdminApp() {
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { currentUser, logout } = useAppStore();
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_34%),linear-gradient(180deg,#020617,#0f172a)] text-slate-100">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-5 md:px-8 md:py-8">
-        <header className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 shadow-lg shadow-black/20 backdrop-blur md:flex-row md:items-center md:justify-between md:p-5">
-          <Link to="/admin" className="flex items-center gap-3 focus:outline-none focus:ring-4 focus:ring-amber-300/10">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-200">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 lg:flex">
+      <aside className="border-b border-white/[0.07] bg-[#111115]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:border-b-0 lg:border-r">
+        <Link to="/admin" className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-amber-400/15">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-400/25 bg-amber-400/10 text-amber-300">
               <ShieldCheck className="h-5 w-5" />
             </span>
-            <span>
-              <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Paris Local</span>
-              <span className="block text-lg font-semibold tracking-tight text-white">Super Admin</span>
+            <span className="min-w-0">
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300">Paris Local</span>
+              <span className="block truncate text-sm font-semibold tracking-tight text-white">Super Admin</span>
             </span>
-          </Link>
-          <nav className="flex flex-wrap items-center gap-2 text-sm">
-            <AdminNavLink to="/admin/hotels" label="Hotels" />
-            <AdminNavLink to="/generator" label="Generateur" />
-            <AdminNavLink to="/admin/users" label="Utilisateurs" />
-          </nav>
-          <div className="flex items-center justify-between gap-3 md:justify-end">
-            <div className="text-right">
-              <p className="text-sm font-medium text-white">{currentUser?.name}</p>
-              <p className="text-xs text-slate-400">{currentUser?.email}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition hover:border-red-300/30 hover:bg-red-500/10 hover:text-red-100 focus:outline-none focus:ring-4 focus:ring-red-300/10"
-              aria-label="Se deconnecter"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+        </Link>
+        <nav className="mt-5 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-5">
+          <AdminNavGroup label="Gestion">
+            <AdminNavLink to="/admin" label="Tableau de bord" icon={<Home className="h-4 w-4" />} />
+            <AdminNavLink to="/admin/hotels" label="Hotels" icon={<Hotel className="h-4 w-4" />} />
+            <AdminNavLink to="/admin/users" label="Utilisateurs" icon={<Users className="h-4 w-4" />} />
+          </AdminNavGroup>
+          <AdminNavGroup label="Outils">
+            <AdminNavLink to="/generator" label="Generator" icon={<Sparkles className="h-4 w-4" />} />
+            <AdminNavLink to="/admin/qr-codes" label="QR Codes" icon={<QrCode className="h-4 w-4" />} />
+            <AdminNavLink to="/admin/deployments" label="Deploiements" icon={<Rocket className="h-4 w-4" />} />
+          </AdminNavGroup>
+          <AdminNavGroup label="Configuration">
+            <AdminNavLink to="/admin/settings" label="Parametres" icon={<Settings className="h-4 w-4" />} />
+            <AdminNavLink to="/admin/integrations" label="Integrations" icon={<SlidersHorizontal className="h-4 w-4" />} />
+          </AdminNavGroup>
+        </nav>
+        <div className="mt-5 rounded-2xl border border-amber-400/15 bg-amber-400/10 p-4 text-sm text-amber-100 lg:mt-auto">
+          <p className="font-semibold">Plateforme multi-tenant</p>
+          <p className="mt-1 text-xs leading-5 text-amber-100/70">Une base centrale, isolation par hotel_id, URLs canoniques par slug.</p>
+        </div>
+        <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-white">{currentUser?.name}</p>
+            <p className="truncate text-[11px] text-zinc-500">{currentUser?.email}</p>
           </div>
-        </header>
-        {children}
-      </div>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.04] text-zinc-400 transition hover:border-red-400/30 hover:bg-red-500/10 hover:text-red-100 focus:outline-none focus:ring-4 focus:ring-red-400/10"
+            aria-label="Se deconnecter"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </aside>
+      <main className="min-w-0 flex-1">
+        <div className="sticky top-0 z-10 border-b border-white/[0.07] bg-[#09090b]/85 px-4 py-3 backdrop-blur-xl md:px-6">
+          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Console plateforme</p>
+              <p className="text-sm font-medium text-zinc-200">Pilotage hotels, QR codes et templates</p>
+            </div>
+            <Link to="/admin/hotels/new" className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-3 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-400/20">
+              <Plus className="h-4 w-4" />
+              Creer un hotel
+            </Link>
+          </div>
+        </div>
+        <div className="mx-auto w-full max-w-[1400px] space-y-6 px-4 py-5 md:px-6 md:py-8">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
 
-function AdminNavLink({ to, label }: { to: string; label: string }) {
+function AdminNavGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Link className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-slate-300 transition hover:border-amber-300/30 hover:bg-amber-300/10 hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300/10" to={to}>
-      {label}
+    <div>
+      <p className="mb-2 hidden px-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 lg:block">{label}</p>
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function AdminNavLink({ to, label, icon }: { to: string; label: string; icon: React.ReactNode }) {
+  const location = useLocation();
+  const active = location.pathname === to || (to !== "/admin" && location.pathname.startsWith(to));
+  return (
+    <Link className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-amber-400/15 ${active ? "border-amber-400/25 bg-amber-400/10 text-amber-100" : "border-transparent text-zinc-400 hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-white"}`} to={to}>
+      <span className={active ? "text-amber-300" : "text-zinc-500"}>{icon}</span>
+      <span className="truncate">{label}</span>
     </Link>
+  );
+}
+
+function AdminDashboardPage() {
+  const { token } = useAppStore();
+  const [hotels, setHotels] = useState<HotelRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    api.hotels(token)
+      .then(setHotels)
+      .catch((err) => setError(err instanceof Error ? err.message : "Impossible de charger la plateforme"))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const activeCount = hotels.filter((hotel) => hotel.status === "active").length;
+  const draftCount = hotels.filter((hotel) => hotel.status === "draft").length;
+  const recentHotels = hotels.slice(0, 5);
+
+  return (
+    <AdminShell>
+      <section className="rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">Super Admin</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">Plateforme hotels</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Vue centrale pour onboarder, verifier et exploiter les hotels clients sans creer d'application separee.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/admin/hotels/new" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-400/20"><Plus className="h-4 w-4" /> Creer un hotel</Link>
+            <Link to="/generator" className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-white/[0.07] focus:outline-none focus:ring-4 focus:ring-white/10"><Sparkles className="h-4 w-4" /> Ouvrir Generator</Link>
+          </div>
+        </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Metric label="Hotels total" value={hotels.length} />
+          <Metric label="Hotels actifs" value={activeCount} tone="emerald" />
+          <Metric label="Brouillons" value={draftCount} tone="amber" />
+          <Metric label="Templates" value={guestThemeIds.length} tone="amber" />
+        </div>
+      </section>
+      <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111115] shadow-lg shadow-black/20">
+          <div className="flex items-center justify-between gap-4 border-b border-white/[0.07] p-5">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-white">Hotels recents</h2>
+              <p className="mt-1 text-sm text-zinc-500">Derniers tenants crees ou modifies.</p>
+            </div>
+            <Link to="/admin/hotels" className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] px-3 py-2 text-sm font-medium text-zinc-300 transition hover:bg-white/[0.04]">Voir tout <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          {loading ? <LoadingState label="Chargement plateforme" /> : null}
+          {error ? <ErrorState message={error} /> : null}
+          {!loading && !error && recentHotels.length > 0 ? <HotelTable hotels={recentHotels} compact /> : null}
+          {!loading && !error && recentHotels.length === 0 ? <EmptyState /> : null}
+        </div>
+        <aside className="rounded-2xl border border-amber-400/15 bg-amber-400/10 p-6 shadow-lg shadow-black/20">
+          <BarChart3 className="h-7 w-7 text-amber-300" />
+          <h2 className="mt-4 text-lg font-semibold tracking-tight text-white">Priorite produit</h2>
+          <p className="mt-2 text-sm leading-6 text-amber-50/75">Onboarding hotel, URLs, theme Guest App et QR code doivent rester actionnables depuis la console.</p>
+        </aside>
+      </section>
+    </AdminShell>
   );
 }
 
@@ -106,6 +218,7 @@ function AdminHotelsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   async function loadHotels() {
     if (!token) return;
@@ -126,9 +239,12 @@ function AdminHotelsPage() {
 
   const filteredHotels = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return hotels;
-    return hotels.filter((hotel) => [hotel.name, hotel.slug, hotel.city, hotel.email].some((value) => value?.toLowerCase().includes(normalizedQuery)));
-  }, [hotels, query]);
+    return hotels.filter((hotel) => {
+      const matchesQuery = !normalizedQuery || [hotel.name, hotel.slug, hotel.city, hotel.email].some((value) => value?.toLowerCase().includes(normalizedQuery));
+      const matchesStatus = statusFilter === "all" || hotel.status === statusFilter;
+      return matchesQuery && matchesStatus;
+    });
+  }, [hotels, query, statusFilter]);
 
   const activeCount = hotels.filter((hotel) => hotel.status === "active").length;
   const draftCount = hotels.filter((hotel) => hotel.status === "draft").length;
@@ -136,7 +252,7 @@ function AdminHotelsPage() {
   return (
     <AdminShell>
       <section className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-6 shadow-lg shadow-black/20 md:p-8">
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Onboarding hotels</p>
@@ -161,8 +277,8 @@ function AdminHotelsPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-slate-900/75 shadow-lg shadow-black/20">
-        <div className="flex flex-col gap-4 border-b border-white/10 p-4 md:flex-row md:items-center md:justify-between md:p-5">
+      <section className="rounded-2xl border border-white/[0.07] bg-[#111115] shadow-lg shadow-black/20">
+        <div className="flex flex-col gap-4 border-b border-white/[0.07] p-4 md:flex-row md:items-center md:justify-between md:p-5">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-white">Liste des hotels</h2>
             <p className="mt-1 text-sm text-slate-400">URLs client et reception generees depuis le slug.</p>
@@ -178,6 +294,12 @@ function AdminHotelsPage() {
                 placeholder="Rechercher nom, slug, ville..."
               />
             </label>
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-white/[0.07] bg-[#09090b] px-3 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-amber-400/50 focus:ring-4 focus:ring-amber-400/10">
+              <option value="all">Tous statuts</option>
+              <option value="active">Actifs</option>
+              <option value="draft">Brouillons</option>
+              <option value="inactive">Inactifs</option>
+            </select>
             <button type="button" onClick={() => void loadHotels()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-white/10">
               <RefreshCw className="h-4 w-4" />
               Actualiser
@@ -193,29 +315,33 @@ function AdminHotelsPage() {
   );
 }
 
-function HotelTable({ hotels }: { hotels: HotelRecord[] }) {
+function HotelTable({ hotels, compact = false }: { hotels: HotelRecord[]; compact?: boolean }) {
   return (
     <div className="overflow-hidden">
-      <div className="hidden grid-cols-[1.1fr_0.8fr_0.7fr_1.4fr_1.4fr_96px] gap-4 border-b border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 lg:grid">
-        <span>Nom</span>
+      <div className={`hidden gap-4 border-b border-white/[0.07] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 lg:grid ${compact ? "grid-cols-[1.1fr_0.7fr_0.7fr_1fr_88px]" : "grid-cols-[1.1fr_0.8fr_0.6fr_0.7fr_1.2fr_1.2fr_0.7fr_120px]"}`}>
+        <span>Hotel</span>
         <span>Slug</span>
+        {!compact ? <span>Ville</span> : null}
         <span>Statut</span>
         <span>URL client</span>
-        <span>URL reception</span>
+        {!compact ? <span>URL reception</span> : null}
+        {!compact ? <span>Cree le</span> : null}
         <span className="text-right">Action</span>
       </div>
-      <div className="divide-y divide-white/10">
+      <div className="divide-y divide-white/[0.07]">
         {hotels.map((hotel) => (
-          <article key={hotel.id} className="grid gap-4 px-4 py-4 transition hover:bg-white/[0.03] lg:grid-cols-[1.1fr_0.8fr_0.7fr_1.4fr_1.4fr_96px] lg:items-center lg:px-5">
+          <article key={hotel.id} className={`grid gap-4 px-4 py-4 transition hover:bg-white/[0.04] lg:items-center lg:px-5 ${compact ? "lg:grid-cols-[1.1fr_0.7fr_0.7fr_1fr_88px]" : "lg:grid-cols-[1.1fr_0.8fr_0.6fr_0.7fr_1.2fr_1.2fr_0.7fr_120px]"}`}>
             <div>
               <p className="font-semibold tracking-tight text-white">{hotel.name}</p>
               <p className="mt-1 text-sm text-slate-400">{[hotel.city, hotel.country].filter(Boolean).join(", ") || "Adresse a completer"}</p>
             </div>
-            <code className="w-fit rounded-xl border border-white/10 bg-slate-950/60 px-3 py-1 text-sm text-slate-300">{hotel.slug}</code>
+            <code className="w-fit rounded-xl border border-white/[0.07] bg-[#09090b] px-3 py-1 font-mono text-[11px] text-zinc-300">{hotel.slug}</code>
+            {!compact ? <span className="text-sm text-zinc-300">{hotel.city || "-"}</span> : null}
             <StatusBadge status={hotel.status ?? "draft"} />
-            <UrlLink href={guestUrl(hotel.slug)} />
-            <UrlLink href={receptionUrl(hotel.slug)} />
-            <Link to={`/admin/hotels/${hotel.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-amber-300/30 hover:bg-amber-300/10 hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300/10">
+            <CopyableUrl href={guestUrl(hotel.slug)} label="URL client" />
+            {!compact ? <CopyableUrl href={receptionUrl(hotel.slug)} label="URL reception" /> : null}
+            {!compact ? <span className="text-sm text-zinc-400">{formatAdminDate(hotel.createdAt)}</span> : null}
+            <Link to={`/admin/hotels/${hotel.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-400/10">
               Voir
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -574,12 +700,25 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-semibold ${tone}`}>{label}</span>;
 }
 
-function UrlLink({ href }: { href: string }) {
+function CopyableUrl({ href, label }: { href: string; label: string }) {
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sm text-sky-200 transition hover:text-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-300/10">
-      {href}
-    </a>
+    <div className="flex min-w-0 items-center gap-2">
+      <a href={href} target="_blank" rel="noreferrer" className="min-w-0 truncate font-mono text-[11px] text-sky-200 transition hover:text-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-300/10">
+        {href}
+      </a>
+      <button type="button" onClick={() => void navigator.clipboard?.writeText(href)} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.04] text-zinc-400 transition hover:border-amber-400/30 hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-400/10" aria-label={`Copier ${label}`}>
+        <Copy className="h-3.5 w-3.5" />
+      </button>
+      <a href={href} target="_blank" rel="noreferrer" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.04] text-zinc-400 transition hover:border-sky-400/30 hover:text-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-400/10" aria-label={`Ouvrir ${label}`}>
+        <ExternalLink className="h-3.5 w-3.5" />
+      </a>
+    </div>
   );
+}
+
+function formatAdminDate(value?: string) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(new Date(value));
 }
 
 function Metric({ label, value, tone = "slate" }: { label: string; value: number; tone?: "slate" | "emerald" | "amber" }) {
