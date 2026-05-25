@@ -20,6 +20,9 @@ export function resolveTenantFromHostname(hostname = window.location.hostname): 
   if (normalized.endsWith(`.${tenantRoot}`)) {
     const prefix = normalized.slice(0, -tenantRoot.length - 1);
     const labels = prefix.split(".");
+    if (labels[0]?.startsWith("admin-") && labels[0].length > "admin-".length) {
+      return { kind: "reception", hostname: normalized, hotelSlug: labels[0].slice("admin-".length), isLocal: false };
+    }
     if (labels[0] === "admin" && labels[1]) {
       return { kind: "reception", hostname: normalized, hotelSlug: labels[1], isLocal: false };
     }

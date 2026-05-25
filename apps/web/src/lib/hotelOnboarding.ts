@@ -59,7 +59,7 @@ export function guestUrl(slug: string) {
 }
 
 export function receptionUrl(slug: string) {
-  return `https://admin.${slug}.${platformDomain}`;
+  return `https://admin-${slug}.${platformDomain}`;
 }
 
 export function normalizeHotelPayload(form: HotelFormState): HotelPayload {
