@@ -3,6 +3,34 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 type ApiOptions = RequestInit & { token?: string };
 export type ApiUser = { id: string; email: string; name: string; role: string; hotelIds: string[] };
 export type ApiAuth = { token: string; user: ApiUser };
+export type HotelPayload = {
+  name: string;
+  slug: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  phone?: string;
+  email: string;
+  website?: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  status?: "active" | "inactive" | "draft";
+};
+
+export type SettingsPayload = {
+  wifiName?: string;
+  wifiPassword?: string;
+  breakfastHours?: string;
+  checkinTime?: string;
+  checkoutTime?: string;
+  roomServiceHours?: string;
+  receptionPhone?: string;
+  whatsappNumber?: string;
+  languages?: string[];
+  modules?: Record<string, boolean>;
+};
 
 async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
@@ -38,6 +66,23 @@ export const api = {
   hotelGuests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/guests`, { token }),
   hotelReviews: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/reviews`, { token }),
   hotels: (token: string) => request<any[]>("/api/hotels", { token }),
+  hotel: (hotelId: string, token: string) => request<any>(`/api/hotels/${hotelId}`, { token }),
+  createHotel: (body: HotelPayload, token: string) => request<any>("/api/hotels", {
+    method: "POST",
+    token,
+    body: JSON.stringify(body)
+  }),
+  updateHotel: (hotelId: string, body: Partial<HotelPayload>, token: string) => request<any>(`/api/hotels/${hotelId}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
+  }),
+  hotelSettings: (hotelId: string, token: string) => request<any>(`/api/hotels/${hotelId}/settings`, { token }),
+  updateHotelSettings: (hotelId: string, body: SettingsPayload, token: string) => request<any>(`/api/hotels/${hotelId}/settings`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
+  }),
   replyMessage: (messageId: string, content: string, token: string) => request<any>(`/api/messages/${messageId}/reply`, {
     method: "POST",
     token,
