@@ -5,6 +5,7 @@ import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
+import { validateGuestStayScope } from "../../utils/tenantScope.js";
 
 export const requestsRouter = Router();
 export const publicRequestsRouter = Router({ mergeParams: true });
@@ -12,6 +13,8 @@ export const publicRequestsRouter = Router({ mergeParams: true });
 publicRequestsRouter.post("/", validateBody(serviceRequestCreateSchema), asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({ where: { slug: req.params.hotelSlug } });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
+  const scoped = await validateGuestStayScope(hotel.id, req.body.guestId, req.body.stayId);
+  if (!scoped) return res.status(404).json({ error: "Request context not found" });
   const request = await prisma.serviceRequest.create({
     data: { ...req.body, hotelId: hotel.id, status: "new" },
     include: { guest: true, stay: true }

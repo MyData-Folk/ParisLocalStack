@@ -7,6 +7,7 @@ import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
+import { validateGuestStayScope } from "../../utils/tenantScope.js";
 
 export const messagesRouter = Router();
 export const publicMessagesRouter = Router({ mergeParams: true });
@@ -24,6 +25,8 @@ function emitMessageStatus(req: Request, hotelId: string, payload: unknown) {
 publicMessagesRouter.post("/", validateBody(messageCreateSchema), asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({ where: { slug: req.params.hotelSlug } });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
+  const scoped = await validateGuestStayScope(hotel.id, req.body.guestId, req.body.stayId);
+  if (!scoped) return res.status(404).json({ error: "Conversation not found" });
   const message = await prisma.message.create({
     data: { ...req.body, hotelId: hotel.id, senderType: "guest", status: "new" },
     include: { guest: true, stay: true }

@@ -42,12 +42,15 @@ export function requireRole(...roles: UserRole[]) {
   };
 }
 
+export function canAccessHotel(user: Express.Request["user"], hotelId: string) {
+  return Boolean(user && (user.role === "super_admin" || user.hotelIds.includes(hotelId)));
+}
+
 export function requireHotelAccess(paramName = "hotelId") {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) return res.status(401).json({ error: "Missing user" });
-    if (req.user.role === "super_admin") return next();
     const hotelId = req.params[paramName] ?? req.body.hotelId;
-    if (!hotelId || !req.user.hotelIds.includes(hotelId)) {
+    if (!hotelId || !canAccessHotel(req.user, hotelId)) {
       return res.status(403).json({ error: "Hotel access denied" });
     }
     return next();

@@ -51,6 +51,8 @@ publicStaysRouter.post("/", validateBody(stayCreateSchema), asyncHandler(async (
     ? (await prisma.guest.create({ data: { ...req.body.guest, hotelId: hotel.id } })).id
     : undefined);
   if (!guestId) return res.status(400).json({ error: "guestId or guest is required" });
+  const guest = await prisma.guest.findFirst({ where: { id: guestId, hotelId: hotel.id }, select: { id: true } });
+  if (!guest) return res.status(404).json({ error: "Guest not found" });
 
   const stay = await prisma.stay.create({
     data: {
