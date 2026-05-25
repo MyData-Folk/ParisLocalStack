@@ -113,6 +113,7 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
 function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
+  const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
   const [reply, setReply] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -283,6 +284,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                 <textarea className="min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-4 outline-none transition placeholder:text-slate-600 focus:border-amber-300/60 focus:ring-4 focus:ring-amber-300/10" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reponse reception" />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20"><MessageSquare className="h-4 w-4" /> Repondre</button>
+                  <button onClick={() => setProfileTarget({ guestId: active.lastMessage.guestId, stayId: active.lastMessage.stayId })} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10"><Eye className="h-4 w-4" /> Voir fiche</button>
                   <button onClick={() => void markConversationDone()} className="rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Marquer comme traite</button>
                 </div>
               </div>
@@ -290,6 +292,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
           ) : <p className="p-5 text-slate-400">Selectionnez un message.</p>}
         </div>
       </div>
+      {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
     </div>
   );
 }
@@ -298,6 +301,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [requestFilter, setRequestFilter] = useState<"all" | "in_progress" | "urgent">("all");
+  const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -407,6 +411,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
+                <button onClick={() => setProfileTarget({ guestId: item.guestId, stayId: item.stayId })} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Voir fiche</button>
                 <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
                 <button onClick={() => void updateStatus(item, "completed")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Traite</button>
                 <button onClick={() => void updateStatus(item, "urgent")} className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-medium text-red-200 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">Urgent</button>
@@ -415,6 +420,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
           </div>
         ))}
       </div>
+      {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
     </div>
   );
 }
@@ -423,6 +429,7 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [reviewFilter, setReviewFilter] = useState<"active" | "alerts" | "resolved">("active");
+  const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -492,8 +499,9 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
       </div>
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
       {items.length === 0 && <EmptyState icon={<Star className="h-6 w-6" />} title="Aucun avis client" description="Les avis et alertes satisfaction apparaitront ici." />}
-      <ReviewSection title="Avis sejours en cours" reviews={visibleActiveReviews} onResolve={resolveReview} />
-      <ReviewSection title="Avis historiques" reviews={visibleHistoricReviews} onResolve={resolveReview} muted />
+      <ReviewSection title="Avis sejours en cours" reviews={visibleActiveReviews} onResolve={resolveReview} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} />
+      <ReviewSection title="Avis historiques" reviews={visibleHistoricReviews} onResolve={resolveReview} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} muted />
+      {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
     </div>
   );
 }
@@ -624,7 +632,7 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
         onEdit={(stay) => setEditingStay(stay)}
         onCheckout={(stay) => void checkout(stay)}
       />
-      {selectedStay && <StayDetailPanel row={buildStayRow(selectedStay, messages, requests, reviews)} stay={selectedStay} onClose={() => setSelectedStay(null)} />}
+      {selectedStay && <GuestProfilePanel hotelId={hotelId} token={token} target={{ guestId: selectedStay.guestId, stayId: selectedStay.id }} onClose={() => setSelectedStay(null)} onStayUpdated={() => void loadReceptionData()} />}
       {editingStay && <StayEditPanel stay={editingStay} onClose={() => setEditingStay(null)} onSave={(payload) => void saveStay(payload)} />}
     </div>
   );
@@ -701,31 +709,152 @@ function RowActions({ row, active = false, onView, onEdit, onCheckout }: { row: 
   );
 }
 
-function StayDetailPanel({ row, stay, onClose }: { row: any; stay: any; onClose: () => void }) {
+function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: { hotelId: string; token: string; target: { guestId?: string; stayId?: string }; onClose: () => void; onStayUpdated?: () => void }) {
+  const [stays, setStays] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reply, setReply] = useState("");
+  const [editingStay, setEditingStay] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    void loadProfile();
+  }, [hotelId, token, target.guestId, target.stayId]);
+
+  async function loadProfile() {
+    setLoading(true);
+    setError("");
+    try {
+      const [activeStays, archivedStays, allMessages, allRequests, allReviews] = await Promise.all([
+        api.hotelStays(hotelId, token, "active"),
+        api.hotelStays(hotelId, token, "archived"),
+        api.hotelMessages(hotelId, token),
+        api.hotelRequests(hotelId, token),
+        api.hotelReviews(hotelId, token)
+      ]);
+      const scopedStays = [...activeStays, ...archivedStays].filter((stay) => {
+        if (target.stayId) return stay.id === target.stayId;
+        if (target.guestId) return stay.guestId === target.guestId;
+        return false;
+      });
+      const stayIds = new Set(scopedStays.map((stay) => stay.id));
+      const guestIds = new Set(scopedStays.map((stay) => stay.guestId).filter(Boolean));
+      if (target.guestId) guestIds.add(target.guestId);
+      setStays(scopedStays);
+      setMessages(allMessages.filter((item) => (item.stayId && stayIds.has(item.stayId)) || (item.guestId && guestIds.has(item.guestId))));
+      setRequests(allRequests.filter((item) => (item.stayId && stayIds.has(item.stayId)) || (item.guestId && guestIds.has(item.guestId))));
+      setReviews(allReviews.filter((item) => (item.stayId && stayIds.has(item.stayId)) || (item.guestId && guestIds.has(item.guestId))));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible de charger la fiche");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const primaryStay = useMemo(() => stays.find((stay) => stay.id === target.stayId) ?? stays[0], [stays, target.stayId]);
+  const row = useMemo(() => primaryStay ? buildStayRow(primaryStay, messages, requests, reviews) : null, [primaryStay, messages, requests, reviews]);
+  const timeline = useMemo(() => primaryStay ? buildGuestTimeline(primaryStay, messages, requests, reviews) : [], [primaryStay, messages, requests, reviews]);
+  const openMessages = messages.filter((item) => openStatuses.has(item.status)).length;
+  const openRequests = requests.filter((item) => openStatuses.has(item.status)).length;
+  const urgentRequests = requests.filter((item) => item.priority === "urgent" || item.status === "urgent").length;
+  const lastReview = [...reviews].sort(sortOperationalDesc)[0];
+  const isActiveStay = primaryStay ? primaryStay.status === "active" || primaryStay.status === "checked_in" : false;
+
+  async function sendProfileReply() {
+    const source = [...messages].filter((item) => item.senderType === "guest").sort(sortOperationalDesc)[0] ?? messages[0];
+    if (!source || !reply.trim()) return;
+    await api.replyMessage(source.id, reply, token);
+    setReply("");
+    await loadProfile();
+  }
+
+  async function updateRequest(item: any, status: string) {
+    await api.updateRequestStatus(item.id, status, token);
+    await loadProfile();
+  }
+
+  async function resolveReview(item: any) {
+    await api.updateReviewStatus(item.id, "resolved", token);
+    await loadProfile();
+  }
+
+  async function checkoutStay() {
+    if (!primaryStay) return;
+    await api.updateStay(primaryStay.id, { status: "checked_out", checkoutDate: toDateInput(new Date().toISOString()) }, token);
+    await loadProfile();
+    onStayUpdated?.();
+  }
+
+  async function saveStay(payload: { roomNumber: string; checkinDate: string; checkoutDate: string; status: string }) {
+    if (!editingStay) return;
+    await api.updateStay(editingStay.id, payload, token);
+    setEditingStay(null);
+    await loadProfile();
+    onStayUpdated?.();
+  }
+
   return (
     <div className="fixed inset-0 z-40 bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <aside className="ml-auto flex h-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+      <aside className="ml-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Fiche sejour</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{row.client}</h2>
-            <p className="mt-1 text-sm text-slate-500">Chambre {row.room} - {formatDate(row.checkinDate)} au {formatDate(row.checkoutDate)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Fiche client / sejour</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{row?.client ?? "Client"}</h2>
+            <p className="mt-1 text-sm text-slate-500">{row ? `Chambre ${row.room} - ${formatDate(row.checkinDate)} au ${formatDate(row.checkoutDate)}` : "Chargement de la fiche complete."}</p>
           </div>
           <button onClick={onClose} aria-label="Fermer" className="rounded-xl border border-white/10 p-2 text-slate-300 transition hover:bg-white/5"><X className="h-4 w-4" /></button>
         </div>
-        <div className="space-y-5 overflow-y-auto p-5">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <InfoPill icon={<Mail className="h-4 w-4" />} label="Email" value={row.email || "Non renseigne"} />
-            <InfoPill icon={<Phone className="h-4 w-4" />} label="Telephone" value={row.phone || "Non renseigne"} />
-            <InfoPill icon={<Languages className="h-4 w-4" />} label="Langue" value={row.language.toUpperCase()} />
-            <InfoPill icon={<MessageSquare className="h-4 w-4" />} label="Dernier contact" value={formatTime(row.lastContact) || "-"} />
-          </div>
-          <HistoryList title="Messages" items={stay.messages ?? []} render={(item) => `${item.senderType === "reception" ? "Reception" : "Client"} - ${item.content}`} />
-          <HistoryList title="Demandes" items={stay.requests ?? []} render={(item) => `${item.title} - ${item.status}`} />
-          <HistoryList title="Avis" items={stay.reviews ?? []} render={(item) => `${item.rating}/5 - ${item.comment || "Aucun commentaire"}`} />
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">Notes internes : a ajouter lors d'une prochaine iteration si un champ dedie est valide en base.</div>
+        <div className="overflow-y-auto p-5">
+          {loading && <LoadingPanel />}
+          {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+          {!loading && !error && row && primaryStay ? (
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="space-y-5">
+                <div className="grid gap-3 md:grid-cols-4">
+                  <MetricCard icon={<Inbox className="h-4 w-4" />} label="Messages ouverts" value={openMessages} tone="amber" />
+                  <MetricCard icon={<ListChecks className="h-4 w-4" />} label="Demandes ouvertes" value={openRequests} tone="blue" />
+                  <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Urgentes" value={urgentRequests} tone="red" />
+                  <MetricCard icon={<Star className="h-4 w-4" />} label="Derniere note" value={lastReview?.rating ?? 0} tone={lastReview?.rating <= 3 ? "red" : "emerald"} />
+                </div>
+                <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-white">Identite et sejour</h3>
+                      <p className="mt-1 text-sm text-slate-500">Profil client, statut du sejour et actions reception.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => setEditingStay(primaryStay)} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5">Modifier sejour</button>
+                      {isActiveStay && <button onClick={() => void checkoutStay()} className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-medium text-red-200 transition hover:bg-red-500/10">Check-out</button>}
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <InfoPill icon={<Mail className="h-4 w-4" />} label="Email" value={row.email || "Non renseigne"} />
+                    <InfoPill icon={<Phone className="h-4 w-4" />} label="Telephone" value={row.phone || "Non renseigne"} />
+                    <InfoPill icon={<Languages className="h-4 w-4" />} label="Langue" value={row.language.toUpperCase()} />
+                    <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Chambre" value={row.room} />
+                    <InfoPill icon={<Clock className="h-4 w-4" />} label="Duree" value={`${row.nights} nuit${row.nights > 1 ? "s" : ""}`} />
+                    <InfoPill icon={<CheckCircle className="h-4 w-4" />} label="Consentement CRM" value={row.marketingConsent ? "Oui" : "Non"} />
+                  </div>
+                </section>
+                <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+                  <h3 className="font-semibold text-white">Timeline sejour</h3>
+                  <div className="mt-4 space-y-3">
+                    {timeline.map((item) => <TimelineItem key={item.id} item={item} />)}
+                  </div>
+                </section>
+              </div>
+              <div className="space-y-5">
+                <ConversationPanel messages={messages} reply={reply} onReplyChange={setReply} onSendReply={sendProfileReply} />
+                <RequestPanel requests={requests} onUpdate={updateRequest} />
+                <ReviewPanel reviews={reviews} onResolve={resolveReview} />
+              </div>
+            </div>
+          ) : null}
         </div>
       </aside>
+      {editingStay && <StayEditPanel stay={editingStay} onClose={() => setEditingStay(null)} onSave={(payload) => void saveStay(payload)} />}
     </div>
   );
 }
@@ -764,19 +893,100 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <label className="block space-y-2 text-sm font-medium text-slate-300"><span>{label}</span>{children}</label>;
 }
 
-function HistoryList({ title, items, render }: { title: string; items: any[]; render: (item: any) => string }) {
+function LoadingPanel() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-8 text-center text-sm text-slate-400">
+      Chargement de la fiche client...
+    </div>
+  );
+}
+
+function TimelineItem({ item }: { item: { title: string; description: string; status?: string; actor: string; createdAt: string } }) {
+  return (
+    <div className="relative pl-7">
+      <span className="absolute left-0 top-1.5 h-3 w-3 rounded-full border border-amber-300/40 bg-amber-300" />
+      <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="font-semibold text-white">{item.title}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-300">{item.description}</p>
+          </div>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-slate-400">{item.actor}</span>
+        </div>
+        <p className="mt-3 text-xs text-slate-500">{formatTime(item.createdAt)}{item.status ? ` - ${item.status}` : ""}</p>
+      </div>
+    </div>
+  );
+}
+
+function ConversationPanel({ messages, reply, onReplyChange, onSendReply }: { messages: any[]; reply: string; onReplyChange: (value: string) => void; onSendReply: () => Promise<void> }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-      <h3 className="font-semibold text-white">{title}</h3>
-      <div className="mt-3 space-y-2">
-        {items.length === 0 && <p className="text-sm text-slate-500">Aucun historique.</p>}
-        {items.map((item) => <p key={item.id} className="rounded-xl bg-slate-950/60 p-3 text-sm text-slate-300">{render(item)}</p>)}
+      <h3 className="font-semibold text-white">Messages</h3>
+      <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+        {[...messages].sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()).map((message) => (
+          <div key={message.id} className={`rounded-2xl px-3 py-2 text-sm ${message.senderType === "reception" ? "ml-8 bg-amber-300 text-slate-950" : "mr-8 border border-white/10 bg-slate-950 text-slate-100"}`}>
+            <p className="text-xs opacity-70">{message.senderType === "reception" ? "Reception" : "Client"} - {formatTime(message.createdAt)}</p>
+            <p className="mt-1">{message.content}</p>
+          </div>
+        ))}
+        {messages.length === 0 && <p className="text-sm text-slate-500">Aucun message.</p>}
+      </div>
+      <textarea value={reply} onChange={(event) => onReplyChange(event.target.value)} placeholder="Repondre au client" className="mt-3 min-h-24 w-full rounded-xl border border-white/10 bg-slate-950/80 p-3 text-sm outline-none transition focus:border-amber-300/50 focus:ring-4 focus:ring-amber-300/10" />
+      <button onClick={() => void onSendReply()} disabled={!reply.trim() || messages.length === 0} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-3 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50">
+        <MessageSquare className="h-4 w-4" /> Repondre
+      </button>
+    </section>
+  );
+}
+
+function RequestPanel({ requests, onUpdate }: { requests: any[]; onUpdate: (request: any, status: string) => Promise<void> }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+      <h3 className="font-semibold text-white">Demandes</h3>
+      <div className="mt-3 space-y-3">
+        {requests.map((request) => (
+          <div key={request.id} className="rounded-xl border border-white/10 bg-slate-950/55 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-medium text-white">{request.title}</p>
+                <p className="mt-1 text-sm text-slate-400">{request.description}</p>
+              </div>
+              <span className="rounded-full border border-white/10 px-2 py-1 text-xs text-slate-300">{request.status}</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={() => void onUpdate(request, "in_progress")} className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/5">En cours</button>
+              <button onClick={() => void onUpdate(request, "completed")} className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/5">Traite</button>
+              <button onClick={() => void onUpdate(request, "urgent")} className="rounded-lg border border-red-400/30 px-2.5 py-1.5 text-xs text-red-200 hover:bg-red-500/10">Urgent</button>
+            </div>
+          </div>
+        ))}
+        {requests.length === 0 && <p className="text-sm text-slate-500">Aucune demande.</p>}
       </div>
     </section>
   );
 }
 
-function ReviewSection({ title, reviews, onResolve, muted = false }: { title: string; reviews: any[]; onResolve: (review: any) => Promise<void>; muted?: boolean }) {
+function ReviewPanel({ reviews, onResolve }: { reviews: any[]; onResolve: (review: any) => Promise<void> }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+      <h3 className="font-semibold text-white">Avis</h3>
+      <div className="mt-3 space-y-3">
+        {reviews.map((review) => (
+          <div key={review.id} className={`rounded-xl border p-3 ${review.rating <= 3 ? "border-red-400/30 bg-red-500/10" : "border-white/10 bg-slate-950/55"}`}>
+            <p className="font-medium text-white">{review.rating}/5</p>
+            <p className="mt-1 text-sm text-slate-300">{review.comment || "Aucun commentaire."}</p>
+            <p className="mt-2 text-xs text-slate-500">{review.status} - {formatTime(review.createdAt)}</p>
+            {review.rating <= 3 && review.status !== "resolved" && <button onClick={() => void onResolve(review)} className="mt-3 rounded-lg border border-red-400/30 px-2.5 py-1.5 text-xs text-red-200 hover:bg-red-500/10">Marquer resolu</button>}
+          </div>
+        ))}
+        {reviews.length === 0 && <p className="text-sm text-slate-500">Aucun avis.</p>}
+      </div>
+    </section>
+  );
+}
+
+function ReviewSection({ title, reviews, onResolve, onViewProfile, muted = false }: { title: string; reviews: any[]; onResolve: (review: any) => Promise<void>; onViewProfile?: (review: any) => void; muted?: boolean }) {
   if (reviews.length === 0) return null;
   return (
     <section className="space-y-3">
@@ -802,6 +1012,11 @@ function ReviewSection({ title, reviews, onResolve, muted = false }: { title: st
               <StatusBadge status={review.rating <= 3 && review.status !== "resolved" ? "urgent" : review.status === "resolved" ? "done" : "new"} />
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-300">{review.comment || "Aucun commentaire."}</p>
+            {onViewProfile && (
+              <button onClick={() => onViewProfile(review)} className="mt-4 mr-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">
+                Voir fiche
+              </button>
+            )}
             {review.rating <= 3 && review.status !== "resolved" && !muted && (
               <button onClick={() => void onResolve(review)} className="mt-4 rounded-xl border border-red-300/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">
                 Marquer comme resolu
@@ -837,6 +1052,47 @@ function buildConversations(messages: MessageItem[]): Conversation[] {
       status: normalizeStatus(lastMessage.status, lastMessage.priority, lastMessage.senderType)
     };
   }).sort((left, right) => new Date(right.lastMessage.createdAt).getTime() - new Date(left.lastMessage.createdAt).getTime());
+}
+
+function buildGuestTimeline(stay: any, messages: any[], requests: any[], reviews: any[]) {
+  return [
+    {
+      id: `stay:${stay.id}`,
+      type: "stay_created",
+      title: "Sejour cree",
+      description: `Chambre ${stay.roomNumber ?? "-"} - statut ${stay.status ?? "active"}`,
+      status: stay.status,
+      actor: "systeme",
+      createdAt: stay.createdAt
+    },
+    ...messages.map((message) => ({
+      id: `message:${message.id}`,
+      type: message.senderType === "reception" ? "message_reception" : "message_client",
+      title: message.senderType === "reception" ? "Reponse reception" : "Message client",
+      description: message.content,
+      status: message.status,
+      actor: message.senderType === "reception" ? "reception" : "client",
+      createdAt: message.createdAt
+    })),
+    ...requests.map((request) => ({
+      id: `request:${request.id}`,
+      type: "request_created",
+      title: request.title || request.type || "Demande client",
+      description: request.description,
+      status: request.status,
+      actor: "client",
+      createdAt: request.createdAt
+    })),
+    ...reviews.map((review) => ({
+      id: `review:${review.id}`,
+      type: review.status === "resolved" ? "review_resolved" : "review_created",
+      title: `Avis client ${review.rating}/5`,
+      description: review.comment || "Aucun commentaire.",
+      status: review.status,
+      actor: "client",
+      createdAt: review.createdAt
+    }))
+  ].filter((item) => item.createdAt).sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
 }
 
 function normalizeStatus(status?: string, priority?: string, senderType?: string): Conversation["status"] {
