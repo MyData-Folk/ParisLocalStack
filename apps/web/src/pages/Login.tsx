@@ -13,8 +13,7 @@ export const LoginPage: React.FC = () => {
 
   const demoAccounts = [
     { label: 'Super Admin', email: 'admin@paris-local.test', role: 'SaaS Admin' },
-    { label: 'Hôtel Admin', email: 'manager@hotel-le-marais.fr', role: 'Hôtel Le Marais' },
-    { label: 'Réceptionniste', email: 'reception@hotel-le-marais.fr', role: 'Hôtel Le Marais' },
+    { label: 'Receptionniste', email: 'reception@vendome.test', role: 'Hotel Vendome' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -211,3 +210,4 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
+
