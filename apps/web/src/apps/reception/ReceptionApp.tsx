@@ -428,7 +428,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
 function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
-  const [reviewFilter, setReviewFilter] = useState<"active" | "alerts" | "resolved">("active");
+  const [reviewFilter, setReviewFilter] = useState<"active" | "pending" | "alerts" | "resolved">("active");
   const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
   const [error, setError] = useState("");
 
@@ -471,12 +471,20 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
     setItems((current) => current.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
   }
 
+  async function updateReviewModeration(review: any, status: string) {
+    const updated = await api.updateReviewStatus(review.id, status, token);
+    setItems((current) => current.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
+  }
+
   const activeReviews = items.filter((item) => item.stayId && activeStayIds.has(item.stayId));
   const historicReviews = items.filter((item) => !item.stayId || !activeStayIds.has(item.stayId));
   const alerts = activeReviews.filter((item) => item.status === "negative_alert" || item.rating <= 3).length;
+  const pendingReviews = activeReviews.filter((item) => item.status === "pending_review" || item.status === "negative_alert").length;
   const resolvedReviews = items.filter((item) => item.status === "resolved");
   const visibleActiveReviews = reviewFilter === "alerts"
     ? activeReviews.filter((item) => item.status === "negative_alert" || item.rating <= 3)
+    : reviewFilter === "pending"
+      ? activeReviews.filter((item) => item.status === "pending_review" || item.status === "negative_alert")
     : reviewFilter === "resolved"
       ? resolvedReviews.filter((item) => item.stayId && activeStayIds.has(item.stayId))
       : activeReviews;
@@ -492,15 +500,16 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
         description={`${alerts} alerte${alerts > 1 ? "s" : ""} negative${alerts > 1 ? "s" : ""} a suivre`}
         live
       />
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-4">
         <MetricCard icon={<Star className="h-4 w-4" />} label="Avis actifs" value={activeReviews.length} tone="blue" active={reviewFilter === "active"} onClick={() => setReviewFilter("active")} />
+        <MetricCard icon={<Clock className="h-4 w-4" />} label="A valider" value={pendingReviews} tone="amber" active={reviewFilter === "pending"} onClick={() => setReviewFilter("pending")} />
         <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Alertes actives" value={alerts} tone="red" active={reviewFilter === "alerts"} onClick={() => setReviewFilter("alerts")} />
         <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Resolus" value={resolvedReviews.length} tone="emerald" active={reviewFilter === "resolved"} onClick={() => setReviewFilter("resolved")} />
       </div>
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
       {items.length === 0 && <EmptyState icon={<Star className="h-6 w-6" />} title="Aucun avis client" description="Les avis et alertes satisfaction apparaitront ici." />}
-      <ReviewSection title="Avis sejours en cours" reviews={visibleActiveReviews} onResolve={resolveReview} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} />
-      <ReviewSection title="Avis historiques" reviews={visibleHistoricReviews} onResolve={resolveReview} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} muted />
+      <ReviewSection title="Avis sejours en cours" reviews={visibleActiveReviews} onResolve={resolveReview} onModerate={updateReviewModeration} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} />
+      <ReviewSection title="Avis historiques" reviews={visibleHistoricReviews} onResolve={resolveReview} onModerate={updateReviewModeration} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} muted />
       {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
     </div>
   );
@@ -1083,7 +1092,7 @@ function ReviewPanel({ reviews, onResolve }: { reviews: any[]; onResolve: (revie
   );
 }
 
-function ReviewSection({ title, reviews, onResolve, onViewProfile, muted = false }: { title: string; reviews: any[]; onResolve: (review: any) => Promise<void>; onViewProfile?: (review: any) => void; muted?: boolean }) {
+function ReviewSection({ title, reviews, onResolve, onModerate, onViewProfile, muted = false }: { title: string; reviews: any[]; onResolve: (review: any) => Promise<void>; onModerate: (review: any, status: string) => Promise<void>; onViewProfile?: (review: any) => void; muted?: boolean }) {
   if (reviews.length === 0) return null;
   return (
     <section className="space-y-3">
@@ -1106,12 +1115,23 @@ function ReviewSection({ title, reviews, onResolve, onViewProfile, muted = false
                 </h3>
                 <p className="mt-1 text-xs text-slate-500">Chambre {review.stay?.roomNumber ?? "-"} - {formatTime(review.createdAt)}</p>
               </div>
-              <StatusBadge status={review.rating <= 3 && review.status !== "resolved" ? "urgent" : review.status === "resolved" ? "done" : "new"} />
+              <StatusBadge status={reviewStatusToBadge(review)} />
             </div>
+            <p className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-300">{reviewStatusLabel(review.status)}</p>
             <p className="mt-4 text-sm leading-6 text-slate-300">{review.comment || "Aucun commentaire."}</p>
             {onViewProfile && (
               <button onClick={() => onViewProfile(review)} className="mt-4 mr-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">
                 Voir fiche
+              </button>
+            )}
+            {(review.status === "pending_review" || review.status === "negative_alert" || review.status === "rejected") && (
+              <button onClick={() => void onModerate(review, "approved")} className="mt-4 mr-2 rounded-xl border border-emerald-300/30 px-4 py-2.5 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/10 focus:outline-none focus:ring-4 focus:ring-emerald-400/10">
+                Valider publication
+              </button>
+            )}
+            {(review.status === "pending_review" || review.status === "negative_alert" || review.status === "approved") && (
+              <button onClick={() => void onModerate(review, "rejected")} className="mt-4 mr-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">
+                Ne pas publier
               </button>
             )}
             {review.rating <= 3 && review.status !== "resolved" && !muted && (
@@ -1198,6 +1218,22 @@ function normalizeStatus(status?: string, priority?: string, senderType?: string
   if (status === "done" || status === "completed" || status === "closed") return "done";
   if (senderType === "reception") return "answered";
   return "new";
+}
+
+function reviewStatusToBadge(review: any): Conversation["status"] {
+  if (review.status === "approved") return "answered";
+  if (review.status === "resolved") return "done";
+  if (review.status === "negative_alert" || review.rating <= 3) return "urgent";
+  if (review.status === "pending_review") return "in_progress";
+  return "new";
+}
+
+function reviewStatusLabel(status?: string) {
+  if (status === "approved") return "Valide et publie";
+  if (status === "rejected") return "Non publie";
+  if (status === "negative_alert") return "Alerte negative - validation requise";
+  if (status === "resolved") return "Traite";
+  return "En attente de validation";
 }
 
 function StatusBadge({ status }: { status: Conversation["status"] }) {

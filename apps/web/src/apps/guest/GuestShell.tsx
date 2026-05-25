@@ -501,28 +501,58 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
   const theme = useGuestTheme();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [currentReview, setCurrentReview] = useState<any | null>(null);
+  const [publishedReviews, setPublishedReviews] = useState<any[]>([]);
+  const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    api.guestReview(hotelSlug, session)
+      .then((review) => {
+        if (!mounted || !review) return;
+        setCurrentReview(review);
+        setRating(review.rating ?? 0);
+        setComment(review.comment ?? "");
+      })
+      .catch(() => undefined);
+    return () => { mounted = false; };
+  }, [hotelSlug, session.guestId, session.stayId]);
+
+  useEffect(() => {
+    api.publishedReviews(hotelSlug)
+      .then(setPublishedReviews)
+      .catch(() => undefined);
+  }, [hotelSlug, currentReview?.status]);
 
   async function submit() {
     if (!rating) return;
     setLoading(true);
     try {
-      await api.createReview(hotelSlug, { ...session, rating, comment });
-      setSubmitted(true);
-      showToast(setToast, rating <= 3 ? "La reception est alertee." : "Merci pour votre avis.");
+      const review = await api.createReview(hotelSlug, { ...session, rating, comment });
+      setCurrentReview(review);
+      setEditing(false);
+      showToast(setToast, rating <= 3 ? "La reception est alertee. Votre avis sera valide avant publication." : "Merci. Votre avis est en attente de validation.");
     } finally {
       setLoading(false);
     }
   }
 
-  if (submitted) {
+  if (currentReview && !editing) {
     return (
       <section className="grid min-h-[26rem] place-items-center px-5 py-6 text-center">
         <div className={`rounded-3xl p-8 ${theme.classes.elevatedCard}`}>
           <CheckCircle className="mx-auto h-12 w-12 text-emerald-600" />
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight">Merci</h2>
-          <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Votre retour a ete transmis a l'equipe. Nous restons disponibles pendant tout votre sejour.</p>
+          <p className={`mt-4 text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>{reviewStatusLabel(currentReview.status)}</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Votre avis est enregistre</h2>
+          <div className="mt-4 flex justify-center gap-1 text-amber-500">
+            {[1, 2, 3, 4, 5].map((value) => <Star key={value} className={`h-6 w-6 ${value <= currentReview.rating ? "fill-current" : "opacity-25"}`} />)}
+          </div>
+          <p className={`mt-4 text-sm leading-6 ${theme.classes.muted}`}>{currentReview.comment || "Aucun commentaire ajoute."}</p>
+          <p className={`mt-3 text-xs leading-5 ${theme.classes.muted}`}>Si vous modifiez votre avis, il repassera en validation reception avant publication.</p>
+          <button onClick={() => setEditing(true)} className={`mt-5 inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 ${theme.classes.primaryButton}`}>
+            Modifier mon avis
+          </button>
         </div>
       </section>
     );
@@ -532,7 +562,8 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
     <section className="space-y-5 px-5 py-6">
       <div>
         <p className={`text-sm font-medium ${theme.classes.muted}`}>Satisfaction</p>
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Comment se passe votre sejour ?</h2>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>{currentReview ? "Modifier votre avis" : "Comment se passe votre sejour ?"}</h2>
+        <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Un seul avis est associe a votre sejour. Il sera publie uniquement apres validation par la reception.</p>
       </div>
       <div className={`rounded-3xl p-5 text-center ${theme.classes.card}`}>
         <p className={`text-sm ${theme.classes.muted}`}>Votre note globale</p>
@@ -555,8 +586,27 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
       <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Un detail a partager avec l'equipe ?" className={`min-h-32 w-full rounded-3xl p-4 text-sm shadow-sm outline-none focus:ring-4 ${theme.classes.input}`} />
       <button onClick={() => void submit()} disabled={!rating || loading} className={`flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-semibold transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        Envoyer mon avis
+        {currentReview ? "Enregistrer la modification" : "Envoyer mon avis"}
       </button>
+      {publishedReviews.length > 0 && (
+        <div className={`rounded-3xl p-5 ${theme.classes.card}`}>
+          <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Avis publies</p>
+          <h3 className={`mt-1 text-xl font-semibold ${theme.classes.title}`}>Ils ont partage leur sejour</h3>
+          <div className="mt-4 space-y-3">
+            {publishedReviews.slice(0, 3).map((review) => (
+              <article key={review.id} className={`rounded-2xl p-4 ${theme.classes.subtleCard}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex gap-1 text-amber-500">
+                    {[1, 2, 3, 4, 5].map((value) => <Star key={value} className={`h-4 w-4 ${value <= review.rating ? "fill-current" : "opacity-25"}`} />)}
+                  </div>
+                  <span className={`text-xs ${theme.classes.muted}`}>{review.guest?.firstName || "Client"}</span>
+                </div>
+                <p className={`mt-3 text-sm leading-6 ${theme.classes.text}`}>{review.comment || "Tres bon sejour."}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -721,6 +771,14 @@ function requestStatusLabel(status?: string) {
   if (status === "urgent") return "Urgent";
   if (status === "completed" || status === "done" || status === "closed") return "Traite";
   return "Nouveau";
+}
+
+function reviewStatusLabel(status?: string) {
+  if (status === "approved") return "Valide et publie";
+  if (status === "rejected") return "Non publie";
+  if (status === "negative_alert") return "Alerte reception en validation";
+  if (status === "resolved") return "Traite par la reception";
+  return "En attente de validation";
 }
 
 function requestStatusClass(status: string | undefined, theme: GuestTheme) {

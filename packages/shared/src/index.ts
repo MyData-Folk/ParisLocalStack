@@ -6,6 +6,7 @@ export const requestStatuses = ["new", "in_progress", "done", "urgent", "closed"
 export const priorities = ["low", "medium", "high", "urgent"] as const;
 export const relationshipStatuses = ["normal", "priority", "watch"] as const;
 export const guestThemes = ["parisian_boutique", "modern_minimal", "palace_luxury"] as const;
+export const reviewStatuses = ["pending_review", "approved", "rejected", "negative_alert", "resolved"] as const;
 
 export type Role = (typeof roles)[number];
 
@@ -91,9 +92,13 @@ export const serviceRequestCreateSchema = z.object({
 
 export const reviewCreateSchema = z.object({
   guestId: z.string().uuid(),
-  stayId: z.string().uuid().optional(),
+  stayId: z.string().uuid(),
   rating: z.number().int().min(1).max(5),
   comment: z.string().optional()
+});
+
+export const reviewStatusUpdateSchema = z.object({
+  status: z.enum(reviewStatuses)
 });
 
 export const recommendationSchema = z.object({

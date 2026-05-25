@@ -65,6 +65,10 @@ export const api = {
     `/api/public/${slug}/requests?${new URLSearchParams(session).toString()}`
   ),
   createReview: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/reviews`, { method: "POST", body: JSON.stringify(body) }),
+  guestReview: (slug: string, session: { guestId: string; stayId: string }) => request<any>(
+    `/api/public/${slug}/reviews/current?${new URLSearchParams(session).toString()}`
+  ),
+  publishedReviews: (slug: string) => request<any[]>(`/api/public/${slug}/reviews/published`),
   hotelMessages: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/messages`, { token }),
   hotelRequests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/requests`, { token }),
   hotelGuests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/guests`, { token }),
