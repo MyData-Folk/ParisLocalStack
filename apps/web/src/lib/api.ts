@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
 type ApiOptions = RequestInit & { token?: string };
 export type ApiUser = { id: string; email: string; name: string; role: string; hotelIds: string[] };
@@ -60,6 +60,9 @@ export const api = {
     `/api/public/${slug}/messages?${new URLSearchParams(session).toString()}`
   ),
   createRequest: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/requests`, { method: "POST", body: JSON.stringify(body) }),
+  guestRequests: (slug: string, session: { guestId: string; stayId: string }) => request<any[]>(
+    `/api/public/${slug}/requests?${new URLSearchParams(session).toString()}`
+  ),
   createReview: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/reviews`, { method: "POST", body: JSON.stringify(body) }),
   hotelMessages: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/messages`, { token }),
   hotelRequests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/requests`, { token }),
@@ -94,6 +97,11 @@ export const api = {
     body: JSON.stringify({ status })
   }),
   updateRequestStatus: (requestId: string, status: string, token: string) => request<any>(`/api/requests/${requestId}/status`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ status })
+  }),
+  updateReviewStatus: (reviewId: string, status: string, token: string) => request<any>(`/api/reviews/${reviewId}/status`, {
     method: "PATCH",
     token,
     body: JSON.stringify({ status })

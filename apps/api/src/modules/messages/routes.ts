@@ -16,11 +16,16 @@ function emitMessage(req: Request, hotelId: string, payload: unknown) {
   io?.to(`hotel:${hotelId}`).emit("message:new", payload);
 }
 
+function emitMessageStatus(req: Request, hotelId: string, payload: unknown) {
+  const io = req.app.get("io") as Server | undefined;
+  io?.to(`hotel:${hotelId}`).emit("message:status", payload);
+}
+
 publicMessagesRouter.post("/", validateBody(messageCreateSchema), asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({ where: { slug: req.params.hotelSlug } });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
   const message = await prisma.message.create({
-    data: { ...req.body, hotelId: hotel.id, senderType: "guest", status: "sent" },
+    data: { ...req.body, hotelId: hotel.id, senderType: "guest", status: "new" },
     include: { guest: true, stay: true }
   });
   emitMessage(req, hotel.id, message);
@@ -68,7 +73,7 @@ messagesRouter.post("/messages/:id/reply", authenticate, validateBody(replyCreat
       senderType: "reception",
       senderId: req.user?.id,
       content: req.body.content,
-      status: "sent",
+      status: "answered",
       priority: source.priority
     },
     include: { guest: true, stay: true }
@@ -82,5 +87,6 @@ messagesRouter.patch("/messages/:id/status", authenticate, asyncHandler(async (r
   if (!message) return res.status(404).json({ error: "Message not found" });
   if (req.user?.role !== "super_admin" && !req.user?.hotelIds.includes(message.hotelId)) return res.status(403).json({ error: "Forbidden" });
   const updated = await prisma.message.update({ where: { id: message.id }, data: { status: req.body.status } });
+  emitMessageStatus(req, message.hotelId, updated);
   return sendOk(res, updated);
 }));

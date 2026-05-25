@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { AlertTriangle, CheckCircle, Clock, Inbox, ListChecks, LogOut, Star, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Inbox, ListChecks, LogOut, Radio, Star, Users } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
+import { getSocket, joinHotelRoom } from "../../lib/socket";
 import { useAppStore } from "../../stores/appStore";
 
 type MessageItem = {
@@ -67,7 +68,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
           <Route path={`${basePath}/inbox`} element={<InboxView hotelId={hotelId} token={token} />} />
           <Route path={`${basePath}/requests`} element={<RequestsView hotelId={hotelId} token={token} />} />
           <Route path={`${basePath}/guests`} element={<DataView title="CRM clients" loader={() => api.hotelGuests(hotelId, token)} />} />
-          <Route path={`${basePath}/reviews`} element={<DataView title="Avis clients" loader={() => api.hotelReviews(hotelId, token)} />} />
+          <Route path={`${basePath}/reviews`} element={<ReviewsView hotelId={hotelId} token={token} />} />
           <Route path={`${basePath}/analytics`} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
           <Route path={`${basePath}/settings`} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
         </Routes>
@@ -97,6 +98,25 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
     void loadMessages();
   }, [hotelId, token]);
 
+  useEffect(() => joinHotelRoom(hotelId), [hotelId]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const onMessage = (message: MessageItem) => {
+      setMessages((current) => upsertById(current, message).sort(sortMessagesDesc));
+    };
+    const onMessageStatus = (message: MessageItem) => {
+      setMessages((current) => current.map((item) => item.id === message.id ? { ...item, ...message } : item));
+    };
+
+    socket.on("message:new", onMessage);
+    socket.on("message:status", onMessageStatus);
+    return () => {
+      socket.off("message:new", onMessage);
+      socket.off("message:status", onMessageStatus);
+    };
+  }, []);
+
   async function loadMessages() {
     setError("");
     try {
@@ -119,7 +139,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   async function sendReply() {
     if (!active || !reply.trim()) return;
     const created = await api.replyMessage(active.lastMessage.id, reply, token);
-    setMessages([created, ...messages]);
+    setMessages((current) => upsertById(current, created).sort(sortMessagesDesc));
     setReply("");
   }
 
@@ -136,7 +156,10 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Inbox operationnelle</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">Messages clients</h1>
-          <p className="mt-2 text-sm text-slate-400">{pendingCount} conversation{pendingCount > 1 ? "s" : ""} a traiter</p>
+                  <p className="mt-2 flex items-center gap-2 text-sm text-slate-400">
+                    <Radio className="h-4 w-4 text-emerald-300" />
+                    Live actif - {pendingCount} conversation{pendingCount > 1 ? "s" : ""} a traiter
+                  </p>
         </div>
         <div className="flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/70 p-1 text-sm">
           {([
@@ -220,31 +243,60 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    let mounted = true;
-    setError("");
-
-    Promise.all([api.hotelRequests(hotelId, token), api.hotelMessages(hotelId, token)])
-      .then(([requests, messages]) => {
-        if (!mounted) return;
-        const normalized = [
-          ...requests.map((item) => ({ ...item, source: "request" })),
-          ...messages
-            .filter((item) => item.senderType === "guest")
-            .map((item) => ({
-              ...item,
-              source: "message",
-              title: "Message client",
-              description: item.content
-            }))
-        ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
-        setItems(normalized);
-      })
-      .catch((err) => {
-        if (mounted) setError(err instanceof Error ? err.message : "Erreur de chargement");
-      });
-
-    return () => { mounted = false; };
+    void loadRequests();
   }, [hotelId, token]);
+
+  useEffect(() => joinHotelRoom(hotelId), [hotelId]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const onMessage = (message: any) => {
+      if (message.senderType !== "guest") return;
+      const normalized = { ...message, source: "message", title: "Message client", description: message.content };
+      setItems((current) => upsertOperationalItem(current, normalized).sort(sortOperationalDesc));
+    };
+    const onMessageStatus = (message: any) => {
+      setItems((current) => current.map((item) => item.source === "message" && item.id === message.id ? { ...item, ...message } : item));
+    };
+    const onRequest = (request: any) => {
+      setItems((current) => upsertOperationalItem(current, { ...request, source: "request" }).sort(sortOperationalDesc));
+    };
+    const onRequestStatus = (request: any) => {
+      setItems((current) => upsertOperationalItem(current, { ...request, source: "request" }).sort(sortOperationalDesc));
+    };
+
+    socket.on("message:new", onMessage);
+    socket.on("message:status", onMessageStatus);
+    socket.on("request:new", onRequest);
+    socket.on("request:status", onRequestStatus);
+    return () => {
+      socket.off("message:new", onMessage);
+      socket.off("message:status", onMessageStatus);
+      socket.off("request:new", onRequest);
+      socket.off("request:status", onRequestStatus);
+    };
+  }, []);
+
+  async function loadRequests() {
+    setError("");
+    try {
+      const [requests, messages] = await Promise.all([api.hotelRequests(hotelId, token), api.hotelMessages(hotelId, token)]);
+      const normalized = [
+        ...requests.map((item) => ({ ...item, source: "request" })),
+        ...messages
+          .filter((item) => item.senderType === "guest")
+          .map((item) => ({
+            ...item,
+            source: "message",
+            title: "Message client",
+            description: item.content
+          }))
+      ].sort(sortOperationalDesc);
+      setItems(normalized);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur de chargement");
+    }
+  }
 
   async function updateStatus(item: any, status: string) {
     if (item.source === "request") await api.updateRequestStatus(item.id, status, token);
@@ -259,7 +311,10 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">File operationnelle</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">Demandes reception</h1>
-          <p className="mt-2 text-sm text-slate-400">{items.length} element{items.length > 1 ? "s" : ""} operationnel{items.length > 1 ? "s" : ""}</p>
+          <p className="mt-2 flex items-center gap-2 text-sm text-slate-400">
+            <Radio className="h-4 w-4 text-emerald-300" />
+            Live actif - {items.length} element{items.length > 1 ? "s" : ""} operationnel{items.length > 1 ? "s" : ""}
+          </p>
         </div>
         </div>
       </div>
@@ -284,11 +339,100 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
               </div>
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
-                <button onClick={() => void updateStatus(item, "done")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Traite</button>
+                <button onClick={() => void updateStatus(item, "completed")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Traite</button>
                 <button onClick={() => void updateStatus(item, "urgent")} className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-medium text-red-200 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">Urgent</button>
               </div>
             </div>
           </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    void loadReviews();
+  }, [hotelId, token]);
+
+  useEffect(() => joinHotelRoom(hotelId), [hotelId]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const onReview = (review: any) => {
+      setItems((current) => upsertById(current, review).sort(sortOperationalDesc));
+    };
+    const onReviewStatus = (review: any) => {
+      setItems((current) => current.map((item) => item.id === review.id ? { ...item, ...review } : item));
+    };
+
+    socket.on("review:new", onReview);
+    socket.on("review:status", onReviewStatus);
+    return () => {
+      socket.off("review:new", onReview);
+      socket.off("review:status", onReviewStatus);
+    };
+  }, []);
+
+  async function loadReviews() {
+    setError("");
+    try {
+      setItems(await api.hotelReviews(hotelId, token));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur de chargement");
+    }
+  }
+
+  async function resolveReview(review: any) {
+    const updated = await api.updateReviewStatus(review.id, "resolved", token);
+    setItems((current) => current.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
+  }
+
+  const alerts = items.filter((item) => item.status === "negative_alert" || item.rating <= 3).length;
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-lg shadow-black/20">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Satisfaction live</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Avis clients</h1>
+            <p className="mt-2 flex items-center gap-2 text-sm text-slate-400">
+              <Radio className="h-4 w-4 text-emerald-300" />
+              {alerts} alerte{alerts > 1 ? "s" : ""} negative{alerts > 1 ? "s" : ""} a suivre
+            </p>
+          </div>
+        </div>
+      </div>
+      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      <div className="grid gap-4 xl:grid-cols-2">
+        {items.length === 0 && <p className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 text-sm text-slate-400">Aucun avis client.</p>}
+        {items.map((review) => (
+          <article key={review.id} className={`rounded-2xl border p-5 shadow-lg shadow-black/20 ${review.rating <= 3 ? "border-red-400/30 bg-red-500/10" : "border-white/10 bg-slate-900/80"}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-1 text-amber-300">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star key={index} className={`h-4 w-4 ${index < review.rating ? "fill-current" : "opacity-25"}`} />
+                  ))}
+                </div>
+                <h2 className="mt-3 font-semibold">
+                  {review.guest?.firstName} {review.guest?.lastName || "Client"}
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">Chambre {review.stay?.roomNumber ?? "-"} - {formatTime(review.createdAt)}</p>
+              </div>
+              <StatusBadge status={review.rating <= 3 && review.status !== "resolved" ? "urgent" : review.status === "resolved" ? "done" : "new"} />
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-300">{review.comment || "Aucun commentaire."}</p>
+            {review.rating <= 3 && review.status !== "resolved" && (
+              <button onClick={() => void resolveReview(review)} className="mt-4 rounded-xl border border-red-300/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">
+                Marquer comme resolu
+              </button>
+            )}
+          </article>
         ))}
       </div>
     </div>
@@ -323,7 +467,7 @@ function buildConversations(messages: MessageItem[]): Conversation[] {
 function normalizeStatus(status?: string, priority?: string, senderType?: string): Conversation["status"] {
   if (status === "urgent" || priority === "urgent") return "urgent";
   if (status === "in_progress") return "in_progress";
-  if (status === "done" || status === "closed") return "done";
+  if (status === "done" || status === "completed" || status === "closed") return "done";
   if (senderType === "reception") return "answered";
   return "new";
 }
@@ -348,6 +492,26 @@ function StatusBadge({ status }: { status: Conversation["status"] }) {
 function formatTime(value?: string) {
   if (!value) return "";
   return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }).format(new Date(value));
+}
+
+function upsertById<T extends { id: string }>(items: T[], next: T) {
+  return items.some((item) => item.id === next.id)
+    ? items.map((item) => item.id === next.id ? { ...item, ...next } : item)
+    : [next, ...items];
+}
+
+function upsertOperationalItem(items: any[], next: any) {
+  return items.some((item) => item.id === next.id && item.source === next.source)
+    ? items.map((item) => item.id === next.id && item.source === next.source ? { ...item, ...next } : item)
+    : [next, ...items];
+}
+
+function sortMessagesDesc(left: MessageItem, right: MessageItem) {
+  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+}
+
+function sortOperationalDesc(left: any, right: any) {
+  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
 }
 
 function DataView({ title, loader }: { title: string; loader: () => Promise<any[]> }) {

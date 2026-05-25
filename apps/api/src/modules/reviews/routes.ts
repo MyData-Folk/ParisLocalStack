@@ -12,7 +12,10 @@ export const publicReviewsRouter = Router({ mergeParams: true });
 publicReviewsRouter.post("/", validateBody(reviewCreateSchema), asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({ where: { slug: req.params.hotelSlug } });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
-  const review = await prisma.review.create({ data: { ...req.body, hotelId: hotel.id, status: req.body.rating <= 3 ? "alert" : "new" } });
+  const review = await prisma.review.create({
+    data: { ...req.body, hotelId: hotel.id, status: req.body.rating <= 3 ? "negative_alert" : "new" },
+    include: { guest: true, stay: true }
+  });
   req.app.get("io")?.to(`hotel:${hotel.id}`).emit("review:new", review);
   return sendCreated(res, review);
 }));
@@ -30,6 +33,11 @@ reviewsRouter.patch("/reviews/:id/status", authenticate, asyncHandler(async (req
   const review = await prisma.review.findUnique({ where: { id: req.params.id } });
   if (!review) return res.status(404).json({ error: "Review not found" });
   if (req.user?.role !== "super_admin" && !req.user?.hotelIds.includes(review.hotelId)) return res.status(403).json({ error: "Forbidden" });
-  const updated = await prisma.review.update({ where: { id: review.id }, data: { status: req.body.status } });
+  const updated = await prisma.review.update({
+    where: { id: review.id },
+    data: { status: req.body.status },
+    include: { guest: true, stay: true }
+  });
+  req.app.get("io")?.to(`hotel:${review.hotelId}`).emit("review:status", updated);
   return sendOk(res, updated);
 }));

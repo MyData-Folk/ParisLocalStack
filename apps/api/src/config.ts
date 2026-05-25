@@ -12,3 +12,19 @@ export const config = {
   uploadDir: process.env.UPLOAD_DIR ?? "uploads",
   webUrl: process.env.WEB_URL ?? "http://localhost:5173"
 };
+
+export function isAllowedOrigin(origin?: string) {
+  if (!origin) return true;
+  const configured = config.corsOrigin.split(",").map((item) => item.trim()).filter(Boolean);
+  if (configured.includes(origin) || configured.includes("*")) return true;
+
+  try {
+    const hostname = new URL(origin).hostname;
+    return hostname === "welcomeparis.hotelmanager.fr"
+      || hostname.endsWith(".welcomeparis.hotelmanager.fr")
+      || hostname === "localhost"
+      || hostname.endsWith(".localhost");
+  } catch {
+    return false;
+  }
+}

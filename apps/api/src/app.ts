@@ -3,7 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import path from "path";
-import { config } from "./config.js";
+import { config, isAllowedOrigin } from "./config.js";
 import { authRouter } from "./modules/auth/routes.js";
 import { hotelsRouter, publicHotelsRouter } from "./modules/hotels/routes.js";
 import { guestsRouter, publicGuestsRouter } from "./modules/guests/routes.js";
@@ -24,7 +24,12 @@ export function createApp() {
 
   app.set("trust proxy", 1);
   app.use(helmet());
-  app.use(cors({ origin: config.corsOrigin.split(","), credentials: true }));
+  app.use(cors({
+    origin: (origin, callback) => {
+      callback(null, isAllowedOrigin(origin));
+    },
+    credentials: true
+  }));
   app.use(express.json({ limit: "1mb" }));
   app.use("/uploads", express.static(path.resolve(config.uploadDir)));
 
