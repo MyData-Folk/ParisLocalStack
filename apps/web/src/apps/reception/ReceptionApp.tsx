@@ -129,7 +129,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   useEffect(() => {
     const socket = getSocket();
     const onMessage = (message: MessageItem) => {
-      if (message.stayId && activeStayIds.size > 0 && !activeStayIds.has(message.stayId)) return;
+      if (!message.stayId || !activeStayIds.has(message.stayId)) return;
       setMessages((current) => upsertById(current, message).sort(sortMessagesDesc));
     };
     const onMessageStatus = (message: MessageItem) => {
@@ -150,7 +150,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
       const [allMessages, activeStays] = await Promise.all([api.hotelMessages(hotelId, token), api.hotelStays(hotelId, token, "active")]);
       const stayIds = new Set(activeStays.map((stay) => stay.id));
       setActiveStayIds(stayIds);
-      setMessages(allMessages.filter((message) => !message.stayId || stayIds.has(message.stayId)));
+      setMessages(allMessages.filter((message) => message.stayId && stayIds.has(message.stayId)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");
     }
@@ -314,7 +314,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
     const socket = getSocket();
     const onMessage = (message: any) => {
       if (message.senderType !== "guest") return;
-      if (message.stayId && activeStayIds.size > 0 && !activeStayIds.has(message.stayId)) return;
+      if (!message.stayId || !activeStayIds.has(message.stayId)) return;
       const normalized = { ...message, source: "message", title: "Message client", description: message.content };
       setItems((current) => upsertOperationalItem(current, normalized).sort(sortOperationalDesc));
     };
@@ -322,7 +322,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
       setItems((current) => current.map((item) => item.source === "message" && item.id === message.id ? { ...item, ...message } : item));
     };
     const onRequest = (request: any) => {
-      if (request.stayId && activeStayIds.size > 0 && !activeStayIds.has(request.stayId)) return;
+      if (!request.stayId || !activeStayIds.has(request.stayId)) return;
       setItems((current) => upsertOperationalItem(current, { ...request, source: "request" }).sort(sortOperationalDesc));
     };
     const onRequestStatus = (request: any) => {
@@ -349,10 +349,10 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
       setActiveStayIds(stayIds);
       const normalized = [
         ...requests
-          .filter((item) => !item.stayId || stayIds.has(item.stayId))
+          .filter((item) => item.stayId && stayIds.has(item.stayId))
           .map((item) => ({ ...item, source: "request" })),
         ...messages
-          .filter((item) => item.senderType === "guest" && (!item.stayId || stayIds.has(item.stayId)))
+          .filter((item) => item.senderType === "guest" && item.stayId && stayIds.has(item.stayId))
           .map((item) => ({
             ...item,
             source: "message",
