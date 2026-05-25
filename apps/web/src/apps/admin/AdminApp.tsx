@@ -20,6 +20,7 @@ import {
   Users
 } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
+import { QrCodePdfButton } from "../../components/QrCodePdfButton";
 import { api, type HotelPayload } from "../../lib/api";
 import { emptyHotelForm, guestUrl, receptionUrl, normalizeHotelPayload, slugify, type HotelFormState } from "../../lib/hotelOnboarding";
 import { useAppStore } from "../../stores/appStore";
@@ -415,6 +416,11 @@ function HotelLaunchCard({ hotel, previewSlug }: { hotel: HotelRecord | null; pr
           <div className="grid aspect-square place-items-center rounded-xl bg-slate-100 text-center text-sm text-slate-500">Le QR code apparaitra apres saisie du slug.</div>
         )}
       </div>
+      {clientUrl ? (
+        <div className="mt-4">
+          <QrCodePdfButton url={clientUrl} hotelName={hotel?.name || slug} slug={slug} />
+        </div>
+      ) : null}
       {hotel ? (
         <p className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">Pret pour impression QR code et partage reception.</p>
       ) : null}

@@ -20,6 +20,7 @@ import {
   Wifi
 } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
+import { QrCodePdfButton } from "../../components/QrCodePdfButton";
 import { api } from "../../lib/api";
 import {
   defaultSettingsForm,
@@ -229,6 +230,11 @@ function GeneratorWizard() {
             <div className="mt-5 rounded-2xl border border-white/10 bg-white p-4">
               {clientUrl ? <QRCodeSVG value={clientUrl} size={198} marginSize={2} className="mx-auto h-auto w-full max-w-52" /> : <div className="grid aspect-square place-items-center rounded-xl bg-slate-100 text-center text-sm text-slate-500">Slug requis</div>}
             </div>
+            {clientUrl ? (
+              <div className="mt-4">
+                <QrCodePdfButton url={clientUrl} hotelName={hotelForm.name || slug} slug={slug} variant="emerald" />
+              </div>
+            ) : null}
             <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Resume</p>
               <p className="mt-2 text-sm font-semibold text-white">{hotelForm.name || "Nom hotel"}</p>
