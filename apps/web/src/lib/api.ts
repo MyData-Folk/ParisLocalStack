@@ -67,6 +67,10 @@ export const api = {
   hotelMessages: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/messages`, { token }),
   hotelRequests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/requests`, { token }),
   hotelGuests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/guests`, { token }),
+  hotelStays: (hotelId: string, token: string, status?: "active" | "archived") => request<any[]>(
+    `/api/hotels/${hotelId}/stays${status ? `?status=${status}` : ""}`,
+    { token }
+  ),
   hotelReviews: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/reviews`, { token }),
   hotels: (token: string) => request<any[]>("/api/hotels", { token }),
   hotel: (hotelId: string, token: string) => request<any>(`/api/hotels/${hotelId}`, { token }),
@@ -100,6 +104,11 @@ export const api = {
     method: "PATCH",
     token,
     body: JSON.stringify({ status })
+  }),
+  updateStay: (stayId: string, body: unknown, token: string) => request<any>(`/api/stays/${stayId}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
   }),
   updateReviewStatus: (reviewId: string, status: string, token: string) => request<any>(`/api/reviews/${reviewId}/status`, {
     method: "PATCH",

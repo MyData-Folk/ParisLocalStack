@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, AlertTriangle, BedDouble, CalendarDays, CheckCircle, Clock, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, ShieldCheck, Star, Users } from "lucide-react";
+import { Activity, AlertTriangle, Archive, BedDouble, CheckCircle, Clock, Edit3, Eye, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, Send, ShieldCheck, Star, Users, X } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
@@ -66,7 +66,8 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
         <nav className="mt-4 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-2">
           <NavItem to={`${basePath}/inbox`} icon={<Inbox className="h-4 w-4" />} label="Messages" />
           <NavItem to={`${basePath}/requests`} icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
-          <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="CRM clients" />
+          <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="Clients presents" />
+          <NavItem to={`${basePath}/history`} icon={<Archive className="h-4 w-4" />} label="Historique" />
           <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
         </nav>
         <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-300/10 p-4 text-sm text-emerald-100">
@@ -86,6 +87,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
           <Route path={routePath("/inbox")} element={<InboxView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/requests")} element={<RequestsView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/guests")} element={<GuestsView hotelId={hotelId} token={token} />} />
+          <Route path={routePath("/history")} element={<HistoryView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/reviews")} element={<ReviewsView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
           <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
@@ -110,6 +112,7 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
 
 function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [reply, setReply] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -125,6 +128,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   useEffect(() => {
     const socket = getSocket();
     const onMessage = (message: MessageItem) => {
+      if (message.stayId && activeStayIds.size > 0 && !activeStayIds.has(message.stayId)) return;
       setMessages((current) => upsertById(current, message).sort(sortMessagesDesc));
     };
     const onMessageStatus = (message: MessageItem) => {
@@ -137,12 +141,15 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
       socket.off("message:new", onMessage);
       socket.off("message:status", onMessageStatus);
     };
-  }, []);
+  }, [activeStayIds]);
 
   async function loadMessages() {
     setError("");
     try {
-      setMessages(await api.hotelMessages(hotelId, token));
+      const [allMessages, activeStays] = await Promise.all([api.hotelMessages(hotelId, token), api.hotelStays(hotelId, token, "active")]);
+      const stayIds = new Set(activeStays.map((stay) => stay.id));
+      setActiveStayIds(stayIds);
+      setMessages(allMessages.filter((message) => !message.stayId || stayIds.has(message.stayId)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");
     }
@@ -289,6 +296,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
 
 function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
+  const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -301,6 +309,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
     const socket = getSocket();
     const onMessage = (message: any) => {
       if (message.senderType !== "guest") return;
+      if (message.stayId && activeStayIds.size > 0 && !activeStayIds.has(message.stayId)) return;
       const normalized = { ...message, source: "message", title: "Message client", description: message.content };
       setItems((current) => upsertOperationalItem(current, normalized).sort(sortOperationalDesc));
     };
@@ -308,6 +317,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
       setItems((current) => current.map((item) => item.source === "message" && item.id === message.id ? { ...item, ...message } : item));
     };
     const onRequest = (request: any) => {
+      if (request.stayId && activeStayIds.size > 0 && !activeStayIds.has(request.stayId)) return;
       setItems((current) => upsertOperationalItem(current, { ...request, source: "request" }).sort(sortOperationalDesc));
     };
     const onRequestStatus = (request: any) => {
@@ -324,16 +334,20 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
       socket.off("request:new", onRequest);
       socket.off("request:status", onRequestStatus);
     };
-  }, []);
+  }, [activeStayIds]);
 
   async function loadRequests() {
     setError("");
     try {
-      const [requests, messages] = await Promise.all([api.hotelRequests(hotelId, token), api.hotelMessages(hotelId, token)]);
+      const [requests, messages, activeStays] = await Promise.all([api.hotelRequests(hotelId, token), api.hotelMessages(hotelId, token), api.hotelStays(hotelId, token, "active")]);
+      const stayIds = new Set(activeStays.map((stay) => stay.id));
+      setActiveStayIds(stayIds);
       const normalized = [
-        ...requests.map((item) => ({ ...item, source: "request" })),
+        ...requests
+          .filter((item) => !item.stayId || stayIds.has(item.stayId))
+          .map((item) => ({ ...item, source: "request" })),
         ...messages
-          .filter((item) => item.senderType === "guest")
+          .filter((item) => item.senderType === "guest" && (!item.stayId || stayIds.has(item.stayId)))
           .map((item) => ({
             ...item,
             source: "message",
@@ -400,6 +414,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
 
 function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
+  const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -428,7 +443,9 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   async function loadReviews() {
     setError("");
     try {
-      setItems(await api.hotelReviews(hotelId, token));
+      const [reviews, activeStays] = await Promise.all([api.hotelReviews(hotelId, token), api.hotelStays(hotelId, token, "active")]);
+      setActiveStayIds(new Set(activeStays.map((stay) => stay.id)));
+      setItems(reviews);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");
     }
@@ -439,7 +456,9 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
     setItems((current) => current.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
   }
 
-  const alerts = items.filter((item) => item.status === "negative_alert" || item.rating <= 3).length;
+  const activeReviews = items.filter((item) => item.stayId && activeStayIds.has(item.stayId));
+  const historicReviews = items.filter((item) => !item.stayId || !activeStayIds.has(item.stayId));
+  const alerts = activeReviews.filter((item) => item.status === "negative_alert" || item.rating <= 3).length;
 
   return (
     <div className="space-y-5">
@@ -450,15 +469,292 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
         live
       />
       <div className="grid gap-3 md:grid-cols-3">
-        <MetricCard icon={<Star className="h-4 w-4" />} label="Avis" value={items.length} tone="blue" />
-        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Alertes" value={alerts} tone="red" />
+        <MetricCard icon={<Star className="h-4 w-4" />} label="Avis actifs" value={activeReviews.length} tone="blue" />
+        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Alertes actives" value={alerts} tone="red" />
         <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Resolus" value={items.filter((item) => item.status === "resolved").length} tone="emerald" />
       </div>
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      {items.length === 0 && <EmptyState icon={<Star className="h-6 w-6" />} title="Aucun avis client" description="Les avis et alertes satisfaction apparaitront ici." />}
+      <ReviewSection title="Avis sejours en cours" reviews={activeReviews} onResolve={resolveReview} />
+      <ReviewSection title="Avis historiques" reviews={historicReviews} onResolve={resolveReview} muted />
+    </div>
+  );
+}
+
+function GuestsView({ hotelId, token }: { hotelId: string; token: string }) {
+  return <StaysTableView hotelId={hotelId} token={token} mode="active" />;
+}
+
+function HistoryView({ hotelId, token }: { hotelId: string; token: string }) {
+  return <StaysTableView hotelId={hotelId} token={token} mode="archived" />;
+}
+
+function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: string; mode: "active" | "archived" }) {
+  const [stays, setStays] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedStay, setSelectedStay] = useState<any | null>(null);
+  const [editingStay, setEditingStay] = useState<any | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    void loadReceptionData();
+  }, [hotelId, token, mode]);
+
+  async function loadReceptionData() {
+    setError("");
+    try {
+      const [stayItems, messageItems, requestItems, reviewItems] = await Promise.all([
+        api.hotelStays(hotelId, token, mode),
+        api.hotelMessages(hotelId, token),
+        api.hotelRequests(hotelId, token),
+        api.hotelReviews(hotelId, token)
+      ]);
+      setStays(stayItems);
+      setMessages(messageItems);
+      setRequests(requestItems);
+      setReviews(reviewItems);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur de chargement");
+    }
+  }
+
+  async function saveStay(payload: { roomNumber: string; checkinDate: string; checkoutDate: string; status: string }) {
+    if (!editingStay) return;
+    await api.updateStay(editingStay.id, payload, token);
+    setEditingStay(null);
+    await loadReceptionData();
+  }
+
+  async function checkout(stay: any) {
+    await api.updateStay(stay.id, { status: "checked_out", checkoutDate: toDateInput(new Date().toISOString()) }, token);
+    await loadReceptionData();
+  }
+
+  const rows = useMemo(() => stays.map((stay) => buildStayRow(stay, messages, requests, reviews)), [stays, messages, requests, reviews]);
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return rows.filter((row) => {
+      const matchesQuery = !query
+        || row.client.toLowerCase().includes(query)
+        || row.email.toLowerCase().includes(query)
+        || row.room.toLowerCase().includes(query);
+      const matchesStatus = statusFilter === "all" || row.status === statusFilter;
+      return matchesQuery && matchesStatus;
+    });
+  }, [rows, search, statusFilter]);
+
+  const weakReviews = rows.filter((row) => row.rating > 0 && row.rating <= 3).length;
+  const consentCount = rows.filter((row) => row.marketingConsent).length;
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow={mode === "active" ? "Exploitation active" : "Historique CRM"}
+        title={mode === "active" ? "Clients presents" : "Clients partis"}
+        description={mode === "active" ? `${rows.length} sejour${rows.length > 1 ? "s" : ""} actif${rows.length > 1 ? "s" : ""} aujourd'hui` : `${rows.length} sejour${rows.length > 1 ? "s" : ""} archive${rows.length > 1 ? "s" : ""}`}
+        live={mode === "active"}
+      />
+      <div className="grid gap-3 md:grid-cols-4">
+        <MetricCard icon={<BedDouble className="h-4 w-4" />} label={mode === "active" ? "Presents" : "Archives"} value={rows.length} tone="blue" />
+        <MetricCard icon={<Inbox className="h-4 w-4" />} label="Messages ouverts" value={rows.reduce((total, row) => total + row.openMessages, 0)} tone="amber" />
+        <MetricCard icon={<ListChecks className="h-4 w-4" />} label="Demandes ouvertes" value={rows.reduce((total, row) => total + row.openRequests, 0)} tone="red" />
+        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label={mode === "active" ? "Consentements" : "CRM opt-in"} value={consentCount} tone="emerald" />
+      </div>
+      <section className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg shadow-black/20">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight text-white">{mode === "active" ? "Tableau des sejours actifs" : "Tableau historique client"}</h2>
+            <p className="mt-1 text-sm text-slate-500">{mode === "active" ? "Les clients partis sont exclus des operations courantes." : "Historique conserve sans suppression de donnees."}</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <label className="relative block w-full sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nom, email, chambre..." aria-label="Rechercher un sejour" className="w-full rounded-xl border border-white/10 bg-slate-950/70 py-2.5 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10" />
+            </label>
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-white outline-none transition focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10">
+              <option value="all">Tous statuts</option>
+              {Array.from(new Set(rows.map((row) => row.status))).map((status) => <option key={status} value={status}>{status}</option>)}
+            </select>
+          </div>
+        </div>
+      </section>
+      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      {!error && filtered.length === 0 && <EmptyState icon={mode === "active" ? <Users className="h-6 w-6" /> : <Archive className="h-6 w-6" />} title="Aucune ligne" description="Aucun sejour ne correspond aux filtres actuels." />}
+      <ReceptionTable
+        mode={mode}
+        rows={filtered}
+        weakReviews={weakReviews}
+        onView={(stay) => setSelectedStay(stay)}
+        onEdit={(stay) => setEditingStay(stay)}
+        onCheckout={(stay) => void checkout(stay)}
+      />
+      {selectedStay && <StayDetailPanel row={buildStayRow(selectedStay, messages, requests, reviews)} stay={selectedStay} onClose={() => setSelectedStay(null)} />}
+      {editingStay && <StayEditPanel stay={editingStay} onClose={() => setEditingStay(null)} onSave={(payload) => void saveStay(payload)} />}
+    </div>
+  );
+}
+
+function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }: { mode: "active" | "archived"; rows: any[]; weakReviews: number; onView: (stay: any) => void; onEdit: (stay: any) => void; onCheckout: (stay: any) => void }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
+      <div className="overflow-x-auto">
+        <table className="min-w-[1180px] w-full text-left text-sm">
+          <thead className="sticky top-0 bg-slate-950/95 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              {(mode === "active"
+                ? ["Chambre", "Client", "Email", "Telephone", "Arrivee", "Depart", "Langue", "CRM", "Statut", "Messages", "Demandes", "Avis", "Actions"]
+                : ["Client", "Email", "Telephone", "Chambre", "Arrivee", "Depart", "Duree", "Marketing", "Note", "Messages", "Demandes", "Dernier contact", "Actions"]
+              ).map((header) => <th key={header} className="px-4 py-3 font-semibold">{header}</th>)}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {rows.map((row) => (
+              <tr key={row.stay.id} className="transition hover:bg-white/[0.03]">
+                {mode === "active" ? (
+                  <>
+                    <td className="px-4 py-4 font-semibold text-amber-100">{row.room}</td>
+                    <td className="px-4 py-4 text-white">{row.client}</td>
+                    <td className="px-4 py-4 text-slate-300">{row.email || "-"}</td>
+                    <td className="px-4 py-4 text-slate-300">{row.phone || "-"}</td>
+                    <td className="px-4 py-4 text-slate-300">{formatDate(row.checkinDate)}</td>
+                    <td className="px-4 py-4 text-slate-300">{formatDate(row.checkoutDate)}</td>
+                    <td className="px-4 py-4 text-slate-300">{row.language.toUpperCase()}</td>
+                    <td className="px-4 py-4"><ConsentBadge ok={row.marketingConsent} /></td>
+                    <td className="px-4 py-4"><StayStatusBadge status={row.status} /></td>
+                    <td className="px-4 py-4 text-slate-200">{row.openMessages}</td>
+                    <td className="px-4 py-4 text-slate-200">{row.openRequests}</td>
+                    <td className="px-4 py-4">{row.rating ? <RatingBadge rating={row.rating} /> : <span className="text-slate-500">-</span>}</td>
+                    <td className="px-4 py-4"><RowActions row={row} active onView={onView} onEdit={onEdit} onCheckout={onCheckout} /></td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-4 py-4 text-white">{row.client}</td>
+                    <td className="px-4 py-4 text-slate-300">{row.email || "-"}</td>
+                    <td className="px-4 py-4 text-slate-300">{row.phone || "-"}</td>
+                    <td className="px-4 py-4 font-semibold text-amber-100">{row.room}</td>
+                    <td className="px-4 py-4 text-slate-300">{formatDate(row.checkinDate)}</td>
+                    <td className="px-4 py-4 text-slate-300">{formatDate(row.checkoutDate)}</td>
+                    <td className="px-4 py-4 text-slate-300">{row.nights} nuit{row.nights > 1 ? "s" : ""}</td>
+                    <td className="px-4 py-4"><ConsentBadge ok={row.marketingConsent} /></td>
+                    <td className="px-4 py-4">{row.rating ? <RatingBadge rating={row.rating} /> : <span className="text-slate-500">-</span>}</td>
+                    <td className="px-4 py-4 text-slate-200">{row.messageCount}</td>
+                    <td className="px-4 py-4 text-slate-200">{row.requestCount}</td>
+                    <td className="px-4 py-4 text-slate-300">{formatTime(row.lastContact)}</td>
+                    <td className="px-4 py-4"><RowActions row={row} onView={onView} onEdit={onEdit} onCheckout={onCheckout} /></td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {mode === "archived" && weakReviews > 0 && <p className="border-t border-white/10 bg-red-500/10 px-4 py-3 text-sm text-red-200">{weakReviews} ancien{weakReviews > 1 ? "s" : ""} sejour{weakReviews > 1 ? "s" : ""} avec note faible.</p>}
+    </div>
+  );
+}
+
+function RowActions({ row, active = false, onView, onEdit, onCheckout }: { row: any; active?: boolean; onView: (stay: any) => void; onEdit: (stay: any) => void; onCheckout: (stay: any) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button onClick={() => onView(row.stay)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/5"><Eye className="h-3.5 w-3.5" /> Voir</button>
+      <button onClick={() => onEdit(row.stay)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/5"><Edit3 className="h-3.5 w-3.5" /> Editer</button>
+      {active && <button onClick={() => onCheckout(row.stay)} className="inline-flex items-center gap-1 rounded-lg border border-red-400/30 px-2.5 py-1.5 text-xs font-medium text-red-200 transition hover:bg-red-500/10"><Archive className="h-3.5 w-3.5" /> Check-out</button>}
+      {active && <a href="/inbox" className="inline-flex items-center gap-1 rounded-lg border border-amber-300/30 px-2.5 py-1.5 text-xs font-medium text-amber-100 transition hover:bg-amber-300/10"><Send className="h-3.5 w-3.5" /> Contacter</a>}
+    </div>
+  );
+}
+
+function StayDetailPanel({ row, stay, onClose }: { row: any; stay: any; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-40 bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <aside className="ml-auto flex h-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Fiche sejour</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{row.client}</h2>
+            <p className="mt-1 text-sm text-slate-500">Chambre {row.room} - {formatDate(row.checkinDate)} au {formatDate(row.checkoutDate)}</p>
+          </div>
+          <button onClick={onClose} aria-label="Fermer" className="rounded-xl border border-white/10 p-2 text-slate-300 transition hover:bg-white/5"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="space-y-5 overflow-y-auto p-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <InfoPill icon={<Mail className="h-4 w-4" />} label="Email" value={row.email || "Non renseigne"} />
+            <InfoPill icon={<Phone className="h-4 w-4" />} label="Telephone" value={row.phone || "Non renseigne"} />
+            <InfoPill icon={<Languages className="h-4 w-4" />} label="Langue" value={row.language.toUpperCase()} />
+            <InfoPill icon={<MessageSquare className="h-4 w-4" />} label="Dernier contact" value={formatTime(row.lastContact) || "-"} />
+          </div>
+          <HistoryList title="Messages" items={stay.messages ?? []} render={(item) => `${item.senderType === "reception" ? "Reception" : "Client"} - ${item.content}`} />
+          <HistoryList title="Demandes" items={stay.requests ?? []} render={(item) => `${item.title} - ${item.status}`} />
+          <HistoryList title="Avis" items={stay.reviews ?? []} render={(item) => `${item.rating}/5 - ${item.comment || "Aucun commentaire"}`} />
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">Notes internes : a ajouter lors d'une prochaine iteration si un champ dedie est valide en base.</div>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function StayEditPanel({ stay, onClose, onSave }: { stay: any; onClose: () => void; onSave: (payload: { roomNumber: string; checkinDate: string; checkoutDate: string; status: string }) => void }) {
+  const [roomNumber, setRoomNumber] = useState(stay.roomNumber ?? "");
+  const [checkinDate, setCheckinDate] = useState(toDateInput(stay.checkinDate));
+  const [checkoutDate, setCheckoutDate] = useState(toDateInput(stay.checkoutDate));
+  const [status, setStatus] = useState(stay.status ?? "active");
+  return (
+    <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <form onSubmit={(event) => { event.preventDefault(); onSave({ roomNumber, checkinDate, checkoutDate, status }); }} className="w-full max-w-xl rounded-2xl border border-white/10 bg-slate-950 p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Edition sejour</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{stay.guest?.firstName} {stay.guest?.lastName}</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Fermer" className="rounded-xl border border-white/10 p-2 text-slate-300 transition hover:bg-white/5"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <Field label="Chambre"><input value={roomNumber} onChange={(event) => setRoomNumber(event.target.value)} className={fieldClassName} required /></Field>
+          <Field label="Statut"><select value={status} onChange={(event) => setStatus(event.target.value)} className={fieldClassName}><option value="active">active</option><option value="checked_in">checked_in</option><option value="checked_out">checked_out</option><option value="archived">archived</option></select></Field>
+          <Field label="Date arrivee"><input type="date" value={checkinDate} onChange={(event) => setCheckinDate(event.target.value)} className={fieldClassName} /></Field>
+          <Field label="Date depart"><input type="date" value={checkoutDate} onChange={(event) => setCheckoutDate(event.target.value)} className={fieldClassName} /></Field>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">Annuler</button>
+          <button className="rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="block space-y-2 text-sm font-medium text-slate-300"><span>{label}</span>{children}</label>;
+}
+
+function HistoryList({ title, items, render }: { title: string; items: any[]; render: (item: any) => string }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+      <h3 className="font-semibold text-white">{title}</h3>
+      <div className="mt-3 space-y-2">
+        {items.length === 0 && <p className="text-sm text-slate-500">Aucun historique.</p>}
+        {items.map((item) => <p key={item.id} className="rounded-xl bg-slate-950/60 p-3 text-sm text-slate-300">{render(item)}</p>)}
+      </div>
+    </section>
+  );
+}
+
+function ReviewSection({ title, reviews, onResolve, muted = false }: { title: string; reviews: any[]; onResolve: (review: any) => Promise<void>; muted?: boolean }) {
+  if (reviews.length === 0) return null;
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-tight text-white">{title}</h2>
+        <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400">{reviews.length} avis</span>
+      </div>
       <div className="grid gap-4 xl:grid-cols-2">
-        {items.length === 0 && <EmptyState icon={<Star className="h-6 w-6" />} title="Aucun avis client" description="Les avis et alertes satisfaction apparaitront ici." />}
-        {items.map((review) => (
-          <article key={review.id} className={`rounded-2xl border p-5 shadow-lg shadow-black/20 transition hover:border-white/15 ${review.rating <= 3 ? "border-red-400/30 bg-red-500/10" : "border-white/10 bg-slate-900/80"}`}>
+        {reviews.map((review) => (
+          <article key={review.id} className={`rounded-2xl border p-5 shadow-lg shadow-black/20 transition hover:border-white/15 ${review.rating <= 3 && !muted ? "border-red-400/30 bg-red-500/10" : "border-white/10 bg-slate-900/80"}`}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-1 text-amber-300">
@@ -466,127 +762,23 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
                     <Star key={index} className={`h-4 w-4 ${index < review.rating ? "fill-current" : "opacity-25"}`} />
                   ))}
                 </div>
-                <h2 className="mt-3 font-semibold">
+                <h3 className="mt-3 font-semibold">
                   {review.guest?.firstName} {review.guest?.lastName || "Client"}
-                </h2>
+                </h3>
                 <p className="mt-1 text-xs text-slate-500">Chambre {review.stay?.roomNumber ?? "-"} - {formatTime(review.createdAt)}</p>
               </div>
               <StatusBadge status={review.rating <= 3 && review.status !== "resolved" ? "urgent" : review.status === "resolved" ? "done" : "new"} />
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-300">{review.comment || "Aucun commentaire."}</p>
-            {review.rating <= 3 && review.status !== "resolved" && (
-              <button onClick={() => void resolveReview(review)} className="mt-4 rounded-xl border border-red-300/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">
+            {review.rating <= 3 && review.status !== "resolved" && !muted && (
+              <button onClick={() => void onResolve(review)} className="mt-4 rounded-xl border border-red-300/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:bg-red-500/10 focus:outline-none focus:ring-4 focus:ring-red-400/10">
                 Marquer comme resolu
               </button>
             )}
           </article>
         ))}
       </div>
-    </div>
-  );
-}
-
-function GuestsView({ hotelId, token }: { hotelId: string; token: string }) {
-  const [items, setItems] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    void loadGuests();
-  }, [hotelId, token]);
-
-  async function loadGuests() {
-    setError("");
-    try {
-      setItems(await api.hotelGuests(hotelId, token));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur de chargement");
-    }
-  }
-
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return items;
-    return items.filter((guest) => {
-      const fullName = `${guest.firstName ?? ""} ${guest.lastName ?? ""}`.toLowerCase();
-      return fullName.includes(query)
-        || String(guest.email ?? "").toLowerCase().includes(query)
-        || String(guest.phone ?? "").toLowerCase().includes(query)
-        || String(guest.language ?? "").toLowerCase().includes(query);
-    });
-  }, [items, search]);
-
-  const consentCount = items.filter((guest) => Boolean(guest.marketingConsent)).length;
-  const todayCount = items.filter((guest) => isToday(guest.createdAt)).length;
-
-  return (
-    <div className="space-y-5">
-      <PageHeader
-        eyebrow="CRM sejour"
-        title="Clients hotel"
-        description={`${items.length} profil${items.length > 1 ? "s" : ""} client centralise${items.length > 1 ? "s" : ""}`}
-      />
-      <div className="grid gap-3 md:grid-cols-3">
-        <MetricCard icon={<Users className="h-4 w-4" />} label="Clients" value={items.length} tone="blue" />
-        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Consentements" value={consentCount} tone="emerald" />
-        <MetricCard icon={<CalendarDays className="h-4 w-4" />} label="Aujourd'hui" value={todayCount} tone="amber" />
-      </div>
-
-      <section className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg shadow-black/20">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-base font-semibold tracking-tight text-white">Base clients</h2>
-            <p className="mt-1 text-sm text-slate-500">Recherche rapide par nom, email, telephone ou langue.</p>
-          </div>
-          <label className="relative block w-full md:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Rechercher un client..."
-              aria-label="Rechercher un client"
-              className="w-full rounded-xl border border-white/10 bg-slate-950/70 py-2.5 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10"
-            />
-          </label>
-        </div>
-      </section>
-
-      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
-      {!error && filtered.length === 0 && (
-        <EmptyState icon={<Users className="h-6 w-6" />} title="Aucun client trouve" description="Les clients apparaitront ici apres l'onboarding de l'app sejour." />
-      )}
-      <div className="grid gap-4 xl:grid-cols-2">
-        {filtered.map((guest) => {
-          const fullName = `${guest.firstName ?? ""} ${guest.lastName ?? ""}`.trim() || guest.email || "Client";
-          return (
-            <article key={guest.id} className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 shadow-lg shadow-black/20 transition hover:border-white/15 hover:bg-slate-900">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-sm font-semibold text-amber-100">
-                  {initials(fullName)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="truncate text-lg font-semibold tracking-tight text-white">{fullName}</h2>
-                      <p className="mt-1 text-xs text-slate-500">Cree le {formatDate(guest.createdAt)}</p>
-                    </div>
-                    <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${guest.marketingConsent ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-200" : "border-white/10 bg-white/[0.04] text-slate-400"}`}>
-                      {guest.marketingConsent ? "RGPD accepte" : "Sans consentement"}
-                    </span>
-                  </div>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <InfoPill icon={<Mail className="h-4 w-4" />} label="Email" value={guest.email || "Non renseigne"} />
-                    <InfoPill icon={<Phone className="h-4 w-4" />} label="Telephone" value={guest.phone || "Non renseigne"} />
-                    <InfoPill icon={<Languages className="h-4 w-4" />} label="Langue" value={String(guest.language || "Non renseignee").toUpperCase()} />
-                    <InfoPill icon={<CalendarDays className="h-4 w-4" />} label="Arrivee CRM" value={formatDate(guest.createdAt)} />
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </div>
+    </section>
   );
 }
 
@@ -640,6 +832,57 @@ function StatusBadge({ status }: { status: Conversation["status"] }) {
   );
 }
 
+const openStatuses = new Set(["new", "in_progress", "urgent", "sent"]);
+const fieldClassName = "w-full rounded-xl border border-white/10 bg-slate-900/90 px-3 py-2.5 text-sm text-white outline-none transition focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10";
+
+function buildStayRow(stay: any, messages: any[], requests: any[], reviews: any[]) {
+  const stayMessages = messages.filter((item) => item.stayId === stay.id);
+  const stayRequests = requests.filter((item) => item.stayId === stay.id);
+  const stayReviews = reviews.filter((item) => item.stayId === stay.id);
+  const lastContact = [...stayMessages, ...stayRequests, ...stayReviews]
+    .map((item) => item.createdAt)
+    .filter(Boolean)
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0];
+  const latestReview = [...stayReviews].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0];
+  const guest = stay.guest ?? {};
+  return {
+    stay: { ...stay, messages: stay.messages ?? stayMessages, requests: stay.requests ?? stayRequests, reviews: stay.reviews ?? stayReviews },
+    room: stay.roomNumber ?? "-",
+    client: `${guest.firstName ?? ""} ${guest.lastName ?? ""}`.trim() || guest.email || "Client",
+    email: guest.email ?? "",
+    phone: guest.phone ?? "",
+    language: guest.language ?? "fr",
+    marketingConsent: Boolean(guest.marketingConsent),
+    status: stay.status ?? "active",
+    checkinDate: stay.checkinDate,
+    checkoutDate: stay.checkoutDate,
+    nights: stayNights(stay.checkinDate, stay.checkoutDate),
+    openMessages: stayMessages.filter((item) => openStatuses.has(item.status)).length,
+    openRequests: stayRequests.filter((item) => openStatuses.has(item.status)).length,
+    messageCount: stayMessages.length,
+    requestCount: stayRequests.length,
+    rating: latestReview?.rating ?? 0,
+    lastContact
+  };
+}
+
+function ConsentBadge({ ok }: { ok: boolean }) {
+  return (
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${ok ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-200" : "border-white/10 bg-white/[0.04] text-slate-400"}`}>
+      {ok ? "Oui" : "Non"}
+    </span>
+  );
+}
+
+function StayStatusBadge({ status }: { status: string }) {
+  const active = status === "active" || status === "checked_in";
+  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${active ? "border-blue-300/25 bg-blue-300/10 text-blue-200" : "border-slate-300/20 bg-white/[0.04] text-slate-300"}`}>{status}</span>;
+}
+
+function RatingBadge({ rating }: { rating: number }) {
+  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${rating <= 3 ? "border-red-300/30 bg-red-500/10 text-red-200" : "border-amber-300/25 bg-amber-300/10 text-amber-100"}`}>{rating}/5</span>;
+}
+
 function formatTime(value?: string) {
   if (!value) return "";
   return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }).format(new Date(value));
@@ -650,21 +893,16 @@ function formatDate(value?: string) {
   return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(value));
 }
 
-function isToday(value?: string) {
-  if (!value) return false;
-  const date = new Date(value);
-  const today = new Date();
-  return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+function toDateInput(value?: string) {
+  if (!value) return "";
+  return new Date(value).toISOString().slice(0, 10);
 }
 
-function initials(value: string) {
-  return value
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase() || "C";
+function stayNights(checkin?: string, checkout?: string) {
+  if (!checkin || !checkout) return 0;
+  const start = new Date(toDateInput(checkin)).getTime();
+  const end = new Date(toDateInput(checkout)).getTime();
+  return Math.max(0, Math.round((end - start) / 86400000));
 }
 
 function PageHeader({ eyebrow, title, description, live = false }: { eyebrow: string; title: string; description: string; live?: boolean }) {

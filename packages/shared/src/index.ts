@@ -48,6 +48,13 @@ export const stayCreateSchema = z.object({
   status: z.string().default("active")
 });
 
+export const stayUpdateSchema = z.object({
+  roomNumber: z.string().min(1).optional(),
+  checkinDate: z.string().optional().nullable(),
+  checkoutDate: z.string().optional().nullable(),
+  status: z.string().min(1).optional()
+});
+
 export const messageCreateSchema = z.object({
   guestId: z.string().uuid(),
   stayId: z.string().uuid().optional(),
