@@ -199,9 +199,9 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
         live
       />
       <div className="grid gap-3 md:grid-cols-3">
-        <MetricCard icon={<Inbox className="h-4 w-4" />} label="A traiter" value={pendingCount} tone="amber" />
-        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Urgents" value={urgentCount} tone="red" />
-        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Repondus" value={answeredCount} tone="emerald" />
+        <MetricCard icon={<Inbox className="h-4 w-4" />} label="A traiter" value={pendingCount} tone="amber" active={filter === "new"} onClick={() => setFilter("new")} />
+        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Urgents" value={urgentCount} tone="red" active={filter === "urgent"} onClick={() => setFilter("urgent")} />
+        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Repondus" value={answeredCount} tone="emerald" active={filter === "answered"} onClick={() => setFilter("answered")} />
       </div>
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
       <div className="grid gap-5 xl:grid-cols-[440px_minmax(0,1fr)]">
@@ -297,6 +297,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
 function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
+  const [requestFilter, setRequestFilter] = useState<"all" | "in_progress" | "urgent">("all");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -367,6 +368,12 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
     setItems((current) => current.map((entry) => entry.id === item.id && entry.source === item.source ? { ...entry, status } : entry));
   }
 
+  const visibleItems = useMemo(() => {
+    if (requestFilter === "in_progress") return items.filter((item) => item.status === "in_progress");
+    if (requestFilter === "urgent") return items.filter((item) => normalizeStatus(item.status, item.priority, item.senderType) === "urgent");
+    return items;
+  }, [items, requestFilter]);
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -376,14 +383,14 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
         live
       />
       <div className="grid gap-3 md:grid-cols-3">
-        <MetricCard icon={<ListChecks className="h-4 w-4" />} label="Total" value={items.length} tone="blue" />
-        <MetricCard icon={<Clock className="h-4 w-4" />} label="En cours" value={items.filter((item) => item.status === "in_progress").length} tone="amber" />
-        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Urgentes" value={items.filter((item) => normalizeStatus(item.status, item.priority, item.senderType) === "urgent").length} tone="red" />
+        <MetricCard icon={<ListChecks className="h-4 w-4" />} label="Total" value={items.length} tone="blue" active={requestFilter === "all"} onClick={() => setRequestFilter("all")} />
+        <MetricCard icon={<Clock className="h-4 w-4" />} label="En cours" value={items.filter((item) => item.status === "in_progress").length} tone="amber" active={requestFilter === "in_progress"} onClick={() => setRequestFilter("in_progress")} />
+        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Urgentes" value={items.filter((item) => normalizeStatus(item.status, item.priority, item.senderType) === "urgent").length} tone="red" active={requestFilter === "urgent"} onClick={() => setRequestFilter("urgent")} />
       </div>
       <div className="grid gap-3">
         {error && <p className="p-4 text-sm text-red-300">{error}</p>}
-        {!error && items.length === 0 && <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Aucune demande" description="Les demandes client apparaitront ici instantanement." />}
-        {items.map((item) => (
+        {!error && visibleItems.length === 0 && <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Aucune demande" description="Les demandes client apparaitront ici instantanement." />}
+        {visibleItems.map((item) => (
           <div key={`${item.source}:${item.id}`} className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg shadow-black/20 transition hover:border-white/15 hover:bg-slate-900">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
@@ -415,6 +422,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
 function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
+  const [reviewFilter, setReviewFilter] = useState<"active" | "alerts" | "resolved">("active");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -459,6 +467,15 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   const activeReviews = items.filter((item) => item.stayId && activeStayIds.has(item.stayId));
   const historicReviews = items.filter((item) => !item.stayId || !activeStayIds.has(item.stayId));
   const alerts = activeReviews.filter((item) => item.status === "negative_alert" || item.rating <= 3).length;
+  const resolvedReviews = items.filter((item) => item.status === "resolved");
+  const visibleActiveReviews = reviewFilter === "alerts"
+    ? activeReviews.filter((item) => item.status === "negative_alert" || item.rating <= 3)
+    : reviewFilter === "resolved"
+      ? resolvedReviews.filter((item) => item.stayId && activeStayIds.has(item.stayId))
+      : activeReviews;
+  const visibleHistoricReviews = reviewFilter === "resolved"
+    ? resolvedReviews.filter((item) => !item.stayId || !activeStayIds.has(item.stayId))
+    : historicReviews;
 
   return (
     <div className="space-y-5">
@@ -469,14 +486,14 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
         live
       />
       <div className="grid gap-3 md:grid-cols-3">
-        <MetricCard icon={<Star className="h-4 w-4" />} label="Avis actifs" value={activeReviews.length} tone="blue" />
-        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Alertes actives" value={alerts} tone="red" />
-        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Resolus" value={items.filter((item) => item.status === "resolved").length} tone="emerald" />
+        <MetricCard icon={<Star className="h-4 w-4" />} label="Avis actifs" value={activeReviews.length} tone="blue" active={reviewFilter === "active"} onClick={() => setReviewFilter("active")} />
+        <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Alertes actives" value={alerts} tone="red" active={reviewFilter === "alerts"} onClick={() => setReviewFilter("alerts")} />
+        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label="Resolus" value={resolvedReviews.length} tone="emerald" active={reviewFilter === "resolved"} onClick={() => setReviewFilter("resolved")} />
       </div>
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
       {items.length === 0 && <EmptyState icon={<Star className="h-6 w-6" />} title="Aucun avis client" description="Les avis et alertes satisfaction apparaitront ici." />}
-      <ReviewSection title="Avis sejours en cours" reviews={activeReviews} onResolve={resolveReview} />
-      <ReviewSection title="Avis historiques" reviews={historicReviews} onResolve={resolveReview} muted />
+      <ReviewSection title="Avis sejours en cours" reviews={visibleActiveReviews} onResolve={resolveReview} />
+      <ReviewSection title="Avis historiques" reviews={visibleHistoricReviews} onResolve={resolveReview} muted />
     </div>
   );
 }
@@ -496,6 +513,7 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
   const [reviews, setReviews] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [metricFilter, setMetricFilter] = useState<"all" | "messages" | "requests" | "consent">("all");
   const [selectedStay, setSelectedStay] = useState<any | null>(null);
   const [editingStay, setEditingStay] = useState<any | null>(null);
   const [error, setError] = useState("");
@@ -543,9 +561,16 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
         || row.email.toLowerCase().includes(query)
         || row.room.toLowerCase().includes(query);
       const matchesStatus = statusFilter === "all" || row.status === statusFilter;
-      return matchesQuery && matchesStatus;
+      const matchesMetric = metricFilter === "messages"
+        ? row.openMessages > 0
+        : metricFilter === "requests"
+          ? row.openRequests > 0
+          : metricFilter === "consent"
+            ? row.marketingConsent
+            : true;
+      return matchesQuery && matchesStatus && matchesMetric;
     });
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, metricFilter]);
 
   const weakReviews = rows.filter((row) => row.rating > 0 && row.rating <= 3).length;
   const consentCount = rows.filter((row) => row.marketingConsent).length;
@@ -559,10 +584,10 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
         live={mode === "active"}
       />
       <div className="grid gap-3 md:grid-cols-4">
-        <MetricCard icon={<BedDouble className="h-4 w-4" />} label={mode === "active" ? "Presents" : "Archives"} value={rows.length} tone="blue" />
-        <MetricCard icon={<Inbox className="h-4 w-4" />} label="Messages ouverts" value={rows.reduce((total, row) => total + row.openMessages, 0)} tone="amber" />
-        <MetricCard icon={<ListChecks className="h-4 w-4" />} label="Demandes ouvertes" value={rows.reduce((total, row) => total + row.openRequests, 0)} tone="red" />
-        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label={mode === "active" ? "Consentements" : "CRM opt-in"} value={consentCount} tone="emerald" />
+        <MetricCard icon={<BedDouble className="h-4 w-4" />} label={mode === "active" ? "Presents" : "Archives"} value={rows.length} tone="blue" active={metricFilter === "all"} onClick={() => setMetricFilter("all")} />
+        <MetricCard icon={<Inbox className="h-4 w-4" />} label="Messages ouverts" value={rows.reduce((total, row) => total + row.openMessages, 0)} tone="amber" active={metricFilter === "messages"} onClick={() => setMetricFilter("messages")} />
+        <MetricCard icon={<ListChecks className="h-4 w-4" />} label="Demandes ouvertes" value={rows.reduce((total, row) => total + row.openRequests, 0)} tone="red" active={metricFilter === "requests"} onClick={() => setMetricFilter("requests")} />
+        <MetricCard icon={<CheckCircle className="h-4 w-4" />} label={mode === "active" ? "Consentements" : "CRM opt-in"} value={consentCount} tone="emerald" active={metricFilter === "consent"} onClick={() => setMetricFilter("consent")} />
       </div>
       <section className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg shadow-black/20">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -929,21 +954,39 @@ function PageHeader({ eyebrow, title, description, live = false }: { eyebrow: st
   );
 }
 
-function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number; tone: "amber" | "red" | "emerald" | "blue" }) {
+function MetricCard({ icon, label, value, tone, active = false, onClick }: { icon: React.ReactNode; label: string; value: number; tone: "amber" | "red" | "emerald" | "blue"; active?: boolean; onClick?: () => void }) {
   const classes = {
     amber: "border-amber-300/20 bg-amber-300/10 text-amber-200",
     red: "border-red-300/20 bg-red-500/10 text-red-200",
     emerald: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
     blue: "border-sky-300/20 bg-sky-300/10 text-sky-200"
   }[tone];
-
-  return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
+  const content = (
+    <>
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${classes}`}>
         {icon}
       </div>
       <p className="mt-4 text-2xl font-semibold tracking-tight text-white">{value}</p>
       <p className="mt-1 text-sm text-slate-400">{label}</p>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        className={`rounded-2xl border p-4 text-left shadow-lg shadow-black/20 transition focus:outline-none focus:ring-4 focus:ring-amber-300/10 ${active ? "border-amber-300/35 bg-slate-900 ring-1 ring-inset ring-amber-300/20" : "border-white/10 bg-slate-900/75 hover:border-white/20 hover:bg-slate-900"}`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
+      {content}
     </div>
   );
 }
