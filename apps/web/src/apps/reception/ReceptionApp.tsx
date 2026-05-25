@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, AlertTriangle, Archive, BedDouble, CheckCircle, Clock, Edit3, Eye, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, Send, ShieldCheck, Star, Users, X } from "lucide-react";
+import { Activity, AlertTriangle, Archive, BedDouble, CheckCircle, Clock, Download, Edit3, Eye, FileJson, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, Send, ShieldCheck, Star, Users, X } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
@@ -574,6 +574,7 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
 
   const weakReviews = rows.filter((row) => row.rating > 0 && row.rating <= 3).length;
   const consentCount = rows.filter((row) => row.marketingConsent).length;
+  const exportName = mode === "active" ? "clients-presents" : "historique-crm";
 
   return (
     <div className="space-y-5">
@@ -593,9 +594,9 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 className="text-base font-semibold tracking-tight text-white">{mode === "active" ? "Tableau des sejours actifs" : "Tableau historique client"}</h2>
-            <p className="mt-1 text-sm text-slate-500">{mode === "active" ? "Les clients partis sont exclus des operations courantes." : "Historique conserve sans suppression de donnees."}</p>
+            <p className="mt-1 text-sm text-slate-500">{mode === "active" ? "Les clients partis sont exclus des operations courantes." : "Historique conserve sans suppression de donnees."} Export du filtre courant : {filtered.length} ligne{filtered.length > 1 ? "s" : ""}.</p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
             <label className="relative block w-full sm:w-80">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nom, email, chambre..." aria-label="Rechercher un sejour" className="w-full rounded-xl border border-white/10 bg-slate-950/70 py-2.5 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10" />
@@ -604,6 +605,12 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
               <option value="all">Tous statuts</option>
               {Array.from(new Set(rows.map((row) => row.status))).map((status) => <option key={status} value={status}>{status}</option>)}
             </select>
+            <button type="button" onClick={() => exportRowsAsExcel(filtered, exportName)} disabled={filtered.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300/25 bg-emerald-300/10 px-3 py-2.5 text-sm font-medium text-emerald-100 transition hover:bg-emerald-300/15 focus:outline-none focus:ring-4 focus:ring-emerald-300/10 disabled:cursor-not-allowed disabled:opacity-50">
+              <Download className="h-4 w-4" /> Excel
+            </button>
+            <button type="button" onClick={() => exportRowsAsJson(filtered, exportName)} disabled={filtered.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300/25 bg-sky-300/10 px-3 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-300/15 focus:outline-none focus:ring-4 focus:ring-sky-300/10 disabled:cursor-not-allowed disabled:opacity-50">
+              <FileJson className="h-4 w-4" /> JSON
+            </button>
           </div>
         </div>
       </section>
@@ -889,6 +896,60 @@ function buildStayRow(stay: any, messages: any[], requests: any[], reviews: any[
     rating: latestReview?.rating ?? 0,
     lastContact
   };
+}
+
+function exportableStayRows(rows: any[]) {
+  return rows.map((row) => ({
+    chambre: row.room,
+    client: row.client,
+    email: row.email,
+    telephone: row.phone,
+    langue: row.language,
+    consentement_crm: row.marketingConsent ? "oui" : "non",
+    statut_sejour: row.status,
+    date_arrivee: formatDate(row.checkinDate),
+    date_depart: formatDate(row.checkoutDate),
+    duree_nuits: row.nights,
+    messages_ouverts: row.openMessages,
+    demandes_ouvertes: row.openRequests,
+    nombre_messages: row.messageCount,
+    nombre_demandes: row.requestCount,
+    note_sejour: row.rating || "",
+    dernier_contact: formatTime(row.lastContact)
+  }));
+}
+
+function exportRowsAsJson(rows: any[], name: string) {
+  downloadFile(`${name}-${dateStamp()}.json`, "application/json;charset=utf-8", JSON.stringify(exportableStayRows(rows), null, 2));
+}
+
+function exportRowsAsExcel(rows: any[], name: string) {
+  const data = exportableStayRows(rows);
+  const headers = Object.keys(data[0] ?? {});
+  const headerRow = headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("");
+  const bodyRows = data.map((row) => `<tr>${headers.map((header) => `<td>${escapeHtml(String(row[header as keyof typeof row] ?? ""))}</td>`).join("")}</tr>`).join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8" /></head><body><table><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}</tbody></table></body></html>`;
+  downloadFile(`${name}-${dateStamp()}.xls`, "application/vnd.ms-excel;charset=utf-8", html);
+}
+
+function downloadFile(filename: string, type: string, content: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function dateStamp() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function ConsentBadge({ ok }: { ok: boolean }) {
