@@ -34,6 +34,7 @@ import {
   type SettingsFormState
 } from "../../lib/hotelOnboarding";
 import { useAppStore } from "../../stores/appStore";
+import { guestThemeIds, guestThemes, type GuestThemeId } from "../../themes";
 
 type CreatedHotel = HotelFormState & { id: string; settings?: unknown };
 type StepKey = "identity" | "branding" | "practical" | "modules" | "preview";
@@ -184,7 +185,7 @@ function GeneratorWizard() {
             </div>
 
             {currentStep.key === "identity" ? <IdentityStep form={hotelForm} update={updateHotel} /> : null}
-            {currentStep.key === "branding" ? <BrandingStep form={hotelForm} update={updateHotel} /> : null}
+            {currentStep.key === "branding" ? <BrandingStep form={hotelForm} settingsForm={settingsForm} update={updateHotel} updateSettings={updateSettings} /> : null}
             {currentStep.key === "practical" ? <PracticalStep form={settingsForm} update={updateSettings} /> : null}
             {currentStep.key === "modules" ? <ModulesStep form={settingsForm} toggle={toggleModule} /> : null}
             {currentStep.key === "preview" ? <PreviewStep hotelForm={hotelForm} settingsForm={settingsForm} createdHotel={createdHotel} saving={saving} error={error} onSave={() => void saveHotel()} /> : null}
@@ -239,6 +240,7 @@ function GeneratorWizard() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Resume</p>
               <p className="mt-2 text-sm font-semibold text-white">{hotelForm.name || "Nom hotel"}</p>
               <p className="mt-1 text-sm text-slate-400">{[hotelForm.city, hotelForm.country].filter(Boolean).join(", ")}</p>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200/80">{guestThemes[settingsForm.guestTheme].name}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {Object.entries(settingsForm.modules).filter(([, enabled]) => enabled).map(([module]) => (
                   <span key={module} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">{module}</span>
@@ -267,7 +269,7 @@ function IdentityStep({ form, update }: { form: HotelFormState; update: <K exten
   );
 }
 
-function BrandingStep({ form, update }: { form: HotelFormState; update: <K extends keyof HotelFormState>(field: K, value: HotelFormState[K]) => void }) {
+function BrandingStep({ form, settingsForm, update, updateSettings }: { form: HotelFormState; settingsForm: SettingsFormState; update: <K extends keyof HotelFormState>(field: K, value: HotelFormState[K]) => void; updateSettings: <K extends keyof SettingsFormState>(field: K, value: SettingsFormState[K]) => void }) {
   return (
     <div className="mt-6 grid gap-4 md:grid-cols-2">
       <Field label="Logo URL" value={form.logoUrl ?? ""} onChange={(value) => update("logoUrl", value)} placeholder="https://..." icon={<Building2 className="h-4 w-4" />} />
@@ -285,6 +287,9 @@ function BrandingStep({ form, update }: { form: HotelFormState; update: <K exten
         <span className="text-sm font-medium text-slate-300">Description courte</span>
         <textarea className="min-h-28 w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-300/50 focus:ring-4 focus:ring-emerald-300/10" value={form.description ?? ""} onChange={(event) => update("description", event.target.value)} placeholder="Boutique hotel premium au coeur de Paris." />
       </label>
+      <div className="md:col-span-2">
+        <ThemePicker value={settingsForm.guestTheme} onChange={(value) => updateSettings("guestTheme", value)} />
+      </div>
     </div>
   );
 }
@@ -355,6 +360,7 @@ function PreviewStep({ hotelForm, settingsForm, createdHotel, saving, error, onS
         <SummaryCard label="Hotel" value={hotelForm.name || "A renseigner"} description={[hotelForm.city, hotelForm.country].filter(Boolean).join(", ")} />
         <SummaryCard label="Slug" value={slug || "A renseigner"} description="Identifiant multi-tenant" />
         <SummaryCard label="Wi-Fi" value={settingsForm.wifiName || "Non renseigne"} description={settingsForm.wifiPassword || "Mot de passe non renseigne"} />
+        <SummaryCard label="Theme client" value={guestThemes[settingsForm.guestTheme].name} description={guestThemes[settingsForm.guestTheme].mood} />
         <SummaryCard label="Modules actifs" value={String(Object.values(settingsForm.modules).filter(Boolean).length)} description="Fonctions client activees" />
       </div>
       <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-5">
@@ -397,6 +403,41 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
         <input className="min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-100 outline-none" value={value} onChange={(event) => onChange(event.target.value)} />
       </span>
     </label>
+  );
+}
+
+function ThemePicker({ value, onChange }: { value: GuestThemeId; onChange: (value: GuestThemeId) => void }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-medium text-slate-300">Theme app client</p>
+        <p className="mt-1 text-xs text-slate-500">Le style visuel est stocke dans les settings de l'hotel et charge dynamiquement par la Guest App.</p>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-3">
+        {guestThemeIds.map((themeId) => {
+          const theme = guestThemes[themeId];
+          const active = value === theme.id;
+          return (
+            <button
+              key={theme.id}
+              type="button"
+              onClick={() => onChange(theme.id)}
+              className={`overflow-hidden rounded-2xl border text-left transition focus:outline-none focus:ring-4 focus:ring-emerald-300/10 ${active ? "border-emerald-300/50 bg-emerald-300/10" : "border-white/10 bg-slate-950/50 hover:bg-white/5"}`}
+            >
+              <span className={`block h-20 ${theme.preview}`} />
+              <span className="block p-4">
+                <span className="flex items-center justify-between gap-3">
+                  <span className="font-semibold tracking-tight text-white">{theme.name}</span>
+                  {active ? <Check className="h-4 w-4 text-emerald-200" /> : null}
+                </span>
+                <span className="mt-2 block text-sm leading-6 text-slate-400">{theme.description}</span>
+                <span className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{theme.mood}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

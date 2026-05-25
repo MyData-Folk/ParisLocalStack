@@ -2,6 +2,7 @@ import type { HotelPayload, SettingsPayload } from "./api";
 
 export type HotelFormState = HotelPayload;
 export type SettingsFormState = Required<Pick<SettingsPayload, "wifiName" | "wifiPassword" | "breakfastHours" | "checkinTime" | "checkoutTime" | "roomServiceHours" | "receptionPhone" | "whatsappNumber">> & {
+  guestTheme: NonNullable<SettingsPayload["guestTheme"]>;
   languages: string[];
   modules: Record<string, boolean>;
 };
@@ -33,6 +34,7 @@ export const defaultSettingsForm: SettingsFormState = {
   roomServiceHours: "18:00 - 22:30",
   receptionPhone: "",
   whatsappNumber: "",
+  guestTheme: "parisian_boutique",
   languages: ["fr", "en"],
   modules: {
     guide: true,

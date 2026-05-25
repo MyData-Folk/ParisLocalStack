@@ -21,7 +21,7 @@ hotelsRouter.post("/", requireRole("super_admin"), validateBody(hotelCreateSchem
   const hotel = await prisma.hotel.create({
     data: {
       ...req.body,
-      settings: { create: { modules: { messages: true, requests: true, reviews: true } } }
+      settings: { create: { guestTheme: "parisian_boutique", modules: { messages: true, requests: true, reviews: true } } }
     },
     include: { settings: true }
   });

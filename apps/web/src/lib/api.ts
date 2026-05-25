@@ -28,6 +28,7 @@ export type SettingsPayload = {
   roomServiceHours?: string;
   receptionPhone?: string;
   whatsappNumber?: string;
+  guestTheme?: "parisian_boutique" | "modern_minimal" | "palace_luxury";
   languages?: string[];
   modules?: Record<string, boolean>;
 };

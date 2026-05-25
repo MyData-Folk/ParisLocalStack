@@ -26,6 +26,7 @@ import {
 import { api } from "../../lib/api";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
 import { resolveTenantFromHostname, routeHotelSlug } from "../../lib/tenant";
+import { resolveGuestTheme, type GuestTheme } from "../../themes";
 
 type Session = { guestId: string; stayId: string; roomNumber: string; firstName?: string; lastName?: string };
 type GuestSection = "welcome" | "home" | "guide" | "services" | "messages" | "review";
@@ -50,6 +51,11 @@ type RequestItem = {
 };
 
 const heroImage = "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=80";
+const GuestThemeContext = React.createContext<GuestTheme>(resolveGuestTheme(undefined));
+
+function useGuestTheme() {
+  return React.useContext(GuestThemeContext);
+}
 
 export function GuestShell() {
   const { hotelSlug: pathSlug } = useParams();
@@ -132,72 +138,76 @@ export function GuestShell() {
   if (status) return <GuestLoading status={status} />;
 
   const activeSection = !session && section !== "guide" ? "welcome" : session && section === "welcome" ? "home" : section;
+  const theme = resolveGuestTheme(settings?.guestTheme);
   return (
-    <div className="min-h-screen bg-[#f8f4ec] text-stone-950">
-      {toast && (
-        <div className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-emerald-200 bg-white/95 px-4 py-3 text-sm font-medium text-emerald-900 shadow-lg shadow-stone-900/10 backdrop-blur">
-          {toast}
+    <GuestThemeContext.Provider value={theme}>
+      <div className={`min-h-screen ${theme.classes.app}`}>
+        {toast && (
+          <div className={`fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl px-4 py-3 text-sm font-medium shadow-lg backdrop-blur ${theme.classes.elevatedCard}`}>
+            {toast}
+          </div>
+        )}
+
+        <div className={`mx-auto min-h-screen max-w-md md:my-6 md:min-h-[calc(100vh-3rem)] md:overflow-hidden md:rounded-[2rem] ${theme.classes.shell}`}>
+          <GuestHeader hotel={hotel} settings={settings} session={session} />
+
+          <main className="pb-24">
+            {activeSection === "welcome" && (
+              <Onboarding hotel={hotel} hotelSlug={hotelSlug} onReady={(next) => {
+                setSession(next);
+                showToast(setToast, "Concierge active. Bienvenue.");
+              }} />
+            )}
+            {activeSection === "home" && session && (
+              <HomeSection
+                hotel={hotel}
+                settings={settings}
+                session={session}
+                requests={requests}
+                onServiceRequest={(service) => createServiceRequest(hotelSlug, session, service, setRequests, setToast)}
+              />
+            )}
+            {activeSection === "services" && session && (
+              <ServicesSection
+                hotelSlug={hotelSlug}
+                session={session}
+                requests={requests}
+                onServiceRequest={(service) => createServiceRequest(hotelSlug, session, service, setRequests, setToast)}
+              />
+            )}
+            {activeSection === "messages" && session && (
+              <MessagesSection hotelSlug={hotelSlug} session={session} messages={messages} setMessages={setMessages} />
+            )}
+            {activeSection === "guide" && (
+              <GuideSection recommendations={recommendations} />
+            )}
+            {activeSection === "review" && session && (
+              <ReviewSection hotelSlug={hotelSlug} session={session} setToast={setToast} />
+            )}
+          </main>
+
+          <GuestNav basePath={basePath} active={activeSection} hasSession={Boolean(session)} />
         </div>
-      )}
-
-      <div className="mx-auto min-h-screen max-w-md bg-[#fbf8f2] shadow-2xl shadow-stone-950/10 md:my-6 md:min-h-[calc(100vh-3rem)] md:overflow-hidden md:rounded-[2rem]">
-        <GuestHeader hotel={hotel} settings={settings} session={session} />
-
-        <main className="pb-24">
-          {activeSection === "welcome" && (
-            <Onboarding hotel={hotel} hotelSlug={hotelSlug} onReady={(next) => {
-              setSession(next);
-              showToast(setToast, "Concierge active. Bienvenue.");
-            }} />
-          )}
-          {activeSection === "home" && session && (
-            <HomeSection
-              hotel={hotel}
-              settings={settings}
-              session={session}
-              requests={requests}
-              onServiceRequest={(service) => createServiceRequest(hotelSlug, session, service, setRequests, setToast)}
-            />
-          )}
-          {activeSection === "services" && session && (
-            <ServicesSection
-              hotelSlug={hotelSlug}
-              session={session}
-              requests={requests}
-              onServiceRequest={(service) => createServiceRequest(hotelSlug, session, service, setRequests, setToast)}
-            />
-          )}
-          {activeSection === "messages" && session && (
-            <MessagesSection hotelSlug={hotelSlug} session={session} messages={messages} setMessages={setMessages} />
-          )}
-          {activeSection === "guide" && (
-            <GuideSection recommendations={recommendations} />
-          )}
-          {activeSection === "review" && session && (
-            <ReviewSection hotelSlug={hotelSlug} session={session} setToast={setToast} />
-          )}
-        </main>
-
-        <GuestNav basePath={basePath} active={activeSection} hasSession={Boolean(session)} />
       </div>
-    </div>
+    </GuestThemeContext.Provider>
   );
 }
 
 function GuestHeader({ hotel, settings, session }: { hotel: any; settings: any; session: Session | null }) {
+  const theme = useGuestTheme();
   return (
-    <header className="relative isolate overflow-hidden rounded-b-[2rem] bg-stone-950 text-white">
+    <header className={`relative isolate overflow-hidden rounded-b-[2rem] ${theme.classes.header}`}>
       <img src={heroImage} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-stone-950/45 via-stone-950/45 to-stone-950/90" />
+      <div className={`absolute inset-0 -z-10 ${theme.classes.headerOverlay}`} />
       <div className="px-5 pb-6 pt-7">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-current backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" />
               Concierge prive
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">{hotel?.name}</h1>
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-100/85">{hotel?.description || "Votre assistant de sejour, disponible a tout moment."}</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-6 opacity-85">{hotel?.description || "Votre assistant de sejour, disponible a tout moment."}</p>
           </div>
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/15 text-lg font-semibold shadow-lg backdrop-blur">
             {hotel?.logoUrl ? <img src={hotel.logoUrl} alt={hotel?.name ?? "Hotel"} className="h-full w-full object-cover" /> : hotel?.name?.charAt(0) ?? <Hotel className="h-5 w-5" />}
@@ -215,6 +225,7 @@ function GuestHeader({ hotel, settings, session }: { hotel: any; settings: any; 
 }
 
 function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: string; onReady: (session: Session) => void }) {
+  const theme = useGuestTheme();
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", roomNumber: "", marketingConsent: false, gdprConsent: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -243,20 +254,20 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
 
   return (
     <section className="space-y-5 px-5 py-6">
-      <div className="rounded-3xl border border-amber-200/70 bg-white p-5 shadow-sm">
+      <div className={`rounded-3xl p-5 ${theme.classes.elevatedCard}`}>
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-950 text-amber-100">
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${theme.classes.iconTile}`}>
             <TicketCheck className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Bienvenue a {hotel?.name}</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight">Activez votre concierge</h2>
-            <p className="mt-2 text-sm leading-6 text-stone-600">Quelques secondes suffisent pour personnaliser votre sejour et joindre la reception sans attente.</p>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Bienvenue a {hotel?.name}</p>
+            <h2 className={`mt-1 text-2xl font-semibold ${theme.classes.title}`}>Activez votre concierge</h2>
+            <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Quelques secondes suffisent pour personnaliser votre sejour et joindre la reception sans attente.</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={submit} className="space-y-4 rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
+      <form onSubmit={submit} className={`space-y-4 rounded-3xl p-5 ${theme.classes.card}`}>
         <div className="grid grid-cols-2 gap-3">
           <GuestInput label="Prenom" value={form.firstName} onChange={(value) => setForm({ ...form, firstName: value })} required />
           <GuestInput label="Nom" value={form.lastName} onChange={(value) => setForm({ ...form, lastName: value })} required />
@@ -266,16 +277,16 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
           <GuestInput label="Telephone" value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} />
           <GuestInput label="Chambre" value={form.roomNumber} onChange={(value) => setForm({ ...form, roomNumber: value })} required />
         </div>
-        <label className="flex gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
-          <input type="checkbox" className="mt-1 h-4 w-4 rounded border-stone-300 accent-stone-950" checked={form.gdprConsent} onChange={(event) => setForm({ ...form, gdprConsent: event.target.checked })} />
+        <label className={`flex gap-3 rounded-2xl p-3 text-sm ${theme.classes.subtleCard}`}>
+          <input type="checkbox" className={`mt-1 h-4 w-4 rounded ${theme.classes.checkbox}`} checked={form.gdprConsent} onChange={(event) => setForm({ ...form, gdprConsent: event.target.checked })} />
           J'accepte le traitement de mes donnees pour le suivi de mon sejour.
         </label>
-        <label className="flex gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
-          <input type="checkbox" className="mt-1 h-4 w-4 rounded border-stone-300 accent-stone-950" checked={form.marketingConsent} onChange={(event) => setForm({ ...form, marketingConsent: event.target.checked })} />
+        <label className={`flex gap-3 rounded-2xl p-3 text-sm ${theme.classes.subtleCard}`}>
+          <input type="checkbox" className={`mt-1 h-4 w-4 rounded ${theme.classes.checkbox}`} checked={form.marketingConsent} onChange={(event) => setForm({ ...form, marketingConsent: event.target.checked })} />
           J'accepte de recevoir les communications de l'hotel.
         </label>
         {error && <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-        <button disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-stone-950 px-5 py-3.5 font-semibold text-white shadow-lg shadow-stone-950/15 transition hover:bg-stone-800 focus:outline-none focus:ring-4 focus:ring-stone-300 disabled:cursor-not-allowed disabled:opacity-60">
+        <button disabled={loading} className={`flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-semibold transition focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${theme.classes.primaryButton}`}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Activer mon concierge
         </button>
@@ -285,12 +296,13 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
 }
 
 function HomeSection({ hotel, settings, session, requests, onServiceRequest }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void }) {
+  const theme = useGuestTheme();
   const recentRequests = requests.slice(0, 3);
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
-        <p className="text-sm font-medium text-stone-500">Bonjour {session.firstName || "et bienvenue"}</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">Votre sejour, simplement.</h2>
+        <p className={`text-sm font-medium ${theme.classes.muted}`}>Bonjour {session.firstName || "et bienvenue"}</p>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre sejour, simplement.</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -300,48 +312,48 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
         <StayCard icon={<Phone className="h-5 w-5" />} label="Reception" title={settings?.receptionPhone || "24/7"} detail="Assistance sejour" />
       </div>
 
-      <div className="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Actions rapides</p>
-            <h3 className="text-lg font-semibold tracking-tight">Besoin de quelque chose ?</h3>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Actions rapides</p>
+            <h3 className={`text-lg font-semibold ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
           </div>
           <ConciergeBell className="h-5 w-5 text-stone-400" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           {serviceTemplates.slice(0, 4).map((service) => (
-            <button key={service.type} onClick={() => onServiceRequest(service)} className="group rounded-2xl border border-stone-200 bg-stone-50 p-4 text-left transition hover:border-amber-300 hover:bg-amber-50 focus:outline-none focus:ring-4 focus:ring-amber-200">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-stone-900 shadow-sm">
+            <button key={service.type} onClick={() => onServiceRequest(service)} className={`group rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
+              <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm ${theme.classes.iconSoft}`}>
                 {service.icon}
               </div>
-              <p className="font-semibold text-stone-950">{service.title}</p>
-              <p className="mt-1 text-xs leading-5 text-stone-500">{service.description}</p>
+              <p className="font-semibold">{service.title}</p>
+              <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>{service.description}</p>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Suivi reception</p>
             <h3 className="text-lg font-semibold tracking-tight">Vos demandes</h3>
           </div>
-          <Link to="services" className="rounded-full border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700">Voir tout</Link>
+          <Link to="services" className={`rounded-full px-3 py-1.5 text-xs font-semibold ${theme.classes.secondaryButton}`}>Voir tout</Link>
         </div>
         <div className="mt-4 space-y-2">
-          {recentRequests.length === 0 && <p className="rounded-2xl bg-stone-50 p-4 text-sm text-stone-500">Aucune demande en cours. La reception reste disponible a tout moment.</p>}
+          {recentRequests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. La reception reste disponible a tout moment.</p>}
           {recentRequests.map((request) => <RequestRow key={request.id} request={request} />)}
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-3xl bg-stone-950 text-white shadow-lg">
+      <div className={`overflow-hidden rounded-3xl shadow-lg ${theme.classes.header}`}>
         <img src={heroImage} alt="" className="h-32 w-full object-cover opacity-80" />
         <div className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">Guide local</p>
+          <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Guide local</p>
           <h3 className="mt-1 text-xl font-semibold tracking-tight">Paris autour de {hotel?.name}</h3>
-          <p className="mt-2 text-sm leading-6 text-stone-300">Restaurants, cafes, pharmacies et lieux utiles selectionnes pour votre sejour.</p>
-          <Link to="guide" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-950">
+          <p className="mt-2 text-sm leading-6 opacity-75">Restaurants, cafes, pharmacies et lieux utiles selectionnes pour votre sejour.</p>
+          <Link to="guide" className={`mt-4 inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold ${theme.classes.primaryButton}`}>
             Explorer le quartier <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
@@ -351,30 +363,31 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
 }
 
 function ServicesSection({ session, requests, onServiceRequest }: { hotelSlug: string; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void }) {
+  const theme = useGuestTheme();
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
-        <p className="text-sm font-medium text-stone-500">Chambre {session.roomNumber}</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">Services de l'hotel</h2>
+        <p className={`text-sm font-medium ${theme.classes.muted}`}>Chambre {session.roomNumber}</p>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Services de l'hotel</h2>
       </div>
       <div className="grid gap-3">
         {serviceTemplates.map((service) => (
-          <button key={service.type} onClick={() => onServiceRequest(service)} className="flex items-center gap-4 rounded-3xl border border-stone-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-amber-200">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-950 text-amber-100">
+          <button key={service.type} onClick={() => onServiceRequest(service)} className={`flex items-center gap-4 rounded-3xl p-4 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 ${theme.classes.elevatedCard}`}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${theme.classes.iconTile}`}>
               {service.icon}
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-semibold tracking-tight">{service.title}</p>
-              <p className="mt-1 text-sm leading-5 text-stone-500">{service.description}</p>
+              <p className={`mt-1 text-sm leading-5 ${theme.classes.muted}`}>{service.description}</p>
             </div>
             <ChevronRight className="h-5 w-5 text-stone-300" />
           </button>
         ))}
       </div>
-      <div className="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
         <h3 className="font-semibold tracking-tight">Suivi en temps reel</h3>
         <div className="mt-4 space-y-2">
-          {requests.length === 0 && <p className="rounded-2xl bg-stone-50 p-4 text-sm text-stone-500">Vos demandes apparaitront ici des leur envoi.</p>}
+          {requests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Vos demandes apparaitront ici des leur envoi.</p>}
           {requests.map((request) => <RequestRow key={request.id} request={request} />)}
         </div>
       </div>
@@ -383,6 +396,7 @@ function ServicesSection({ session, requests, onServiceRequest }: { hotelSlug: s
 }
 
 function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelSlug: string; session: Session; messages: MessageItem[]; setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>> }) {
+  const theme = useGuestTheme();
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -401,22 +415,22 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
   return (
     <section className="flex min-h-[calc(100vh-18rem)] flex-col px-5 py-6">
       <div className="mb-4">
-        <p className="text-sm font-medium text-stone-500">Reception</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">Votre messagerie</h2>
+        <p className={`text-sm font-medium ${theme.classes.muted}`}>Reception</p>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre messagerie</h2>
       </div>
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className={`flex-1 space-y-3 overflow-y-auto rounded-3xl p-4 ${theme.classes.card}`}>
         {messages.length === 0 && (
-          <div className="grid min-h-56 place-items-center rounded-3xl bg-stone-50 p-6 text-center">
+          <div className={`grid min-h-56 place-items-center rounded-3xl p-6 text-center ${theme.classes.subtleCard}`}>
             <div>
-              <MessageCircle className="mx-auto h-10 w-10 text-stone-300" />
+              <MessageCircle className={`mx-auto h-10 w-10 ${theme.classes.muted}`} />
               <p className="mt-3 font-semibold">La reception est a votre ecoute</p>
-              <p className="mt-1 text-sm text-stone-500">Envoyez un message, la reponse apparaitra ici instantanement.</p>
+              <p className={`mt-1 text-sm ${theme.classes.muted}`}>Envoyez un message, la reponse apparaitra ici instantanement.</p>
             </div>
           </div>
         )}
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.senderType === "guest" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[82%] rounded-[1.35rem] px-4 py-3 shadow-sm ${message.senderType === "guest" ? "rounded-br-md bg-stone-950 text-white" : "rounded-bl-md bg-stone-100 text-stone-950"}`}>
+            <div className={`max-w-[82%] rounded-[1.35rem] px-4 py-3 shadow-sm ${message.senderType === "guest" ? theme.classes.messageGuest : theme.classes.messageReception}`}>
               <div className="mb-1 flex items-center justify-between gap-3 text-xs opacity-65">
                 <span>{message.senderType === "guest" ? "Vous" : "Reception"}</span>
                 <span>{formatTime(message.createdAt)}</span>
@@ -426,9 +440,9 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
           </div>
         ))}
       </div>
-      <div className="mt-3 flex items-end gap-2 rounded-3xl border border-stone-200 bg-white p-2 shadow-sm">
-        <textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Ecrire a la reception..." className="min-h-12 flex-1 resize-none rounded-2xl bg-stone-50 px-4 py-3 text-sm outline-none placeholder:text-stone-400 focus:ring-4 focus:ring-amber-100" />
-        <button onClick={() => void sendMessage()} disabled={sending || !content.trim()} aria-label="Envoyer le message" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-950 text-white transition hover:bg-stone-800 focus:outline-none focus:ring-4 focus:ring-stone-300 disabled:opacity-50">
+      <div className={`mt-3 flex items-end gap-2 rounded-3xl p-2 ${theme.classes.card}`}>
+        <textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Ecrire a la reception..." className={`min-h-12 flex-1 resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 ${theme.classes.input}`} />
+        <button onClick={() => void sendMessage()} disabled={sending || !content.trim()} aria-label="Envoyer le message" className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
       </div>
@@ -437,6 +451,7 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
 }
 
 function GuideSection({ recommendations }: { recommendations: any[] }) {
+  const theme = useGuestTheme();
   const categories = ["all", ...Array.from(new Set(recommendations.map((item) => item.category).filter(Boolean)))];
   const [category, setCategory] = useState("all");
   const filtered = category === "all" ? recommendations : recommendations.filter((item) => item.category === category);
@@ -444,20 +459,20 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
-        <p className="text-sm font-medium text-stone-500">Selection locale</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">Guide du quartier</h2>
+        <p className={`text-sm font-medium ${theme.classes.muted}`}>Selection locale</p>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Guide du quartier</h2>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {categories.map((item) => (
-          <button key={item} onClick={() => setCategory(item)} className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold capitalize transition ${category === item ? "border-stone-950 bg-stone-950 text-white" : "border-stone-200 bg-white text-stone-600"}`}>
+          <button key={item} onClick={() => setCategory(item)} className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold capitalize transition ${category === item ? theme.classes.chipActive : theme.classes.chipIdle}`}>
             {item === "all" ? "Tout" : item}
           </button>
         ))}
       </div>
       <div className="space-y-3">
-        {filtered.length === 0 && <p className="rounded-3xl border border-stone-200 bg-white p-5 text-sm text-stone-500">Le guide local sera bientot disponible.</p>}
+        {filtered.length === 0 && <p className={`rounded-3xl p-5 text-sm ${theme.classes.card}`}>Le guide local sera bientot disponible.</p>}
         {filtered.map((item, index) => (
-          <article key={item.id} className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
+          <article key={item.id} className={`overflow-hidden rounded-3xl ${theme.classes.card}`}>
             <div className="relative h-36">
               <img src={guideImage(index)} alt="" className="h-full w-full object-cover" />
               <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize text-stone-800 backdrop-blur">{item.category || "Adresse"}</div>
@@ -466,13 +481,13 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold tracking-tight">{item.name}</h3>
-                  <p className="mt-1 text-sm leading-6 text-stone-500">{item.description}</p>
+                  <p className={`mt-1 text-sm leading-6 ${theme.classes.muted}`}>{item.description}</p>
                 </div>
                 {item.isFeatured && <Star className="h-5 w-5 fill-amber-300 text-amber-400" />}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-stone-500">
-                {item.distance && <span className="rounded-full bg-stone-100 px-3 py-1">{item.distance}</span>}
-                {item.address && <span className="rounded-full bg-stone-100 px-3 py-1">{item.address}</span>}
+              <div className={`mt-3 flex flex-wrap gap-2 text-xs font-medium ${theme.classes.muted}`}>
+                {item.distance && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.distance}</span>}
+                {item.address && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.address}</span>}
               </div>
             </div>
           </article>
@@ -483,6 +498,7 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
 }
 
 function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; session: Session; setToast: (value: string) => void }) {
+  const theme = useGuestTheme();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -503,10 +519,10 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
   if (submitted) {
     return (
       <section className="grid min-h-[26rem] place-items-center px-5 py-6 text-center">
-        <div className="rounded-3xl border border-emerald-200 bg-white p-8 shadow-sm">
+        <div className={`rounded-3xl p-8 ${theme.classes.elevatedCard}`}>
           <CheckCircle className="mx-auto h-12 w-12 text-emerald-600" />
           <h2 className="mt-4 text-2xl font-semibold tracking-tight">Merci</h2>
-          <p className="mt-2 text-sm leading-6 text-stone-500">Votre retour a ete transmis a l'equipe. Nous restons disponibles pendant tout votre sejour.</p>
+          <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Votre retour a ete transmis a l'equipe. Nous restons disponibles pendant tout votre sejour.</p>
         </div>
       </section>
     );
@@ -515,11 +531,11 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
-        <p className="text-sm font-medium text-stone-500">Satisfaction</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">Comment se passe votre sejour ?</h2>
+        <p className={`text-sm font-medium ${theme.classes.muted}`}>Satisfaction</p>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Comment se passe votre sejour ?</h2>
       </div>
-      <div className="rounded-3xl border border-stone-200 bg-white p-5 text-center shadow-sm">
-        <p className="text-sm text-stone-500">Votre note globale</p>
+      <div className={`rounded-3xl p-5 text-center ${theme.classes.card}`}>
+        <p className={`text-sm ${theme.classes.muted}`}>Votre note globale</p>
         <div className="mt-4 flex justify-center gap-2">
           {[1, 2, 3, 4, 5].map((value) => (
             <button key={value} onClick={() => setRating(value)} aria-label={`Noter ${value} sur 5`} className={`rounded-2xl p-2 transition focus:outline-none focus:ring-4 focus:ring-amber-100 ${rating >= value ? "scale-105 text-amber-500" : "text-stone-300"}`}>
@@ -536,8 +552,8 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
           </div>
         )}
       </div>
-      <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Un detail a partager avec l'equipe ?" className="min-h-32 w-full rounded-3xl border border-stone-200 bg-white p-4 text-sm shadow-sm outline-none placeholder:text-stone-400 focus:ring-4 focus:ring-amber-100" />
-      <button onClick={() => void submit()} disabled={!rating || loading} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-stone-950 px-5 py-3.5 font-semibold text-white shadow-lg shadow-stone-950/15 transition hover:bg-stone-800 focus:outline-none focus:ring-4 focus:ring-stone-300 disabled:opacity-50">
+      <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Un detail a partager avec l'equipe ?" className={`min-h-32 w-full rounded-3xl p-4 text-sm shadow-sm outline-none focus:ring-4 ${theme.classes.input}`} />
+      <button onClick={() => void submit()} disabled={!rating || loading} className={`flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-semibold transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         Envoyer mon avis
       </button>
@@ -577,6 +593,7 @@ async function loadGuestTimeline(hotelSlug: string, session: Session, setMessage
 }
 
 function GuestNav({ basePath, active, hasSession }: { basePath: string; active: GuestSection; hasSession: boolean }) {
+  const theme = useGuestTheme();
   const items = [
     { id: "home", label: "Sejour", icon: <Home className="h-4 w-4" /> },
     { id: "services", label: "Services", icon: <ConciergeBell className="h-4 w-4" /> },
@@ -586,10 +603,10 @@ function GuestNav({ basePath, active, hasSession }: { basePath: string; active: 
   ] as const;
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 border-t border-stone-200 bg-white/95 px-3 pb-3 pt-2 shadow-2xl shadow-stone-950/10 backdrop-blur md:bottom-6 md:rounded-b-[2rem]">
+    <nav className={`fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 border-t px-3 pb-3 pt-2 shadow-2xl backdrop-blur md:bottom-6 md:rounded-b-[2rem] ${theme.classes.nav}`}>
       <div className="grid grid-cols-5 gap-1">
         {items.map((item) => (
-          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-xs font-semibold transition focus:outline-none focus:ring-4 focus:ring-amber-100 ${active === item.id ? "bg-stone-950 text-white" : "text-stone-500 hover:bg-stone-100 hover:text-stone-950"}`}>
+          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-xs font-semibold transition focus:outline-none focus:ring-4 ${active === item.id ? theme.classes.navActive : theme.classes.navIdle}`}>
             {item.icon}
             <span>{item.label}</span>
           </Link>
@@ -600,10 +617,11 @@ function GuestNav({ basePath, active, hasSession }: { basePath: string; active: 
 }
 
 function GuestInput({ label, value, onChange, type = "text", required = false }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean }) {
+  const theme = useGuestTheme();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-500">{label}{required ? " *" : ""}</span>
-      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none transition placeholder:text-stone-400 focus:border-amber-300 focus:bg-white focus:ring-4 focus:ring-amber-100" />
+      <span className={`mb-1.5 block text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>{label}{required ? " *" : ""}</span>
+      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-4 ${theme.classes.input}`} />
     </label>
   );
 }
@@ -619,24 +637,26 @@ function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string
 }
 
 function StayCard({ icon, label, title, detail }: { icon: React.ReactNode; label: string; title: string; detail: string }) {
+  const theme = useGuestTheme();
   return (
-    <div className="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">{icon}</div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">{label}</p>
+    <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
+      <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-2xl ${theme.classes.iconSoft}`}>{icon}</div>
+      <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>{label}</p>
       <p className="mt-1 truncate font-semibold">{title}</p>
-      <p className="mt-1 truncate text-xs text-stone-500">{detail}</p>
+      <p className={`mt-1 truncate text-xs ${theme.classes.muted}`}>{detail}</p>
     </div>
   );
 }
 
 function RequestRow({ request }: { request: RequestItem }) {
+  const theme = useGuestTheme();
   return (
-    <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50 p-3">
+    <div className={`flex items-start justify-between gap-3 rounded-2xl p-3 ${theme.classes.subtleCard}`}>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{request.title}</p>
-        <p className="mt-1 truncate text-xs text-stone-500">{request.description}</p>
+        <p className={`mt-1 truncate text-xs ${theme.classes.muted}`}>{request.description}</p>
       </div>
-      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${requestStatusClass(request.status)}`}>
+      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${requestStatusClass(request.status, theme)}`}>
         {requestStatusLabel(request.status)}
       </span>
     </div>
@@ -644,10 +664,11 @@ function RequestRow({ request }: { request: RequestItem }) {
 }
 
 function GuestLoading({ status }: { status: string }) {
+  const theme = resolveGuestTheme(undefined);
   return (
-    <div className="grid min-h-screen place-items-center bg-[#f8f4ec] p-6 text-stone-950">
-      <div className="w-full max-w-sm rounded-3xl border border-stone-200 bg-white p-6 text-center shadow-lg">
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-amber-700" />
+    <div className={`grid min-h-screen place-items-center p-6 ${theme.classes.app}`}>
+      <div className={`w-full max-w-sm rounded-3xl p-6 text-center ${theme.classes.elevatedCard}`}>
+        <Loader2 className="mx-auto h-8 w-8 animate-spin" />
         <p className="mt-4 font-medium">{status}</p>
       </div>
     </div>
@@ -702,11 +723,11 @@ function requestStatusLabel(status?: string) {
   return "Nouveau";
 }
 
-function requestStatusClass(status?: string) {
-  if (status === "urgent") return "bg-red-100 text-red-700";
-  if (status === "in_progress") return "bg-amber-100 text-amber-800";
-  if (status === "completed" || status === "done" || status === "closed") return "bg-emerald-100 text-emerald-700";
-  return "bg-blue-100 text-blue-700";
+function requestStatusClass(status: string | undefined, theme: GuestTheme) {
+  if (status === "urgent") return theme.classes.statusUrgent;
+  if (status === "in_progress") return theme.classes.statusProgress;
+  if (status === "completed" || status === "done" || status === "closed") return theme.classes.statusDone;
+  return theme.classes.statusNew;
 }
 
 function guideImage(index: number) {

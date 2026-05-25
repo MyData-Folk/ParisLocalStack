@@ -44,6 +44,7 @@ export interface HotelSettings {
   breakfastPrice?: number;
   roomServiceAvailable: boolean;
   roomServiceHours: string;
+  guestTheme?: 'parisian_boutique' | 'modern_minimal' | 'palace_luxury';
   receptionPhone: string;
   emergencyPhone: string;
   welcomeMessage: string;

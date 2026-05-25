@@ -11,6 +11,7 @@ import {
   Hotel,
   Loader2,
   LogOut,
+  Palette,
   Plus,
   RefreshCw,
   Search,
@@ -24,12 +25,13 @@ import { QrCodePdfButton } from "../../components/QrCodePdfButton";
 import { api, type HotelPayload } from "../../lib/api";
 import { emptyHotelForm, guestUrl, receptionUrl, normalizeHotelPayload, slugify, type HotelFormState } from "../../lib/hotelOnboarding";
 import { useAppStore } from "../../stores/appStore";
+import { guestThemeIds, guestThemes, resolveGuestTheme, type GuestThemeId } from "../../themes";
 
 type HotelRecord = HotelPayload & {
   id: string;
   createdAt?: string;
   updatedAt?: string;
-  settings?: unknown;
+  settings?: { guestTheme?: GuestThemeId } | null;
 };
 
 export function AdminApp() {
@@ -228,6 +230,7 @@ function CreateHotelPage() {
   const { token } = useAppStore();
   const navigate = useNavigate();
   const [form, setForm] = useState<HotelFormState>(emptyHotelForm);
+  const [guestTheme, setGuestTheme] = useState<GuestThemeId>("parisian_boutique");
   const [slugTouched, setSlugTouched] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -250,7 +253,8 @@ function CreateHotelPage() {
     setError(null);
     try {
       const created = await api.createHotel(normalizeHotelPayload(form), token);
-      setCreatedHotel(created);
+      const settings = await api.updateHotelSettings(created.id, { guestTheme }, token);
+      setCreatedHotel({ ...created, settings });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Creation impossible");
     } finally {
@@ -275,7 +279,7 @@ function CreateHotelPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">Nouvel hotel</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Creation multi-tenant</h1>
           <p className="mt-3 text-sm leading-6 text-slate-400">Le formulaire cree l'hotel et ses settings par defaut. Aucune nouvelle application React n'est generee.</p>
-          <HotelForm form={form} onChange={updateField} onSubmit={submit} saving={saving} error={error} submitLabel="Creer l'hotel" />
+          <HotelForm form={form} guestTheme={guestTheme} onThemeChange={setGuestTheme} onChange={updateField} onSubmit={submit} saving={saving} error={error} submitLabel="Creer l'hotel" />
         </section>
         <HotelLaunchCard hotel={createdHotel} previewSlug={slugify(form.slug || form.name)} />
       </div>
@@ -287,6 +291,9 @@ function HotelDetailsPage() {
   const { hotelId } = useParams();
   const { token } = useAppStore();
   const [hotel, setHotel] = useState<HotelRecord | null>(null);
+  const [guestTheme, setGuestTheme] = useState<GuestThemeId>("parisian_boutique");
+  const [themeSaving, setThemeSaving] = useState(false);
+  const [themeMessage, setThemeMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -294,10 +301,28 @@ function HotelDetailsPage() {
     if (!token || !hotelId) return;
     setLoading(true);
     api.hotel(hotelId, token)
-      .then(setHotel)
+      .then((loaded) => {
+        setHotel(loaded);
+        setGuestTheme(resolveGuestTheme(loaded.settings?.guestTheme).id);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Hotel introuvable"))
       .finally(() => setLoading(false));
   }, [hotelId, token]);
+
+  async function saveTheme() {
+    if (!token || !hotel) return;
+    setThemeSaving(true);
+    setThemeMessage("");
+    try {
+      const settings = await api.updateHotelSettings(hotel.id, { guestTheme }, token);
+      setHotel({ ...hotel, settings });
+      setThemeMessage("Theme client enregistre. Le changement est visible sans redeploiement.");
+    } catch (err) {
+      setThemeMessage(err instanceof Error ? err.message : "Enregistrement impossible");
+    } finally {
+      setThemeSaving(false);
+    }
+  }
 
   return (
     <AdminShell>
@@ -326,6 +351,21 @@ function HotelDetailsPage() {
               <InfoBlock label="Adresse" value={hotel.address || "Non renseignee"} wide />
               <InfoBlock label="Site web" value={hotel.website || "Non renseigne"} wide />
             </div>
+            <div className="mt-7 rounded-2xl border border-white/10 bg-slate-950/50 p-5">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-200/80">Theme Guest App</p>
+                  <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">Identite visuelle client</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">Le theme s'applique a l'app client multi-tenant sans redeploiement.</p>
+                </div>
+                <button type="button" onClick={() => void saveTheme()} disabled={themeSaving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20 disabled:opacity-60">
+                  {themeSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Palette className="h-4 w-4" />}
+                  Enregistrer le theme
+                </button>
+              </div>
+              <ThemePicker value={guestTheme} onChange={setGuestTheme} />
+              {themeMessage ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{themeMessage}</p> : null}
+            </div>
           </section>
           <HotelLaunchCard hotel={hotel} previewSlug={hotel.slug} />
         </div>
@@ -336,6 +376,8 @@ function HotelDetailsPage() {
 
 function HotelForm({
   form,
+  guestTheme,
+  onThemeChange,
   onChange,
   onSubmit,
   saving,
@@ -343,6 +385,8 @@ function HotelForm({
   submitLabel
 }: {
   form: HotelFormState;
+  guestTheme?: GuestThemeId;
+  onThemeChange?: (value: GuestThemeId) => void;
   onChange: <K extends keyof HotelFormState>(field: K, value: HotelFormState[K]) => void;
   onSubmit: (event: React.FormEvent) => void;
   saving: boolean;
@@ -376,6 +420,7 @@ function HotelForm({
         <ColorField label="Couleur principale" value={form.primaryColor ?? "#c9a84c"} onChange={(value) => onChange("primaryColor", value)} />
         <ColorField label="Couleur secondaire" value={form.secondaryColor ?? "#0f172a"} onChange={(value) => onChange("secondaryColor", value)} />
       </div>
+      {guestTheme && onThemeChange ? <ThemePicker value={guestTheme} onChange={onThemeChange} /> : null}
       {error ? <ErrorState message={error} compact /> : null}
       <button
         type="submit"
@@ -485,6 +530,41 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
         <input className="min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-100 outline-none" value={value} onChange={(event) => onChange(event.target.value)} />
       </span>
     </label>
+  );
+}
+
+function ThemePicker({ value, onChange }: { value: GuestThemeId; onChange: (value: GuestThemeId) => void }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-medium text-slate-300">Theme app client</p>
+        <p className="mt-1 text-xs text-slate-500">Choisissez le template UX/UI applique au sous-domaine client.</p>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-3">
+        {guestThemeIds.map((themeId) => {
+          const theme = guestThemes[themeId];
+          const active = value === themeId;
+          return (
+            <button
+              key={theme.id}
+              type="button"
+              onClick={() => onChange(theme.id)}
+              className={`overflow-hidden rounded-2xl border text-left transition focus:outline-none focus:ring-4 focus:ring-amber-300/10 ${active ? "border-amber-300/50 bg-amber-300/10" : "border-white/10 bg-slate-950/50 hover:bg-white/5"}`}
+            >
+              <span className={`block h-20 ${theme.preview}`} />
+              <span className="block p-4">
+                <span className="flex items-center justify-between gap-3">
+                  <span className="font-semibold tracking-tight text-white">{theme.name}</span>
+                  {active ? <CheckCircle2 className="h-4 w-4 text-amber-200" /> : null}
+                </span>
+                <span className="mt-2 block text-sm leading-6 text-slate-400">{theme.description}</span>
+                <span className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{theme.mood}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

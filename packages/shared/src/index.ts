@@ -5,6 +5,7 @@ export const hotelStatuses = ["active", "inactive", "draft"] as const;
 export const requestStatuses = ["new", "in_progress", "done", "urgent", "closed"] as const;
 export const priorities = ["low", "medium", "high", "urgent"] as const;
 export const relationshipStatuses = ["normal", "priority", "watch"] as const;
+export const guestThemes = ["parisian_boutique", "modern_minimal", "palace_luxury"] as const;
 
 export type Role = (typeof roles)[number];
 
@@ -117,6 +118,7 @@ export const settingsUpdateSchema = z.object({
   roomServiceHours: z.string().optional(),
   receptionPhone: z.string().optional(),
   whatsappNumber: z.string().optional(),
+  guestTheme: z.enum(guestThemes).optional(),
   languages: z.array(z.string()).optional(),
   modules: z.record(z.boolean()).optional()
 });

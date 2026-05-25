@@ -216,6 +216,7 @@ model HotelSettings {
   roomServiceHours String?  @map("room_service_hours")
   receptionPhone   String?  @map("reception_phone")
   whatsappNumber   String?  @map("whatsapp_number")
+  guestTheme       String   @default("parisian_boutique") @map("guest_theme")
   languages        Json     @default("[\"fr\",\"en\"]")
   modules          Json     @default("{}")
   createdAt        DateTime @default(now()) @map("created_at")

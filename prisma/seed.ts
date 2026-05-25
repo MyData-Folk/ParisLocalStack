@@ -32,6 +32,7 @@ async function main() {
           roomServiceHours: "07:00 - 23:00",
           receptionPhone: "+33 1 00 00 00 00",
           whatsappNumber: "+33 6 00 00 00 00",
+          guestTheme: "parisian_boutique",
           languages: ["fr", "en"],
           modules: { messages: true, requests: true, reviews: true, recommendations: true }
         }
