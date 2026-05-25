@@ -643,12 +643,12 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }:
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
       <div className="overflow-x-auto">
-        <table className="min-w-[1180px] w-full text-left text-sm">
+        <table className="min-w-[1520px] w-full text-left text-sm">
           <thead className="sticky top-0 bg-slate-950/95 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               {(mode === "active"
-                ? ["Chambre", "Client", "Email", "Telephone", "Arrivee", "Depart", "Langue", "CRM", "Statut", "Messages", "Demandes", "Avis", "Actions"]
-                : ["Client", "Email", "Telephone", "Chambre", "Arrivee", "Depart", "Duree", "Marketing", "Note", "Messages", "Demandes", "Dernier contact", "Actions"]
+                ? ["Chambre", "Client", "Relation", "Tags", "Email", "Telephone", "Arrivee", "Depart", "Langue", "CRM", "Statut", "Messages", "Demandes", "Avis", "Actions"]
+                : ["Client", "Relation", "Tags", "Email", "Telephone", "Chambre", "Arrivee", "Depart", "Duree", "Marketing", "Note", "Messages", "Demandes", "Dernier contact", "Actions"]
               ).map((header) => <th key={header} className="px-4 py-3 font-semibold">{header}</th>)}
             </tr>
           </thead>
@@ -659,6 +659,8 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }:
                   <>
                     <td className="px-4 py-4 font-semibold text-amber-100">{row.room}</td>
                     <td className="px-4 py-4 text-white">{row.client}</td>
+                    <td className="px-4 py-4"><RelationshipBadge status={row.relationshipStatus} /></td>
+                    <td className="px-4 py-4"><TagList tags={row.crmTags} /></td>
                     <td className="px-4 py-4 text-slate-300">{row.email || "-"}</td>
                     <td className="px-4 py-4 text-slate-300">{row.phone || "-"}</td>
                     <td className="px-4 py-4 text-slate-300">{formatDate(row.checkinDate)}</td>
@@ -674,6 +676,8 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }:
                 ) : (
                   <>
                     <td className="px-4 py-4 text-white">{row.client}</td>
+                    <td className="px-4 py-4"><RelationshipBadge status={row.relationshipStatus} /></td>
+                    <td className="px-4 py-4"><TagList tags={row.crmTags} /></td>
                     <td className="px-4 py-4 text-slate-300">{row.email || "-"}</td>
                     <td className="px-4 py-4 text-slate-300">{row.phone || "-"}</td>
                     <td className="px-4 py-4 font-semibold text-amber-100">{row.room}</td>
@@ -716,6 +720,9 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
   const [reviews, setReviews] = useState<any[]>([]);
   const [reply, setReply] = useState("");
   const [editingStay, setEditingStay] = useState<any | null>(null);
+  const [editingCrm, setEditingCrm] = useState(false);
+  const [crmDraft, setCrmDraft] = useState({ relationshipStatus: "normal", crmTags: "", preferences: "{\n}", internalNotes: "" });
+  const [crmError, setCrmError] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -762,6 +769,17 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
   const lastReview = [...reviews].sort(sortOperationalDesc)[0];
   const isActiveStay = primaryStay ? primaryStay.status === "active" || primaryStay.status === "checked_in" : false;
 
+  useEffect(() => {
+    if (!row) return;
+    setCrmDraft({
+      relationshipStatus: row.relationshipStatus,
+      crmTags: row.crmTags.join(", "),
+      preferences: JSON.stringify(row.preferences, null, 2),
+      internalNotes: row.internalNotes
+    });
+    setCrmError("");
+  }, [row?.guestId, row?.relationshipStatus, row?.internalNotes, row?.crmTags.join(","), JSON.stringify(row?.preferences ?? {})]);
+
   async function sendProfileReply() {
     const source = [...messages].filter((item) => item.senderType === "guest").sort(sortOperationalDesc)[0] ?? messages[0];
     if (!source || !reply.trim()) return;
@@ -791,6 +809,29 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
     if (!editingStay) return;
     await api.updateStay(editingStay.id, payload, token);
     setEditingStay(null);
+    await loadProfile();
+    onStayUpdated?.();
+  }
+
+  async function saveGuestCrm() {
+    if (!row?.guestId) return;
+    setCrmError("");
+    let preferences: Record<string, string | number | boolean> = {};
+    try {
+      const parsed = crmDraft.preferences.trim() ? JSON.parse(crmDraft.preferences) : {};
+      if (!isPlainPreferenceObject(parsed)) throw new Error("Les preferences doivent etre un objet JSON simple.");
+      preferences = parsed;
+    } catch (err) {
+      setCrmError(err instanceof Error ? err.message : "JSON preferences invalide");
+      return;
+    }
+    await api.updateGuestCrm(row.guestId, {
+      relationshipStatus: crmDraft.relationshipStatus,
+      crmTags: parseTags(crmDraft.crmTags),
+      preferences,
+      internalNotes: crmDraft.internalNotes
+    }, token);
+    setEditingCrm(false);
     await loadProfile();
     onStayUpdated?.();
   }
@@ -837,6 +878,62 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
                     <InfoPill icon={<Clock className="h-4 w-4" />} label="Duree" value={`${row.nights} nuit${row.nights > 1 ? "s" : ""}`} />
                     <InfoPill icon={<CheckCircle className="h-4 w-4" />} label="Consentement CRM" value={row.marketingConsent ? "Oui" : "Non"} />
                   </div>
+                </section>
+                <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-white">CRM reception</h3>
+                      <p className="mt-1 text-sm text-slate-500">Informations internes non visibles par le client.</p>
+                    </div>
+                    <button onClick={() => setEditingCrm((value) => !value)} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5">
+                      {editingCrm ? "Fermer" : "Editer CRM"}
+                    </button>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Relation</p>
+                      <div className="mt-2"><RelationshipBadge status={row.relationshipStatus} /></div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 md:col-span-2">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Tags CRM</p>
+                      <div className="mt-2"><TagList tags={row.crmTags} /></div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 md:col-span-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Preferences</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-300">{formatPreferences(row.preferences)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 md:col-span-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Notes internes</p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-300">{row.internalNotes || "Aucune note interne."}</p>
+                    </div>
+                  </div>
+                  {editingCrm ? (
+                    <div className="mt-5 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="Statut relation">
+                          <select value={crmDraft.relationshipStatus} onChange={(event) => setCrmDraft((draft) => ({ ...draft, relationshipStatus: event.target.value }))} className={fieldClassName}>
+                            <option value="normal">normal</option>
+                            <option value="priority">prioritaire</option>
+                            <option value="watch">a surveiller</option>
+                          </select>
+                        </Field>
+                        <Field label="Tags CRM">
+                          <input value={crmDraft.crmTags} onChange={(event) => setCrmDraft((draft) => ({ ...draft, crmTags: event.target.value }))} placeholder="VIP, allergie, preference calme" className={fieldClassName} />
+                        </Field>
+                        <Field label="Preferences JSON">
+                          <textarea value={crmDraft.preferences} onChange={(event) => setCrmDraft((draft) => ({ ...draft, preferences: event.target.value }))} className={`${fieldClassName} min-h-28 font-mono`} />
+                        </Field>
+                        <Field label="Notes internes">
+                          <textarea value={crmDraft.internalNotes} onChange={(event) => setCrmDraft((draft) => ({ ...draft, internalNotes: event.target.value }))} placeholder="Notes visibles uniquement par la reception." className={`${fieldClassName} min-h-28`} />
+                        </Field>
+                      </div>
+                      {crmError && <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{crmError}</p>}
+                      <div className="mt-4 flex justify-end gap-2">
+                        <button onClick={() => setEditingCrm(false)} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">Annuler</button>
+                        <button onClick={() => void saveGuestCrm()} className="rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200">Enregistrer CRM</button>
+                      </div>
+                    </div>
+                  ) : null}
                 </section>
                 <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
                   <h3 className="font-semibold text-white">Timeline sejour</h3>
@@ -1120,6 +1217,28 @@ function StatusBadge({ status }: { status: Conversation["status"] }) {
   );
 }
 
+function RelationshipBadge({ status }: { status?: string }) {
+  const config = {
+    normal: { label: "Normal", className: "border-slate-400/30 bg-slate-500/10 text-slate-200" },
+    priority: { label: "Prioritaire", className: "border-amber-400/30 bg-amber-500/10 text-amber-100" },
+    watch: { label: "A surveiller", className: "border-red-400/30 bg-red-500/10 text-red-200" }
+  }[status ?? "normal"] ?? { label: status ?? "Normal", className: "border-slate-400/30 bg-slate-500/10 text-slate-200" };
+
+  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${config.className}`}>{config.label}</span>;
+}
+
+function TagList({ tags }: { tags: string[] }) {
+  if (!tags.length) return <span className="text-xs text-slate-500">Aucun</span>;
+  return (
+    <div className="flex max-w-64 flex-wrap gap-1.5">
+      {tags.slice(0, 4).map((tag) => (
+        <span key={tag} className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs font-medium text-slate-300">{tag}</span>
+      ))}
+      {tags.length > 4 ? <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs font-medium text-slate-500">+{tags.length - 4}</span> : null}
+    </div>
+  );
+}
+
 const openStatuses = new Set(["new", "in_progress", "urgent", "sent"]);
 const fieldClassName = "w-full rounded-xl border border-white/10 bg-slate-900/90 px-3 py-2.5 text-sm text-white outline-none transition focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10";
 
@@ -1133,14 +1252,21 @@ function buildStayRow(stay: any, messages: any[], requests: any[], reviews: any[
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0];
   const latestReview = [...stayReviews].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0];
   const guest = stay.guest ?? {};
+  const crmTags = Array.isArray(guest.crmTags) ? guest.crmTags.filter((tag: unknown): tag is string => typeof tag === "string") : [];
+  const preferences = isPlainPreferenceObject(guest.preferences) ? guest.preferences : {};
   return {
     stay: { ...stay, messages: stay.messages ?? stayMessages, requests: stay.requests ?? stayRequests, reviews: stay.reviews ?? stayReviews },
+    guestId: stay.guestId ?? guest.id,
     room: stay.roomNumber ?? "-",
     client: `${guest.firstName ?? ""} ${guest.lastName ?? ""}`.trim() || guest.email || "Client",
     email: guest.email ?? "",
     phone: guest.phone ?? "",
     language: guest.language ?? "fr",
     marketingConsent: Boolean(guest.marketingConsent),
+    relationshipStatus: guest.relationshipStatus ?? "normal",
+    crmTags,
+    preferences,
+    internalNotes: guest.internalNotes ?? "",
     status: stay.status ?? "active",
     checkinDate: stay.checkinDate,
     checkoutDate: stay.checkoutDate,
@@ -1154,10 +1280,29 @@ function buildStayRow(stay: any, messages: any[], requests: any[], reviews: any[
   };
 }
 
+function parseTags(value: string) {
+  return Array.from(new Set(value.split(",").map((tag) => tag.trim()).filter(Boolean))).slice(0, 20);
+}
+
+function isPlainPreferenceObject(value: unknown): value is Record<string, string | number | boolean> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  return Object.values(value).every((item) => ["string", "number", "boolean"].includes(typeof item));
+}
+
+function formatPreferences(preferences: Record<string, string | number | boolean>) {
+  const entries = Object.entries(preferences);
+  if (entries.length === 0) return "Aucune preference renseignee.";
+  return entries.map(([key, value]) => `${key}: ${String(value)}`).join(" - ");
+}
+
 function exportableStayRows(rows: any[]) {
   return rows.map((row) => ({
     chambre: row.room,
     client: row.client,
+    relation_client: row.relationshipStatus,
+    tags_crm: row.crmTags.join(", "),
+    preferences: formatPreferences(row.preferences),
+    notes_internes: row.internalNotes,
     email: row.email,
     telephone: row.phone,
     langue: row.language,

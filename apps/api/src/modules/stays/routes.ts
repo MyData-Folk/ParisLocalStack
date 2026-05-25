@@ -5,6 +5,7 @@ import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
+import { publicGuestSelect } from "../../utils/publicSelects.js";
 
 export const staysRouter = Router();
 export const publicStaysRouter = Router({ mergeParams: true });
@@ -63,7 +64,7 @@ publicStaysRouter.post("/", validateBody(stayCreateSchema), asyncHandler(async (
       checkoutDate: req.body.checkoutDate ? new Date(req.body.checkoutDate) : undefined,
       status: req.body.status
     },
-    include: { guest: true }
+    include: { guest: { select: publicGuestSelect } }
   });
   return sendCreated(res, stay);
 }));

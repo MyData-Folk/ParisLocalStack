@@ -4,6 +4,7 @@ export const roles = ["super_admin", "hotel_admin", "receptionist", "guest"] as 
 export const hotelStatuses = ["active", "inactive", "draft"] as const;
 export const requestStatuses = ["new", "in_progress", "done", "urgent", "closed"] as const;
 export const priorities = ["low", "medium", "high", "urgent"] as const;
+export const relationshipStatuses = ["normal", "priority", "watch"] as const;
 
 export type Role = (typeof roles)[number];
 
@@ -37,6 +38,13 @@ export const guestCreateSchema = z.object({
   phone: z.string().optional(),
   language: z.string().default("fr"),
   marketingConsent: z.boolean().default(false)
+});
+
+export const guestCrmUpdateSchema = z.object({
+  internalNotes: z.string().max(4000).optional(),
+  crmTags: z.array(z.string().min(1).max(40)).max(20).optional(),
+  preferences: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+  relationshipStatus: z.enum(relationshipStatuses).optional()
 });
 
 export const stayCreateSchema = z.object({

@@ -110,6 +110,11 @@ export const api = {
     token,
     body: JSON.stringify(body)
   }),
+  updateGuestCrm: (guestId: string, body: unknown, token: string) => request<any>(`/api/guests/${guestId}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
+  }),
   updateReviewStatus: (reviewId: string, status: string, token: string) => request<any>(`/api/reviews/${reviewId}/status`, {
     method: "PATCH",
     token,

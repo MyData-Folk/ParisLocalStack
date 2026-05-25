@@ -5,6 +5,7 @@ import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
+import { publicGuestSelect } from "../../utils/publicSelects.js";
 import { validateGuestStayScope } from "../../utils/tenantScope.js";
 
 export const requestsRouter = Router();
@@ -17,7 +18,7 @@ publicRequestsRouter.post("/", validateBody(serviceRequestCreateSchema), asyncHa
   if (!scoped) return res.status(404).json({ error: "Request context not found" });
   const request = await prisma.serviceRequest.create({
     data: { ...req.body, hotelId: hotel.id, status: "new" },
-    include: { guest: true, stay: true }
+    include: { guest: { select: publicGuestSelect }, stay: true }
   });
   req.app.get("io")?.to(`hotel:${hotel.id}`).emit("request:new", request);
   return sendCreated(res, request);
@@ -37,7 +38,7 @@ publicRequestsRouter.get("/", asyncHandler(async (req, res) => {
 
   const requests = await prisma.serviceRequest.findMany({
     where: { hotelId: hotel.id, guestId: query.data.guestId, stayId: query.data.stayId },
-    include: { guest: true, stay: true },
+    include: { guest: { select: publicGuestSelect }, stay: true },
     orderBy: { createdAt: "desc" }
   });
   return sendOk(res, requests);

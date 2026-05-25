@@ -5,6 +5,7 @@ import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
+import { publicGuestSelect } from "../../utils/publicSelects.js";
 import { validateGuestStayScope } from "../../utils/tenantScope.js";
 
 export const reviewsRouter = Router();
@@ -17,7 +18,7 @@ publicReviewsRouter.post("/", validateBody(reviewCreateSchema), asyncHandler(asy
   if (!scoped) return res.status(404).json({ error: "Review context not found" });
   const review = await prisma.review.create({
     data: { ...req.body, hotelId: hotel.id, status: req.body.rating <= 3 ? "negative_alert" : "new" },
-    include: { guest: true, stay: true }
+    include: { guest: { select: publicGuestSelect }, stay: true }
   });
   req.app.get("io")?.to(`hotel:${hotel.id}`).emit("review:new", review);
   return sendCreated(res, review);

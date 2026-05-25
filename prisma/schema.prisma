@@ -82,21 +82,25 @@ model HotelUser {
 }
 
 model Guest {
-  id               String           @id @default(uuid())
-  hotelId          String           @map("hotel_id")
-  firstName        String           @map("first_name")
-  lastName         String           @map("last_name")
-  email            String
-  phone            String?
-  language         String           @default("fr")
-  marketingConsent Boolean          @default(false) @map("marketing_consent")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  hotel            Hotel            @relation(fields: [hotelId], references: [id], onDelete: Cascade)
-  stays            Stay[]
-  messages         Message[]
-  serviceRequests  ServiceRequest[]
-  reviews          Review[]
-  analyticsEvents  AnalyticsEvent[]
+  id                 String           @id @default(uuid())
+  hotelId            String           @map("hotel_id")
+  firstName          String           @map("first_name")
+  lastName           String           @map("last_name")
+  email              String
+  phone              String?
+  language           String           @default("fr")
+  marketingConsent   Boolean          @default(false) @map("marketing_consent")
+  internalNotes      String           @default("") @map("internal_notes")
+  crmTags            Json             @default("[]") @map("crm_tags")
+  preferences        Json             @default("{}")
+  relationshipStatus String           @default("normal") @map("relationship_status")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  hotel              Hotel            @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  stays              Stay[]
+  messages           Message[]
+  serviceRequests    ServiceRequest[]
+  reviews            Review[]
+  analyticsEvents    AnalyticsEvent[]
 
   @@index([hotelId])
   @@index([hotelId, email])

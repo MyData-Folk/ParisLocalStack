@@ -7,6 +7,7 @@ import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
+import { publicGuestSelect } from "../../utils/publicSelects.js";
 import { validateGuestStayScope } from "../../utils/tenantScope.js";
 
 export const messagesRouter = Router();
@@ -29,7 +30,7 @@ publicMessagesRouter.post("/", validateBody(messageCreateSchema), asyncHandler(a
   if (!scoped) return res.status(404).json({ error: "Conversation not found" });
   const message = await prisma.message.create({
     data: { ...req.body, hotelId: hotel.id, senderType: "guest", status: "new" },
-    include: { guest: true, stay: true }
+    include: { guest: { select: publicGuestSelect }, stay: true }
   });
   emitMessage(req, hotel.id, message);
   return sendCreated(res, message);
@@ -49,7 +50,7 @@ publicMessagesRouter.get("/", asyncHandler(async (req, res) => {
 
   const messages = await prisma.message.findMany({
     where: { hotelId: hotel.id, guestId: query.data.guestId, stayId: query.data.stayId },
-    include: { guest: true, stay: true },
+    include: { guest: { select: publicGuestSelect }, stay: true },
     orderBy: { createdAt: "asc" }
   });
   return sendOk(res, messages);
