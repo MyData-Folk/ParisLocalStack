@@ -5,14 +5,14 @@ import { Button } from '../components/ui/Button';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAppStore();
-  const [email, setEmail] = useState('admin@concierge-os.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('admin@paris-local.test');
+  const [password, setPassword] = useState('ChangeMe123!');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const demoAccounts = [
-    { label: 'Super Admin', email: 'admin@concierge-os.com', role: 'SaaS Admin' },
+    { label: 'Super Admin', email: 'admin@paris-local.test', role: 'SaaS Admin' },
     { label: 'Hôtel Admin', email: 'manager@hotel-le-marais.fr', role: 'Hôtel Le Marais' },
     { label: 'Réceptionniste', email: 'reception@hotel-le-marais.fr', role: 'Hôtel Le Marais' },
   ];
@@ -128,7 +128,7 @@ export const LoginPage: React.FC = () => {
               {demoAccounts.map((account, i) => (
                 <button
                   key={i}
-                  onClick={() => { setEmail(account.email); setPassword('demo123'); }}
+                  onClick={() => { setEmail(account.email); setPassword('ChangeMe123!'); }}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/30 transition-all text-left group"
                 >
                   <div>

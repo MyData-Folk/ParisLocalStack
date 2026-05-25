@@ -1,13 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AlertTriangle, CheckCircle, Clock, Inbox, ListChecks, LogOut, Star, Users } from "lucide-react";
+import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
-import { extractHotelSlug } from "../../lib/tenant";
-
-type AuthState = {
-  token: string;
-  user: { id: string; name: string; role: string; hotelIds: string[] };
-};
+import { useAppStore } from "../../stores/appStore";
 
 type MessageItem = {
   id: string;
@@ -35,70 +31,42 @@ type Conversation = {
 type FilterKey = "all" | "new" | "urgent" | "answered";
 
 export function ReceptionApp({ basePath = "" }: { basePath?: string }) {
-  const [auth, setAuth] = useState<AuthState | null>(() => {
-    const raw = localStorage.getItem("reception-auth");
-    return raw ? JSON.parse(raw) as AuthState : null;
-  });
+  return (
+    <AuthGate title="Connexion reception" subtitle="Acces securise au dashboard hotel" allowedRoles={["super_admin", "hotel_admin", "receptionist"]}>
+      <ReceptionDashboard basePath={basePath} />
+    </AuthGate>
+  );
+}
 
-  if (!auth) return <ReceptionLogin onLogin={setAuth} />;
+function ReceptionDashboard({ basePath }: { basePath: string }) {
+  const { currentUser, token, logout } = useAppStore();
+  if (!currentUser || !token) return null;
 
-  const hotelId = auth.user.hotelIds[0];
+  const hotelId = currentUser.hotelIds[0];
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
       <aside className="w-64 border-r border-white/10 bg-slate-900 p-4">
         <h1 className="text-lg font-semibold">Reception</h1>
-        <p className="text-sm text-slate-400">{auth.user.name}</p>
+        <p className="text-sm text-slate-400">{currentUser.name}</p>
         <nav className="mt-6 space-y-2 text-sm">
           <NavItem to={`${basePath}/inbox`} icon={<Inbox className="h-4 w-4" />} label="Messages" />
           <NavItem to={`${basePath}/requests`} icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
           <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="CRM clients" />
           <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
         </nav>
-        <button onClick={() => { localStorage.removeItem("reception-auth"); setAuth(null); }} className="mt-8 inline-flex items-center gap-2 text-sm text-slate-300"><LogOut className="h-4 w-4" /> Deconnexion</button>
+        <button onClick={() => void logout()} className="mt-8 inline-flex items-center gap-2 text-sm text-slate-300"><LogOut className="h-4 w-4" /> Deconnexion</button>
       </aside>
       <main className="min-w-0 flex-1 p-6">
         <Routes>
           <Route path={basePath || "/"} element={<Navigate to={`${basePath}/inbox`} replace />} />
-          <Route path={`${basePath}/inbox`} element={<InboxView hotelId={hotelId} token={auth.token} />} />
-          <Route path={`${basePath}/requests`} element={<RequestsView hotelId={hotelId} token={auth.token} />} />
-          <Route path={`${basePath}/guests`} element={<DataView title="CRM clients" loader={() => api.hotelGuests(hotelId, auth.token)} />} />
-          <Route path={`${basePath}/reviews`} element={<DataView title="Avis clients" loader={() => api.hotelReviews(hotelId, auth.token)} />} />
+          <Route path={`${basePath}/inbox`} element={<InboxView hotelId={hotelId} token={token} />} />
+          <Route path={`${basePath}/requests`} element={<RequestsView hotelId={hotelId} token={token} />} />
+          <Route path={`${basePath}/guests`} element={<DataView title="CRM clients" loader={() => api.hotelGuests(hotelId, token)} />} />
+          <Route path={`${basePath}/reviews`} element={<DataView title="Avis clients" loader={() => api.hotelReviews(hotelId, token)} />} />
           <Route path={`${basePath}/analytics`} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
           <Route path={`${basePath}/settings`} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
         </Routes>
       </main>
-    </div>
-  );
-}
-
-function ReceptionLogin({ onLogin }: { onLogin: (auth: AuthState) => void }) {
-  const [email, setEmail] = useState("reception@vendome.test");
-  const [password, setPassword] = useState("ChangeMe123!");
-  const [error, setError] = useState("");
-  const slug = extractHotelSlug();
-
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    setError("");
-    try {
-      const auth = await api.login(email, password);
-      localStorage.setItem("reception-auth", JSON.stringify(auth));
-      onLogin(auth);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-    }
-  }
-
-  return (
-    <div className="grid min-h-screen place-items-center bg-slate-950 p-4 text-slate-100">
-      <form onSubmit={submit} className="w-full max-w-sm rounded-lg border border-white/10 bg-slate-900 p-5">
-        <p className="text-sm text-amber-300">{slug ? `admin.${slug}` : "Reception"}</p>
-        <h1 className="text-xl font-semibold">Connexion reception</h1>
-        <input className="mt-5 w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2" value={email} onChange={(event) => setEmail(event.target.value)} />
-        <input className="mt-3 w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-        {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
-        <button className="mt-4 w-full rounded-md bg-amber-400 px-4 py-2 font-medium text-slate-950">Entrer</button>
-      </form>
     </div>
   );
 }

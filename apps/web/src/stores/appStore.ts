@@ -1,12 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Hotel, User, AppNotification } from '../types';
-import { mockHotels, mockUsers } from '../lib/mockData';
+import type { Hotel, AppNotification } from '../types';
+import { mockHotels } from '../lib/mockData';
+import { api, type ApiUser } from '../lib/api';
+
+// TODO: clean up orphaned apps/web/src/pages screens that still depend on mockData in a separate ticket.
+type AuthUser = ApiUser & {
+  firstName: string;
+  lastName: string;
+  hotelId?: string;
+};
 
 interface AppState {
   // Auth
-  currentUser: User | null;
+  token: string | null;
+  currentUser: AuthUser | null;
   isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  authError: string | null;
 
   // Current hotel context
   currentHotel: Hotel | null;
@@ -22,7 +33,8 @@ interface AppState {
 
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  restoreSession: () => Promise<boolean>;
   setCurrentHotel: (hotel: Hotel | null) => void;
   setSidebarOpen: (open: boolean) => void;
   setActiveView: (view: string) => void;
@@ -50,8 +62,19 @@ const initialNotifications: AppNotification[] = [
   },
 ];
 
-const getHotelForUser = (user: User): Hotel | null => {
-  if (user.hotelId) return mockHotels.find(h => h.id === user.hotelId) || null;
+const toAuthUser = (user: ApiUser): AuthUser => {
+  const [firstName = user.name, ...rest] = user.name.trim().split(/\s+/);
+  return {
+    ...user,
+    firstName,
+    lastName: rest.join(' '),
+    hotelId: user.hotelIds[0],
+  };
+};
+
+const getHotelForUser = (user: AuthUser): Hotel | null => {
+  // TODO: replace mockHotels with API-backed hotel context when orphaned mock pages are cleaned up.
+  if (user.hotelId) return mockHotels.find(h => h.id === user.hotelId) || mockHotels[0] || null;
   return mockHotels[0] || null;
 };
 
@@ -59,9 +82,12 @@ const countUnread = (notifications: AppNotification[]) => notifications.filter(n
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
+      token: null,
       currentUser: null,
       isAuthenticated: false,
+      isAuthLoading: false,
+      authError: null,
       currentHotel: null,
       hotels: mockHotels,
       sidebarOpen: true,
@@ -69,27 +95,77 @@ export const useAppStore = create<AppState>()(
       notifications: initialNotifications,
       unreadNotifications: countUnread(initialNotifications),
 
-      login: async (email: string, _password: string) => {
-        const normalizedEmail = email.trim().toLowerCase();
-        const user = mockUsers.find(u => u.email.toLowerCase() === normalizedEmail);
-        if (!user) return false;
-
-        set({
-          currentUser: user,
-          isAuthenticated: true,
-          currentHotel: getHotelForUser(user),
-          activeView: 'dashboard',
-        });
-        return true;
+      login: async (email: string, password: string) => {
+        set({ isAuthLoading: true, authError: null });
+        try {
+          const auth = await api.login(email.trim().toLowerCase(), password);
+          const user = toAuthUser(auth.user);
+          localStorage.removeItem('reception-auth');
+          set({
+            token: auth.token,
+            currentUser: user,
+            isAuthenticated: true,
+            isAuthLoading: false,
+            authError: null,
+            currentHotel: getHotelForUser(user),
+            activeView: 'dashboard',
+          });
+          return true;
+        } catch (error) {
+          set({
+            token: null,
+            currentUser: null,
+            isAuthenticated: false,
+            isAuthLoading: false,
+            authError: error instanceof Error ? error.message : 'Connexion impossible',
+            currentHotel: null,
+          });
+          return false;
+        }
       },
 
-      logout: () => {
+      logout: async () => {
+        const token = get().token;
+        if (token) await api.logout(token).catch(() => undefined);
+        localStorage.removeItem('reception-auth');
         set({
+          token: null,
           currentUser: null,
           isAuthenticated: false,
+          isAuthLoading: false,
+          authError: null,
           currentHotel: null,
           activeView: 'dashboard',
         });
+      },
+
+      restoreSession: async () => {
+        const token = get().token;
+        if (!token) return false;
+        set({ isAuthLoading: true, authError: null });
+        try {
+          const apiUser = await api.me(token);
+          const user = toAuthUser(apiUser);
+          set({
+            currentUser: user,
+            isAuthenticated: true,
+            isAuthLoading: false,
+            authError: null,
+            currentHotel: getHotelForUser(user),
+          });
+          return true;
+        } catch {
+          localStorage.removeItem('reception-auth');
+          set({
+            token: null,
+            currentUser: null,
+            isAuthenticated: false,
+            isAuthLoading: false,
+            authError: 'Session expiree',
+            currentHotel: null,
+          });
+          return false;
+        }
       },
 
       setCurrentHotel: (hotel) => set({ currentHotel: hotel }),
@@ -134,6 +210,7 @@ export const useAppStore = create<AppState>()(
       name: 'concierge-os-state',
       partialize: (state) => ({
         currentUser: state.currentUser,
+        token: state.token,
         isAuthenticated: state.isAuthenticated,
         currentHotel: state.currentHotel,
         sidebarOpen: state.sidebarOpen,

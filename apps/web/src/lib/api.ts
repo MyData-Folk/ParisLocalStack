@@ -1,6 +1,8 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
 type ApiOptions = RequestInit & { token?: string };
+export type ApiUser = { id: string; email: string; name: string; role: string; hotelIds: string[] };
+export type ApiAuth = { token: string; user: ApiUser };
 
 async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
@@ -14,10 +16,12 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
 }
 
 export const api = {
-  login: (email: string, password: string) => request<{ token: string; user: { id: string; name: string; role: string; hotelIds: string[] } }>("/api/auth/login", {
+  login: (email: string, password: string) => request<ApiAuth>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password })
   }),
+  me: (token: string) => request<ApiUser>("/api/auth/me", { token }),
+  logout: (token: string) => request<{ ok: boolean }>("/api/auth/logout", { method: "POST", token }),
   hotelBySlug: (slug: string) => request<any>(`/api/public/hotels/by-slug/${slug}`),
   settings: (slug: string) => request<any>(`/api/public/${slug}/settings`),
   recommendations: (slug: string) => request<any[]>(`/api/public/${slug}/recommendations`),
