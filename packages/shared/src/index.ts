@@ -87,6 +87,7 @@ export const serviceRequestCreateSchema = z.object({
   type: z.string().min(1),
   title: z.string().min(1),
   description: z.string().min(1),
+  details: z.record(z.unknown()).optional(),
   priority: z.enum(priorities).default("medium")
 });
 
@@ -111,6 +112,13 @@ export const recommendationSchema = z.object({
   distance: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
+  imageUrl: z.string().url().optional().or(z.literal("")),
+  tags: z.array(z.string().min(1).max(40)).max(20).optional(),
+  openingHours: z.string().optional(),
+  googlePlaceId: z.string().optional(),
+  sortOrder: z.number().int().default(0),
+  isActive: z.boolean().default(true),
+  source: z.string().optional().default("manual"),
   isFeatured: z.boolean().default(false)
 });
 

@@ -12,7 +12,18 @@ export const publicRecommendationsRouter = Router({ mergeParams: true });
 publicRecommendationsRouter.get("/", asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({ where: { slug: req.params.hotelSlug } });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
-  const recommendations = await prisma.recommendation.findMany({ where: { hotelId: hotel.id }, orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }] });
+  const recommendations = await prisma.recommendation.findMany({
+    where: { hotelId: hotel.id, isActive: true },
+    orderBy: [{ isFeatured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }]
+  });
+  return sendOk(res, recommendations);
+}));
+
+recommendationsRouter.get("/hotels/:hotelId/recommendations", authenticate, requireHotelAccess("hotelId"), asyncHandler(async (req, res) => {
+  const recommendations = await prisma.recommendation.findMany({
+    where: { hotelId: req.params.hotelId },
+    orderBy: [{ isFeatured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }]
+  });
   return sendOk(res, recommendations);
 }));
 

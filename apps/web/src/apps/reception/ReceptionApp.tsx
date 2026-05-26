@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Activity, AlertTriangle, Archive, BarChart3, BedDouble, CheckCircle, Clock, Download, Edit3, Eye, FileJson, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, Radio, Search, Send, Settings, ShieldCheck, Star, Users, X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { Activity, AlertTriangle, Archive, BarChart3, BedDouble, CheckCircle, Clock, Copy, Download, Edit3, ExternalLink, Eye, FileJson, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, QrCode, Radio, Search, Send, Settings, ShieldCheck, Star, Users, X } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
+import { QrCodePdfButton } from "../../components/QrCodePdfButton";
 import { api } from "../../lib/api";
+import { guestUrl } from "../../lib/hotelOnboarding";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
 import { useAppStore } from "../../stores/appStore";
 
@@ -73,6 +76,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
             <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="Clients presents" />
             <NavItem to={`${basePath}/history`} icon={<Archive className="h-4 w-4" />} label="Historique CRM" />
             <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
+            <NavItem to={`${basePath}/qr`} icon={<QrCode className="h-4 w-4" />} label="QR Code" />
           </ReceptionNavGroup>
           <ReceptionNavGroup label="Pilotage">
             <NavItem to={`${basePath}/analytics`} icon={<BarChart3 className="h-4 w-4" />} label="Analytics" />
@@ -112,6 +116,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
           <Route path={routePath("/guests")} element={<GuestsView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/history")} element={<HistoryView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/reviews")} element={<ReviewsView hotelId={hotelId} token={token} />} />
+          <Route path={routePath("/qr")} element={<ReceptionQrView hotelId={hotelId} token={token} />} />
           <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
           <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
         </Routes>
@@ -197,6 +202,57 @@ function ReceptionHome({ hotelId, token, basePath }: { hotelId: string; token: s
           <Radio className="h-6 w-6 text-sky-300" />
           <h2 className="mt-4 text-lg font-semibold tracking-tight text-white">Centre live</h2>
           <p className="mt-2 text-sm leading-6 text-sky-50/75">Le dashboard reception reste synchronise avec les messages, demandes, avis et statuts actifs.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ReceptionQrView({ hotelId, token }: { hotelId: string; token: string }) {
+  const [hotel, setHotel] = useState<any | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setError("");
+    void api.hotel(hotelId, token)
+      .then(setHotel)
+      .catch((err) => setError(err instanceof Error ? err.message : "Impossible de charger le QR code"));
+  }, [hotelId, token]);
+
+  const url = hotel?.slug ? guestUrl(hotel.slug) : "";
+
+  return (
+    <div className="space-y-5">
+      <PageHeader eyebrow="QR client" title="QR code hotel" description="Lien unique pour onboarding client, pre-check-in et impression reception" />
+      {error ? <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p> : null}
+      <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+          <div className="rounded-2xl bg-white p-5">
+            {url ? <QRCodeSVG value={url} size={280} marginSize={2} className="mx-auto h-auto w-full max-w-72" /> : <div className="grid aspect-square place-items-center text-sm text-zinc-500">Chargement du QR code</div>}
+          </div>
+          {url ? <div className="mt-4"><QrCodePdfButton url={url} hotelName={hotel?.name || hotel.slug} slug={hotel.slug} variant="emerald" /></div> : null}
+        </div>
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-300">URL canonique client</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">{hotel?.name ?? "Hotel"}</h2>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">Le QR code ouvre l'app client de l'hotel. Sans session existante, le client arrive directement sur l'enregistrement : identite, coordonnees, chambre et dates de sejour.</p>
+          <div className="mt-5 rounded-2xl border border-white/[0.07] bg-[#09090b] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Lien a partager</p>
+            <div className="mt-2 flex items-center gap-2">
+              <code className="min-w-0 flex-1 truncate font-mono text-xs text-sky-100">{url || "Chargement..."}</code>
+              <button type="button" disabled={!url} onClick={() => void navigator.clipboard?.writeText(url)} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.04] text-zinc-300 transition hover:bg-white/[0.07] focus:outline-none focus:ring-4 focus:ring-sky-400/15 disabled:opacity-50" aria-label="Copier le lien client">
+                <Copy className="h-4 w-4" />
+              </button>
+              <a href={url || undefined} target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.04] text-zinc-300 transition hover:bg-white/[0.07] focus:outline-none focus:ring-4 focus:ring-sky-400/15 aria-disabled:pointer-events-none aria-disabled:opacity-50" aria-disabled={!url} aria-label="Ouvrir l'app client">
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <InfoPill icon={<QrCode className="h-4 w-4" />} label="Usage" value="Print / Email" />
+            <InfoPill icon={<Users className="h-4 w-4" />} label="Scan" value="Onboarding" />
+            <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Reception" value="Sejour editable" />
+          </div>
         </div>
       </section>
     </div>
@@ -515,7 +571,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
             <table className="min-w-[1120px] w-full text-left text-sm">
               <thead className="bg-[#09090b] text-[11px] uppercase tracking-wider text-zinc-500">
                 <tr>
-                  {["Type / Demande", "Client", "Chambre", "Statut", "Priorite", "Cree le", "Actions"].map((header) => <th key={header} className="px-4 py-3 font-semibold">{header}</th>)}
+                  {["Type / Demande", "Client", "Chambre", "Souhaite", "Destination / Details", "Statut", "Priorite", "Actions"].map((header) => <th key={header} className="px-4 py-3 font-semibold">{header}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.07]">
@@ -532,9 +588,10 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
                     </td>
                     <td className="px-4 py-4 text-zinc-200">{item.guest?.firstName} {item.guest?.lastName || "Client"}</td>
                     <td className="px-4 py-4 font-semibold text-sky-100">{item.stay?.roomNumber ?? "-"}</td>
+                    <td className="px-4 py-4 text-zinc-300">{requestDesiredTime(item)}</td>
+                    <td className="px-4 py-4 text-zinc-300">{requestPrimaryDetail(item)}</td>
                     <td className="px-4 py-4"><StatusBadge status={normalizeStatus(item.status, item.priority, item.senderType)} /></td>
                     <td className="px-4 py-4 text-zinc-300">{item.priority ?? "-"}</td>
-                    <td className="px-4 py-4 text-zinc-400">{formatTime(item.createdAt)}</td>
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => setProfileTarget({ guestId: item.guestId, stayId: item.stayId })} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">Fiche</button>
@@ -1190,6 +1247,7 @@ function RequestPanel({ requests, onUpdate }: { requests: any[]; onUpdate: (requ
               </div>
               <span className="rounded-full border border-white/10 px-2 py-1 text-xs text-slate-300">{request.status}</span>
             </div>
+            <RequestDetailsView request={request} />
             <div className="mt-3 flex flex-wrap gap-2">
               <button onClick={() => void onUpdate(request, "in_progress")} className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/5">En cours</button>
               <button onClick={() => void onUpdate(request, "completed")} className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/5">Traite</button>
@@ -1219,6 +1277,21 @@ function ReviewPanel({ reviews, onResolve }: { reviews: any[]; onResolve: (revie
         {reviews.length === 0 && <p className="text-sm text-slate-500">Aucun avis.</p>}
       </div>
     </section>
+  );
+}
+
+function RequestDetailsView({ request }: { request: any }) {
+  const details = requestDetailsEntries(request);
+  if (details.length === 0) return null;
+  return (
+    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      {details.map(([label, value]) => (
+        <div key={label} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+          <p className="mt-1 text-sm text-slate-200">{value}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -1459,6 +1532,73 @@ function formatPreferences(preferences: Record<string, string | number | boolean
   const entries = Object.entries(preferences);
   if (entries.length === 0) return "Aucune preference renseignee.";
   return entries.map(([key, value]) => `${key}: ${String(value)}`).join(" - ");
+}
+
+function requestDesiredTime(request: any) {
+  const details = request.details ?? {};
+  if (details.asap) return "Des que possible";
+  const date = details.requestedDate ? formatDate(String(details.requestedDate)) : "";
+  const time = details.requestedTime ? String(details.requestedTime) : "";
+  return [date, time].filter(Boolean).join(" ") || formatTime(request.createdAt);
+}
+
+function requestPrimaryDetail(request: any) {
+  const details = request.details ?? {};
+  if (request.type === "taxi") return taxiRequestDestination(details);
+  if (request.type === "restaurant") return `${details.people ?? "-"} pers.${details.cuisine ? ` - ${details.cuisine}` : ""}${details.area ? ` - ${details.area}` : ""}`;
+  if (request.type === "room_service") return `${details.requestType ?? "Room service"}${details.quantity ? ` x${details.quantity}` : ""}`;
+  if (request.type === "towels") return `${details.quantity ?? 1} ${details.itemType ?? "linge"}`;
+  return details.subject ?? request.description ?? "-";
+}
+
+function requestDetailsEntries(request: any): Array<[string, string]> {
+  const details = request.details ?? {};
+  if (!details || typeof details !== "object") return [];
+  if (request.type === "taxi") {
+    const entries: Array<[string, string]> = [
+      ["Date / heure", requestDesiredTime(request)],
+      ["Depart", details.pickup === "hotel" ? "Hotel" : String(details.pickup ?? "-")],
+      ["Destination", taxiRequestDestination(details)],
+      ["Passagers", String(details.passengers ?? "-")],
+      ["Bagages", String(details.luggage ?? "0")],
+      ["Telephone", String(details.phone ?? "-")],
+      ["Note", String(details.notes ?? "-")]
+    ];
+    return entries.filter(([, value]) => value && value !== "-");
+  }
+  if (request.type === "restaurant") {
+    const entries: Array<[string, string]> = [
+      ["Date / heure", requestDesiredTime(request)],
+      ["Personnes", String(details.people ?? "-")],
+      ["Cuisine", String(details.cuisine ?? "-")],
+      ["Budget", String(details.budget ?? "-")],
+      ["Quartier", String(details.area ?? "-")],
+      ["Restaurant", String(details.restaurantName ?? "-")],
+      ["Contraintes", String(details.dietaryRestrictions ?? "-")],
+      ["Note", String(details.notes ?? "-")]
+    ];
+    return entries.filter(([, value]) => value && value !== "-");
+  }
+  return Object.entries(details)
+    .filter(([, value]) => value !== undefined && value !== "")
+    .map(([key, value]) => [humanizeDetailKey(key), String(value)]);
+}
+
+function taxiRequestDestination(details: any) {
+  if (details.destinationType === "airport") return airportName(details.airport);
+  if (details.destinationType === "station") return String(details.station ?? "Gare");
+  return String(details.destinationLabel ?? "Destination libre");
+}
+
+function airportName(value?: string) {
+  if (value === "CDG") return "Aeroport Charles de Gaulle";
+  if (value === "ORY") return "Aeroport Orly";
+  if (value === "BVA") return "Aeroport Beauvais";
+  return value ? String(value) : "Aeroport";
+}
+
+function humanizeDetailKey(key: string) {
+  return key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase());
 }
 
 function exportableStayRows(rows: any[]) {

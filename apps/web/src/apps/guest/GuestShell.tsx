@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import {
   Bell,
+  CalendarDays,
   Car,
   CheckCircle,
   ChevronRight,
@@ -21,7 +22,8 @@ import {
   TicketCheck,
   Utensils,
   Waves,
-  Wifi
+  Wifi,
+  X
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
@@ -47,8 +49,10 @@ type RequestItem = {
   description: string;
   status?: string;
   priority?: string;
+  details?: Record<string, unknown>;
   createdAt: string;
 };
+type RequestDetails = Record<string, string | number | boolean | undefined>;
 
 const heroImage = "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=80";
 const GuestThemeContext = React.createContext<GuestTheme>(resolveGuestTheme(undefined));
@@ -73,6 +77,7 @@ export function GuestShell() {
   const [session, setSession] = useState<Session | null>(() => readGuestSession(hotelSlug));
   const [status, setStatus] = useState("Chargement de votre concierge...");
   const [toast, setToast] = useState("");
+  const [activeService, setActiveService] = useState<ServiceTemplate | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -164,7 +169,7 @@ export function GuestShell() {
                 settings={settings}
                 session={session}
                 requests={requests}
-                onServiceRequest={(service) => createServiceRequest(hotelSlug, session, service, setRequests, setToast)}
+                onServiceRequest={setActiveService}
               />
             )}
             {activeSection === "services" && session && (
@@ -172,7 +177,7 @@ export function GuestShell() {
                 hotelSlug={hotelSlug}
                 session={session}
                 requests={requests}
-                onServiceRequest={(service) => createServiceRequest(hotelSlug, session, service, setRequests, setToast)}
+                onServiceRequest={setActiveService}
               />
             )}
             {activeSection === "messages" && session && (
@@ -187,6 +192,19 @@ export function GuestShell() {
           </main>
 
           <GuestNav basePath={basePath} active={activeSection} hasSession={Boolean(session)} />
+          {activeService && session ? (
+            <ServiceRequestSheet
+              service={activeService}
+              session={session}
+              hotelSlug={hotelSlug}
+              onClose={() => setActiveService(null)}
+              onCreated={(created) => {
+                setRequests((current) => upsertById(current, created).sort(sortByCreatedAtDesc));
+                showToast(setToast, `${activeService.title} transmis a la reception.`);
+                setActiveService(null);
+              }}
+            />
+          ) : null}
         </div>
       </div>
     </GuestThemeContext.Provider>
@@ -226,7 +244,18 @@ function GuestHeader({ hotel, settings, session }: { hotel: any; settings: any; 
 
 function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: string; onReady: (session: Session) => void }) {
   const theme = useGuestTheme();
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", roomNumber: "", marketingConsent: false, gdprConsent: false });
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    roomNumber: "",
+    checkinDate: today,
+    checkoutDate: "",
+    marketingConsent: false,
+    gdprConsent: false
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -241,7 +270,13 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
     setError("");
     try {
       const guest = await api.createGuest(hotelSlug, { ...form, language: navigator.language.slice(0, 2) || "fr" });
-      const stay = await api.createStay(hotelSlug, { guestId: guest.id, roomNumber: form.roomNumber });
+      const stay = await api.createStay(hotelSlug, {
+        guestId: guest.id,
+        roomNumber: form.roomNumber,
+        checkinDate: form.checkinDate || undefined,
+        checkoutDate: form.checkoutDate || undefined,
+        status: "active"
+      });
       const session = { guestId: guest.id, stayId: stay.id, roomNumber: form.roomNumber, firstName: form.firstName, lastName: form.lastName };
       localStorage.setItem(`guest-session:${hotelSlug}`, JSON.stringify(session));
       onReady(session);
@@ -276,6 +311,10 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
         <div className="grid grid-cols-2 gap-3">
           <GuestInput label="Telephone" value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} />
           <GuestInput label="Chambre" value={form.roomNumber} onChange={(value) => setForm({ ...form, roomNumber: value })} required />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <GuestInput label="Arrivee" type="date" value={form.checkinDate} onChange={(value) => setForm({ ...form, checkinDate: value })} required />
+          <GuestInput label="Depart" type="date" value={form.checkoutDate} onChange={(value) => setForm({ ...form, checkoutDate: value })} required />
         </div>
         <label className={`flex gap-3 rounded-2xl p-3 text-sm ${theme.classes.subtleCard}`}>
           <input type="checkbox" className={`mt-1 h-4 w-4 rounded ${theme.classes.checkbox}`} checked={form.gdprConsent} onChange={(event) => setForm({ ...form, gdprConsent: event.target.checked })} />
@@ -452,9 +491,10 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
 
 function GuideSection({ recommendations }: { recommendations: any[] }) {
   const theme = useGuestTheme();
-  const categories = ["all", ...Array.from(new Set(recommendations.map((item) => item.category).filter(Boolean)))];
+  const orderedRecommendations = [...recommendations].sort((left, right) => Number(right.isFeatured) - Number(left.isFeatured) || (left.sortOrder ?? 0) - (right.sortOrder ?? 0));
+  const categories = ["all", ...Array.from(new Set(orderedRecommendations.map((item) => item.category).filter(Boolean)))];
   const [category, setCategory] = useState("all");
-  const filtered = category === "all" ? recommendations : recommendations.filter((item) => item.category === category);
+  const filtered = category === "all" ? orderedRecommendations : orderedRecommendations.filter((item) => item.category === category);
 
   return (
     <section className="space-y-5 px-5 py-6">
@@ -474,7 +514,7 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
         {filtered.map((item, index) => (
           <article key={item.id} className={`overflow-hidden rounded-3xl ${theme.classes.card}`}>
             <div className="relative h-36">
-              <img src={guideImage(index)} alt="" className="h-full w-full object-cover" />
+              <img src={item.imageUrl || guideImage(index)} alt="" className="h-full w-full object-cover" />
               <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize text-stone-800 backdrop-blur">{item.category || "Adresse"}</div>
             </div>
             <div className="p-4">
@@ -488,6 +528,13 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
               <div className={`mt-3 flex flex-wrap gap-2 text-xs font-medium ${theme.classes.muted}`}>
                 {item.distance && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.distance}</span>}
                 {item.address && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.address}</span>}
+                {item.openingHours && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.openingHours}</span>}
+                {Array.isArray(item.tags) ? item.tags.slice(0, 3).map((tag: string) => <span key={tag} className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{tag}</span>) : null}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {item.phone ? <a href={`tel:${item.phone}`} className={`rounded-2xl px-4 py-2 text-xs font-semibold ${theme.classes.secondaryButton}`}>Appeler</a> : null}
+                {item.website ? <a href={item.website} target="_blank" rel="noreferrer" className={`rounded-2xl px-4 py-2 text-xs font-semibold ${theme.classes.secondaryButton}`}>Site web</a> : null}
+                {(item.latitude && item.longitude) || item.address ? <a href={mapsUrl(item)} target="_blank" rel="noreferrer" className={`rounded-2xl px-4 py-2 text-xs font-semibold ${theme.classes.primaryButton}`}>Itineraire</a> : null}
               </div>
             </div>
           </article>
@@ -621,16 +668,201 @@ const serviceTemplates: ServiceTemplate[] = [
   { type: "reception", title: "Assistance reception", description: "Question urgente ou besoin particulier.", priority: "urgent", icon: <ConciergeBell className="h-5 w-5" /> }
 ];
 
-async function createServiceRequest(hotelSlug: string, session: Session, service: ServiceTemplate, setRequests: React.Dispatch<React.SetStateAction<RequestItem[]>>, setToast: (value: string) => void) {
-  const created = await api.createRequest(hotelSlug, {
-    ...session,
-    type: service.type,
-    title: service.title,
-    description: service.description,
-    priority: service.priority
-  });
-  setRequests((current) => upsertById(current, created).sort(sortByCreatedAtDesc));
-  showToast(setToast, `${service.title} transmis a la reception.`);
+function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }: { service: ServiceTemplate; session: Session; hotelSlug: string; onClose: () => void; onCreated: (request: RequestItem) => void }) {
+  const theme = useGuestTheme();
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState<RequestDetails>(() => defaultRequestDetails(service.type, today));
+  const [saving, setSaving] = useState(false);
+
+  function update(field: string, value: string | number | boolean) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const normalized = normalizeRequestPayload(service, form);
+      const created = await api.createRequest(hotelSlug, {
+        ...session,
+        type: service.type,
+        title: normalized.title,
+        description: normalized.description,
+        details: normalized.details,
+        priority: normalized.priority
+      });
+      onCreated(created);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-stone-950/55 p-3 backdrop-blur-sm md:items-center md:justify-center" role="dialog" aria-modal="true">
+      <form onSubmit={submit} className={`max-h-[88vh] w-full overflow-y-auto rounded-[2rem] p-5 shadow-2xl md:max-w-md ${theme.classes.elevatedCard}`}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>Demande structuree</p>
+            <h2 className={`mt-1 text-2xl font-semibold tracking-tight ${theme.classes.title}`}>{service.title}</h2>
+            <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>{service.description}</p>
+          </div>
+          <button type="button" onClick={onClose} className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl border ${theme.classes.secondaryButton}`} aria-label="Fermer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="mt-5 grid gap-4">
+          {service.type === "taxi" ? <TaxiFields form={form} update={update} /> : null}
+          {service.type === "restaurant" ? <RestaurantFields form={form} update={update} /> : null}
+          {service.type === "room_service" ? <RoomServiceFields form={form} update={update} /> : null}
+          {service.type === "towels" ? <LinenFields form={form} update={update} /> : null}
+          {service.type === "reception" ? <ReceptionAssistanceFields form={form} update={update} /> : null}
+        </div>
+        <button type="submit" disabled={saving} className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarDays className="h-4 w-4" />}
+          Envoyer a la reception
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function TaxiFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
+  const destinationType = String(form.destinationType ?? "address");
+  return (
+    <>
+      <GuestInput label="Date souhaitee" type="date" value={String(form.requestedDate ?? "")} onChange={(value) => update("requestedDate", value)} required />
+      <GuestInput label="Heure souhaitee" type="time" value={String(form.requestedTime ?? "")} onChange={(value) => update("requestedTime", value)} required />
+      <GuestSelect label="Destination" value={destinationType} onChange={(value) => update("destinationType", value)} options={[["address", "Paris / adresse libre"], ["airport", "Aeroport"], ["station", "Gare"], ["other", "Autre"]]} />
+      {destinationType === "airport" ? <GuestSelect label="Aeroport" value={String(form.airport ?? "CDG")} onChange={(value) => update("airport", value)} options={[["CDG", "Charles de Gaulle"], ["ORY", "Orly"], ["BVA", "Beauvais"], ["other", "Autre"]]} /> : null}
+      {destinationType === "station" ? <GuestSelect label="Gare" value={String(form.station ?? "Gare du Nord")} onChange={(value) => update("station", value)} options={["Gare du Nord", "Gare de Lyon", "Gare Saint-Lazare", "Gare Montparnasse", "Gare de l'Est", "Autre"].map((item) => [item, item])} /> : null}
+      <GuestInput label="Adresse ou destination libre" value={String(form.destinationLabel ?? "")} onChange={(value) => update("destinationLabel", value)} />
+      <GuestInput label="Passagers" type="number" value={String(form.passengers ?? 1)} onChange={(value) => update("passengers", Number(value))} required />
+      <GuestInput label="Bagages" type="number" value={String(form.luggage ?? 0)} onChange={(value) => update("luggage", Number(value))} />
+      <GuestInput label="Telephone" value={String(form.phone ?? "")} onChange={(value) => update("phone", value)} />
+      <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
+    </>
+  );
+}
+
+function RestaurantFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
+  return (
+    <>
+      <GuestInput label="Date souhaitee" type="date" value={String(form.requestedDate ?? "")} onChange={(value) => update("requestedDate", value)} required />
+      <GuestInput label="Heure souhaitee" type="time" value={String(form.requestedTime ?? "")} onChange={(value) => update("requestedTime", value)} required />
+      <GuestInput label="Nombre de personnes" type="number" value={String(form.people ?? 2)} onChange={(value) => update("people", Number(value))} required />
+      <GuestInput label="Type de cuisine" value={String(form.cuisine ?? "")} onChange={(value) => update("cuisine", value)} />
+      <GuestSelect label="Budget" value={String(form.budget ?? "medium")} onChange={(value) => update("budget", value)} options={[["economy", "Economique"], ["medium", "Moyen"], ["premium", "Premium"], ["gastronomic", "Gastronomique"]]} />
+      <GuestInput label="Quartier souhaite" value={String(form.area ?? "")} onChange={(value) => update("area", value)} />
+      <GuestInput label="Restaurant precis optionnel" value={String(form.restaurantName ?? "")} onChange={(value) => update("restaurantName", value)} />
+      <GuestInput label="Contraintes alimentaires" value={String(form.dietaryRestrictions ?? "")} onChange={(value) => update("dietaryRestrictions", value)} />
+      <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
+    </>
+  );
+}
+
+function RoomServiceFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
+  return (
+    <>
+      <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.asap)} onChange={(event) => update("asap", event.target.checked)} /> Des que possible</label>
+      {!form.asap ? <GuestInput label="Heure souhaitee" type="time" value={String(form.requestedTime ?? "")} onChange={(value) => update("requestedTime", value)} /> : null}
+      <GuestInput label="Type de demande" value={String(form.requestType ?? "")} onChange={(value) => update("requestType", value)} required />
+      <GuestInput label="Quantite" type="number" value={String(form.quantity ?? 1)} onChange={(value) => update("quantity", Number(value))} />
+      <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
+    </>
+  );
+}
+
+function LinenFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
+  return (
+    <>
+      <GuestSelect label="Type" value={String(form.itemType ?? "serviettes")} onChange={(value) => update("itemType", value)} options={[["serviettes", "Serviettes"], ["oreillers", "Oreillers"], ["couvertures", "Couvertures"], ["autre", "Autre"]]} />
+      <GuestInput label="Quantite" type="number" value={String(form.quantity ?? 1)} onChange={(value) => update("quantity", Number(value))} required />
+      <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.urgent)} onChange={(event) => update("urgent", event.target.checked)} /> Urgent</label>
+      <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
+    </>
+  );
+}
+
+function ReceptionAssistanceFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
+  return (
+    <>
+      <GuestInput label="Sujet" value={String(form.subject ?? "")} onChange={(value) => update("subject", value)} required />
+      <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.urgent)} onChange={(event) => update("urgent", event.target.checked)} /> Urgent</label>
+      <GuestTextarea label="Message" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} required />
+    </>
+  );
+}
+
+function GuestSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<[string, string]> }) {
+  const theme = useGuestTheme();
+  return (
+    <label className="block">
+      <span className={`mb-1.5 block text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)} className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-4 ${theme.classes.input}`}>
+        {options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{optionLabel}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function GuestTextarea({ label, value, onChange, required = false }: { label: string; value: string; onChange: (value: string) => void; required?: boolean }) {
+  const theme = useGuestTheme();
+  return (
+    <label className="block">
+      <span className={`mb-1.5 block text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>{label}{required ? " *" : ""}</span>
+      <textarea required={required} value={value} onChange={(event) => onChange(event.target.value)} className={`min-h-24 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-4 ${theme.classes.input}`} />
+    </label>
+  );
+}
+
+function defaultRequestDetails(type: string, today: string): RequestDetails {
+  if (type === "taxi") return { requestedDate: today, requestedTime: "12:00", pickup: "hotel", destinationType: "address", passengers: 1, luggage: 0 };
+  if (type === "restaurant") return { requestedDate: today, requestedTime: "20:00", people: 2, budget: "medium" };
+  if (type === "room_service") return { asap: true, requestType: "", quantity: 1 };
+  if (type === "towels") return { itemType: "serviettes", quantity: 2, urgent: false };
+  return { subject: "", urgent: false, notes: "" };
+}
+
+function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails) {
+  const details = { ...form };
+  const priority = form.urgent ? "urgent" : service.priority;
+  if (service.type === "taxi") {
+    const destination = taxiDestinationLabel(form);
+    return {
+      title: "Demande taxi",
+      priority,
+      details,
+      description: `Taxi le ${form.requestedDate || "-"} a ${form.requestedTime || "-"} vers ${destination}. ${form.passengers || 1} passager(s), ${form.luggage || 0} bagage(s).${form.notes ? ` ${form.notes}` : ""}`
+    };
+  }
+  if (service.type === "restaurant") {
+    return {
+      title: "Demande reservation restaurant",
+      priority,
+      details,
+      description: `Table pour ${form.people || 2} le ${form.requestedDate || "-"} a ${form.requestedTime || "-"}${form.cuisine ? `, cuisine ${form.cuisine}` : ""}${form.area ? `, quartier ${form.area}` : ""}.${form.notes ? ` ${form.notes}` : ""}`
+    };
+  }
+  if (service.type === "room_service") {
+    return { title: "Demande room service", priority, details, description: `${form.asap ? "Des que possible" : `A ${form.requestedTime || "-"}`} - ${form.requestType || "Demande en chambre"}${form.quantity ? ` x${form.quantity}` : ""}.${form.notes ? ` ${form.notes}` : ""}` };
+  }
+  if (service.type === "towels") {
+    return { title: "Demande linge", priority, details, description: `${form.quantity || 1} ${form.itemType || "article(s)"} demande(s).${form.notes ? ` ${form.notes}` : ""}` };
+  }
+  return { title: "Assistance reception", priority, details, description: `${form.subject || "Assistance"} - ${form.notes || ""}` };
+}
+
+function taxiDestinationLabel(form: RequestDetails) {
+  if (form.destinationType === "airport") return airportLabel(String(form.airport ?? "CDG"));
+  if (form.destinationType === "station") return String(form.station ?? "Gare");
+  return String(form.destinationLabel || "destination libre");
+}
+
+function airportLabel(value: string) {
+  if (value === "CDG") return "Aeroport Charles de Gaulle";
+  if (value === "ORY") return "Aeroport Orly";
+  if (value === "BVA") return "Aeroport Beauvais";
+  return "Aeroport";
 }
 
 async function loadGuestTimeline(hotelSlug: string, session: Session, setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>, setRequests: React.Dispatch<React.SetStateAction<RequestItem[]>>) {
@@ -796,4 +1028,9 @@ function guideImage(index: number) {
     "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"
   ];
   return images[index % images.length];
+}
+
+function mapsUrl(item: any) {
+  if (item.latitude && item.longitude) return `https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address || item.name)}`;
 }

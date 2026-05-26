@@ -368,6 +368,12 @@ function PreviewStep({ hotelForm, settingsForm, createdHotel, saving, error, onS
         <p className="mt-2 text-sm leading-6 text-slate-400">Cette action cree ou met a jour l'hotel, puis applique les settings operationnels.</p>
         {error ? <p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</p> : null}
         {createdHotel ? <p className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">Hotel enregistre. Les URLs et le QR code sont prets.</p> : null}
+        {createdHotel ? (
+          <a href={`/admin/hotels/${createdHotel.id}`} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-emerald-300/10">
+            Gerer les recommandations locales
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        ) : null}
         <button type="button" onClick={onSave} disabled={saving || !hotelForm.name || !hotelForm.email || !slug} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-200 focus:outline-none focus:ring-4 focus:ring-emerald-300/20 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           {createdHotel ? "Mettre a jour l'hotel" : "Creer l'hotel"}

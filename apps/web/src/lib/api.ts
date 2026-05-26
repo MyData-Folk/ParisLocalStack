@@ -33,6 +33,26 @@ export type SettingsPayload = {
   modules?: Record<string, boolean>;
 };
 
+export type RecommendationPayload = {
+  category: string;
+  name: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  website?: string;
+  distance?: string;
+  latitude?: number;
+  longitude?: number;
+  imageUrl?: string;
+  tags?: string[];
+  openingHours?: string;
+  googlePlaceId?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+  source?: string;
+  isFeatured?: boolean;
+};
+
 async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   if (!(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
@@ -71,6 +91,21 @@ export const api = {
   publishedReviews: (slug: string) => request<any[]>(`/api/public/${slug}/reviews/published`),
   hotelMessages: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/messages`, { token }),
   hotelRequests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/requests`, { token }),
+  hotelRecommendations: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/recommendations`, { token }),
+  createRecommendation: (hotelId: string, body: RecommendationPayload, token: string) => request<any>(`/api/hotels/${hotelId}/recommendations`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body)
+  }),
+  updateRecommendation: (recommendationId: string, body: Partial<RecommendationPayload>, token: string) => request<any>(`/api/recommendations/${recommendationId}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
+  }),
+  deleteRecommendation: (recommendationId: string, token: string) => request<{ ok: boolean }>(`/api/recommendations/${recommendationId}`, {
+    method: "DELETE",
+    token
+  }),
   hotelGuests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/guests`, { token }),
   hotelStays: (hotelId: string, token: string, status?: "active" | "archived") => request<any[]>(
     `/api/hotels/${hotelId}/stays${status ? `?status=${status}` : ""}`,
