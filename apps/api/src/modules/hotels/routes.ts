@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { hotelCreateSchema, hotelUpdateSchema } from "@paris-local/shared";
+import bcrypt from "bcryptjs";
+import { hotelCreateSchema, hotelUpdateSchema, receptionUserCreateSchema } from "@paris-local/shared";
+import { UserRole } from "@prisma/client";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess, requireRole } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
@@ -8,6 +10,33 @@ import { sendCreated, sendOk } from "../../utils/http.js";
 
 export const hotelsRouter = Router();
 export const publicHotelsRouter = Router();
+
+const defaultReceptionPassword = "ChangeMe123!";
+
+function defaultReceptionEmail(slug: string) {
+  return `reception+${slug}@welcomeparis.hotelmanager.fr`;
+}
+
+async function ensureReceptionUser(hotel: { id: string; name: string; slug: string }, input?: { email?: string; password?: string; name?: string }) {
+  const email = (input?.email || defaultReceptionEmail(hotel.slug)).trim().toLowerCase();
+  const password = input?.password || defaultReceptionPassword;
+  const name = input?.name || `Reception ${hotel.name}`;
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: { name, role: UserRole.receptionist, passwordHash },
+    create: { email, name, role: UserRole.receptionist, passwordHash }
+  });
+
+  await prisma.hotelUser.upsert({
+    where: { hotelId_userId: { hotelId: hotel.id, userId: user.id } },
+    update: { role: UserRole.receptionist },
+    create: { hotelId: hotel.id, userId: user.id, role: UserRole.receptionist }
+  });
+
+  return { id: user.id, email: user.email, name: user.name, role: user.role, temporaryPassword: password };
+}
 
 hotelsRouter.use(authenticate);
 
@@ -25,13 +54,21 @@ hotelsRouter.post("/", requireRole("super_admin"), validateBody(hotelCreateSchem
     },
     include: { settings: true }
   });
-  return sendCreated(res, hotel);
+  const receptionUser = await ensureReceptionUser(hotel);
+  return sendCreated(res, { ...hotel, receptionUser });
 }));
 
 hotelsRouter.get("/:id", requireHotelAccess("id"), asyncHandler(async (req, res) => {
-  const hotel = await prisma.hotel.findUnique({ where: { id: req.params.id }, include: { settings: true, users: true } });
+  const hotel = await prisma.hotel.findUnique({ where: { id: req.params.id }, include: { settings: true, users: { include: { user: true } } } });
   if (!hotel) return res.status(404).json({ error: "Hotel not found" });
   return sendOk(res, hotel);
+}));
+
+hotelsRouter.post("/:id/reception-user", requireRole("super_admin"), requireHotelAccess("id"), validateBody(receptionUserCreateSchema), asyncHandler(async (req, res) => {
+  const hotel = await prisma.hotel.findUnique({ where: { id: req.params.id } });
+  if (!hotel) return res.status(404).json({ error: "Hotel not found" });
+  const receptionUser = await ensureReceptionUser(hotel, req.body);
+  return sendOk(res, receptionUser);
 }));
 
 hotelsRouter.patch("/:id", requireHotelAccess("id"), validateBody(hotelUpdateSchema), asyncHandler(async (req, res) => {

@@ -455,6 +455,9 @@ function HotelDetailsPage() {
   const [recommendationForm, setRecommendationForm] = useState<RecommendationFormState>(emptyRecommendationForm);
   const [editingRecommendationId, setEditingRecommendationId] = useState<string | null>(null);
   const [recommendationMessage, setRecommendationMessage] = useState("");
+  const [receptionAccess, setReceptionAccess] = useState<any | null>(null);
+  const [receptionAccessMessage, setReceptionAccessMessage] = useState("");
+  const [receptionAccessSaving, setReceptionAccessSaving] = useState(false);
   const [themeSaving, setThemeSaving] = useState(false);
   const [themeMessage, setThemeMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -503,6 +506,21 @@ function HotelDetailsPage() {
       setRecommendationMessage("Recommandation enregistree. Elle est visible cote client si elle est active.");
     } catch (err) {
       setRecommendationMessage(err instanceof Error ? err.message : "Enregistrement impossible");
+    }
+  }
+
+  async function createReceptionAccess() {
+    if (!token || !hotel) return;
+    setReceptionAccessSaving(true);
+    setReceptionAccessMessage("");
+    try {
+      const access = await api.createReceptionUser(hotel.id, {}, token);
+      setReceptionAccess(access);
+      setReceptionAccessMessage("Acces reception cree et associe a cet hotel.");
+    } catch (err) {
+      setReceptionAccessMessage(err instanceof Error ? err.message : "Creation acces reception impossible");
+    } finally {
+      setReceptionAccessSaving(false);
     }
   }
 
@@ -573,6 +591,7 @@ function HotelDetailsPage() {
               <ThemePicker value={guestTheme} onChange={setGuestTheme} />
               {themeMessage ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{themeMessage}</p> : null}
             </div>
+            <ReceptionAccessCard hotel={hotel} access={receptionAccess} message={receptionAccessMessage} saving={receptionAccessSaving} onCreate={() => void createReceptionAccess()} />
             <RecommendationManager
               recommendations={recommendations}
               form={recommendationForm}
@@ -684,6 +703,34 @@ function RecommendationManager({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function ReceptionAccessCard({ hotel, access, message, saving, onCreate }: { hotel: HotelRecord; access: any | null; message: string; saving: boolean; onCreate: () => void }) {
+  const users = Array.isArray((hotel as any).users) ? (hotel as any).users : [];
+  const existing = users.find((entry: any) => entry.role === "receptionist" || entry.user?.role === "receptionist")?.user;
+  const email = access?.email || existing?.email || `reception+${hotel.slug}@welcomeparis.hotelmanager.fr`;
+  const password = access?.temporaryPassword;
+
+  return (
+    <div className="mt-7 rounded-2xl border border-sky-300/20 bg-sky-300/10 p-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-200/90">Acces reception</p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">Compte dashboard hotel</h2>
+          <p className="mt-2 text-sm leading-6 text-sky-50/75">Chaque hotel doit avoir un utilisateur reception associe pour ouvrir son sous-domaine admin sans afficher un autre hotel.</p>
+        </div>
+        <button type="button" onClick={onCreate} disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:opacity-60">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+          {existing || access ? "Regenerer acces" : "Creer acces"}
+        </button>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <InfoBlock label="Email reception" value={email} />
+        <InfoBlock label="Mot de passe temporaire" value={password || "Non affiche. Regenerez si besoin."} />
+      </div>
+      {message ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-sky-50">{message}</p> : null}
     </div>
   );
 }

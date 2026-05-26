@@ -33,6 +33,12 @@ export const hotelCreateSchema = z.object({
 
 export const hotelUpdateSchema = hotelCreateSchema.partial();
 
+export const receptionUserCreateSchema = z.object({
+  email: z.string().email().optional(),
+  password: z.string().min(8).optional(),
+  name: z.string().min(2).optional()
+});
+
 export const guestCreateSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),

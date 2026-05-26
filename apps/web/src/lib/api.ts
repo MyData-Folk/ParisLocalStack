@@ -124,6 +124,11 @@ export const api = {
     token,
     body: JSON.stringify(body)
   }),
+  createReceptionUser: (hotelId: string, body: { email?: string; password?: string; name?: string }, token: string) => request<any>(`/api/hotels/${hotelId}/reception-user`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body)
+  }),
   hotelSettings: (hotelId: string, token: string) => request<any>(`/api/hotels/${hotelId}/settings`, { token }),
   updateHotelSettings: (hotelId: string, body: SettingsPayload, token: string) => request<any>(`/api/hotels/${hotelId}/settings`, {
     method: "PATCH",
