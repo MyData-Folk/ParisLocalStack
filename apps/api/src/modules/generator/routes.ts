@@ -15,7 +15,7 @@ generatorRouter.get("/:hotelId/config", authenticate, requireHotelAccess("hotelI
   return sendOk(res, {
     hotelSlug: hotel.slug,
     guestUrl: `https://${hotel.slug}.welcomeparis.hotelmanager.fr`,
-    receptionUrl: `https://admin.${hotel.slug}.welcomeparis.hotelmanager.fr`,
+    receptionUrl: `https://admin-${hotel.slug}.welcomeparis.hotelmanager.fr`,
     hotel
   });
 }));

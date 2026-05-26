@@ -7,6 +7,7 @@ import { QrCodePdfButton } from "../../components/QrCodePdfButton";
 import { api } from "../../lib/api";
 import { guestUrl } from "../../lib/hotelOnboarding";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
+import { resolveTenantFromHostname } from "../../lib/tenant";
 import { useAppStore } from "../../stores/appStore";
 
 type MessageItem = {
@@ -44,9 +45,45 @@ export function ReceptionApp({ basePath = "" }: { basePath?: string }) {
 
 function ReceptionDashboard({ basePath }: { basePath: string }) {
   const { currentUser, token, logout } = useAppStore();
+  const tenant = resolveTenantFromHostname();
+  const tenantSlug = tenant.kind === "reception" ? tenant.hotelSlug : null;
+  const [hotelContext, setHotelContext] = useState<any | null>(null);
+  const [contextLoading, setContextLoading] = useState(true);
+  const [contextError, setContextError] = useState("");
+
+  useEffect(() => {
+    if (!token || !currentUser) return;
+    setContextLoading(true);
+    setContextError("");
+    const loader = tenantSlug
+      ? api.hotelBySlug(tenantSlug)
+      : currentUser.hotelIds[0]
+        ? api.hotel(currentUser.hotelIds[0], token)
+        : Promise.resolve(null);
+    void loader
+      .then((hotel) => {
+        if (!hotel) {
+          setHotelContext(null);
+          setContextError("Aucun hotel associe a ce compte.");
+          return;
+        }
+        const allowed = currentUser.role === "super_admin" || currentUser.hotelIds.includes(hotel.id);
+        if (!allowed) {
+          setHotelContext(null);
+          setContextError("Votre compte n'a pas acces a cet hotel.");
+          return;
+        }
+        setHotelContext(hotel);
+      })
+      .catch(() => {
+        setHotelContext(null);
+        setContextError(tenantSlug ? `Hotel introuvable pour le sous-domaine admin-${tenantSlug}.` : "Impossible de charger le contexte hotel.");
+      })
+      .finally(() => setContextLoading(false));
+  }, [token, currentUser?.id, currentUser?.role, currentUser?.hotelIds.join(","), tenantSlug]);
+
   if (!currentUser || !token) return null;
 
-  const hotelId = currentUser.hotelIds[0];
   const routePath = (path: string) => basePath ? path.replace(/^\//, "") : path;
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 lg:flex">
@@ -62,8 +99,8 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
             </div>
           </div>
           <div className="mt-4 rounded-xl border border-white/[0.07] bg-[#09090b] p-3">
-            <p className="truncate text-sm font-medium text-white">{currentUser.name}</p>
-            <p className="mt-1 text-xs text-zinc-500">Centre operationnel hotelier</p>
+            <p className="truncate text-sm font-medium text-white">{hotelContext?.name ?? currentUser.name}</p>
+            <p className="mt-1 text-xs text-zinc-500">{tenantSlug ? `admin-${tenantSlug}` : "Centre operationnel hotelier"}</p>
           </div>
         </div>
         <nav className="mt-4 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-5">
@@ -108,21 +145,37 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
           </div>
         </div>
         <div className="space-y-6 p-4 md:p-6 xl:p-8">
-        <Routes>
-          <Route index element={<Navigate to={`${basePath}/dashboard`} replace />} />
-          <Route path={routePath("/dashboard")} element={<ReceptionHome hotelId={hotelId} token={token} basePath={basePath} />} />
-          <Route path={routePath("/inbox")} element={<InboxView hotelId={hotelId} token={token} />} />
-          <Route path={routePath("/requests")} element={<RequestsView hotelId={hotelId} token={token} />} />
-          <Route path={routePath("/guests")} element={<GuestsView hotelId={hotelId} token={token} />} />
-          <Route path={routePath("/history")} element={<HistoryView hotelId={hotelId} token={token} />} />
-          <Route path={routePath("/reviews")} element={<ReviewsView hotelId={hotelId} token={token} />} />
-          <Route path={routePath("/qr")} element={<ReceptionQrView hotelId={hotelId} token={token} />} />
-          <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
-          <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
-        </Routes>
+        {contextLoading ? <LoadingPanel /> : null}
+        {!contextLoading && contextError ? <TenantContextError message={contextError} tenantSlug={tenantSlug} /> : null}
+        {!contextLoading && hotelContext ? (
+          <Routes>
+            <Route index element={<Navigate to={`${basePath}/dashboard`} replace />} />
+            <Route path={routePath("/dashboard")} element={<ReceptionHome hotelId={hotelContext.id} token={token} basePath={basePath} />} />
+            <Route path={routePath("/inbox")} element={<InboxView hotelId={hotelContext.id} token={token} />} />
+            <Route path={routePath("/requests")} element={<RequestsView hotelId={hotelContext.id} token={token} />} />
+            <Route path={routePath("/guests")} element={<GuestsView hotelId={hotelContext.id} token={token} />} />
+            <Route path={routePath("/history")} element={<HistoryView hotelId={hotelContext.id} token={token} />} />
+            <Route path={routePath("/reviews")} element={<ReviewsView hotelId={hotelContext.id} token={token} />} />
+            <Route path={routePath("/qr")} element={<ReceptionQrView hotelId={hotelContext.id} token={token} />} />
+            <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
+            <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
+          </Routes>
+        ) : null}
         </div>
       </main>
     </div>
+  );
+}
+
+function TenantContextError({ message, tenantSlug }: { message: string; tenantSlug: string | null }) {
+  return (
+    <section className="rounded-2xl border border-red-400/30 bg-red-500/10 p-6 shadow-lg shadow-black/20">
+      <AlertTriangle className="h-7 w-7 text-red-200" />
+      <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white">Contexte hotel indisponible</h1>
+      <p className="mt-2 text-sm leading-6 text-red-100/80">{message}</p>
+      {tenantSlug ? <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-mono text-xs text-red-50">Slug detecte : {tenantSlug}</p> : null}
+      <p className="mt-3 text-sm text-red-100/70">Verifiez le slug exact genere dans Super Admin. Exemple : `admin-folkestone-opera.welcomeparis.hotelmanager.fr` si le slug hotel est `folkestone-opera`.</p>
+    </section>
   );
 }
 
