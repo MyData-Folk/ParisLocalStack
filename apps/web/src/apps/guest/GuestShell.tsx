@@ -551,6 +551,7 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
   const [currentReview, setCurrentReview] = useState<any | null>(null);
   const [publishedReviews, setPublishedReviews] = useState<any[]>([]);
   const [editing, setEditing] = useState(false);
+  const [showPublished, setShowPublished] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -587,7 +588,7 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
 
   if (currentReview && !editing) {
     return (
-      <section className="grid min-h-[26rem] place-items-center px-5 py-6 text-center">
+      <section className="space-y-5 px-5 py-6 text-center">
         <div className={`rounded-3xl p-8 ${theme.classes.elevatedCard}`}>
           <CheckCircle className="mx-auto h-12 w-12 text-emerald-600" />
           <p className={`mt-4 text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>{reviewStatusLabel(currentReview.status)}</p>
@@ -600,7 +601,11 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
           <button onClick={() => setEditing(true)} className={`mt-5 inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 ${theme.classes.primaryButton}`}>
             Modifier mon avis
           </button>
+          <button onClick={() => setShowPublished((value) => !value)} className={`mt-3 inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
+            {showPublished ? "Masquer les avis" : "Voir les avis"}
+          </button>
         </div>
+        {showPublished ? <PublishedReviewsPanel reviews={publishedReviews} /> : null}
       </section>
     );
   }
@@ -635,26 +640,44 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         {currentReview ? "Enregistrer la modification" : "Envoyer mon avis"}
       </button>
-      {publishedReviews.length > 0 && (
-        <div className={`rounded-3xl p-5 ${theme.classes.card}`}>
-          <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Avis publies</p>
-          <h3 className={`mt-1 text-xl font-semibold ${theme.classes.title}`}>Ils ont partage leur sejour</h3>
-          <div className="mt-4 space-y-3">
-            {publishedReviews.slice(0, 3).map((review) => (
-              <article key={review.id} className={`rounded-2xl p-4 ${theme.classes.subtleCard}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex gap-1 text-amber-500">
-                    {[1, 2, 3, 4, 5].map((value) => <Star key={value} className={`h-4 w-4 ${value <= review.rating ? "fill-current" : "opacity-25"}`} />)}
-                  </div>
-                  <span className={`text-xs ${theme.classes.muted}`}>{review.guest?.firstName || "Client"}</span>
+      <button type="button" onClick={() => setShowPublished((value) => !value)} className={`flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-semibold transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
+        <Star className="h-4 w-4" />
+        {showPublished ? "Masquer les avis" : "Voir les avis"}
+      </button>
+      {showPublished ? <PublishedReviewsPanel reviews={publishedReviews} /> : null}
+    </section>
+  );
+}
+
+function PublishedReviewsPanel({ reviews }: { reviews: any[] }) {
+  const theme = useGuestTheme();
+  return (
+    <div className={`rounded-3xl p-5 ${theme.classes.card}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Voir les avis</p>
+          <h3 className={`mt-1 text-xl font-semibold ${theme.classes.title}`}>Experiences partagees par les clients</h3>
+        </div>
+        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${theme.classes.subtleCard}`}>{reviews.length}</span>
+      </div>
+      {reviews.length === 0 ? (
+        <p className={`mt-4 rounded-2xl p-4 text-sm leading-6 ${theme.classes.subtleCard}`}>Aucun avis public pour le moment. Les avis sont affiches uniquement apres validation par la reception.</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {reviews.map((review) => (
+            <article key={review.id} className={`rounded-2xl p-4 ${theme.classes.subtleCard}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex gap-1 text-amber-500">
+                  {[1, 2, 3, 4, 5].map((value) => <Star key={value} className={`h-4 w-4 ${value <= review.rating ? "fill-current" : "opacity-25"}`} />)}
                 </div>
-                <p className={`mt-3 text-sm leading-6 ${theme.classes.text}`}>{review.comment || "Tres bon sejour."}</p>
-              </article>
-            ))}
-          </div>
+                <span className={`text-xs ${theme.classes.muted}`}>{review.guest?.firstName || "Client"}</span>
+              </div>
+              <p className={`mt-3 text-sm leading-6 ${theme.classes.text}`}>{review.comment || "Tres bon sejour."}</p>
+            </article>
+          ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 

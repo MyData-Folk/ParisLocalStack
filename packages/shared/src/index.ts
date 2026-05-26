@@ -158,4 +158,11 @@ export const analyticsEventSchema = z.object({
   eventPayload: z.record(z.unknown()).default({})
 });
 
+export const remoteFileCreateSchema = z.object({
+  url: z.string().url(),
+  originalName: z.string().min(1).max(160).optional(),
+  mimeType: z.string().min(1).max(80).optional(),
+  size: z.number().int().nonnegative().optional()
+});
+
 export type HotelCreateInput = z.infer<typeof hotelCreateSchema>;

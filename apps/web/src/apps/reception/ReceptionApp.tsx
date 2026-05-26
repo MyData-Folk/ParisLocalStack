@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { Activity, AlertTriangle, Archive, BarChart3, BedDouble, CheckCircle, Clock, Copy, Download, Edit3, ExternalLink, Eye, FileJson, Inbox, Languages, ListChecks, LogOut, Mail, MessageSquare, Phone, QrCode, Radio, Search, Send, Settings, ShieldCheck, Star, Users, X } from "lucide-react";
+import { Activity, AlertTriangle, Archive, BarChart3, BedDouble, CheckCircle, Clock, Copy, Download, Edit3, ExternalLink, Eye, FileJson, Image as ImageIcon, Inbox, Languages, Link2, ListChecks, LogOut, Mail, MessageSquare, Phone, QrCode, Radio, Search, Send, Settings, ShieldCheck, Star, Upload, Users, X } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { QrCodePdfButton } from "../../components/QrCodePdfButton";
-import { api } from "../../lib/api";
+import { API_URL, api } from "../../lib/api";
 import { guestUrl } from "../../lib/hotelOnboarding";
 import { getSocket, joinHotelRoom } from "../../lib/socket";
 import { resolveTenantFromHostname } from "../../lib/tenant";
@@ -127,6 +127,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
             <NavItem to={`${basePath}/history`} icon={<Archive className="h-4 w-4" />} label="Historique CRM" />
             <NavItem to={`${basePath}/reviews`} icon={<Star className="h-4 w-4" />} label="Avis" />
             <NavItem to={`${basePath}/qr`} icon={<QrCode className="h-4 w-4" />} label="QR Code" />
+            <NavItem to={`${basePath}/media`} icon={<ImageIcon className="h-4 w-4" />} label="Medias" />
           </ReceptionNavGroup>
           <ReceptionNavGroup label="Pilotage">
             <NavItem to={`${basePath}/analytics`} icon={<BarChart3 className="h-4 w-4" />} label="Analytics" />
@@ -170,6 +171,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
             <Route path={routePath("/history")} element={<HistoryView hotelId={hotelContext.id} token={token} />} />
             <Route path={routePath("/reviews")} element={<ReviewsView hotelId={hotelContext.id} token={token} />} />
             <Route path={routePath("/qr")} element={<ReceptionQrView hotelId={hotelContext.id} token={token} />} />
+            <Route path={routePath("/media")} element={<MediaLibraryView hotelId={hotelContext.id} token={token} />} />
             <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
             <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
           </Routes>
@@ -319,6 +321,185 @@ function ReceptionQrView({ hotelId, token }: { hotelId: string; token: string })
             <InfoPill icon={<Users className="h-4 w-4" />} label="Scan" value="Onboarding" />
             <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Reception" value="Sejour editable" />
           </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function MediaLibraryView({ hotelId, token }: { hotelId: string; token: string }) {
+  const [hotel, setHotel] = useState<any | null>(null);
+  const [files, setFiles] = useState<any[]>([]);
+  const [url, setUrl] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function loadMedia() {
+    setLoading(true);
+    setMessage("");
+    try {
+      const [loadedHotel, loadedFiles] = await Promise.all([api.hotel(hotelId, token), api.hotelFiles(hotelId, token)]);
+      setHotel(loadedHotel);
+      setFiles(loadedFiles);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Impossible de charger la mediatheque");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadMedia();
+  }, [hotelId, token]);
+
+  async function uploadFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      const uploaded = await api.uploadHotelFile(hotelId, file, token);
+      setFiles((current) => [uploaded, ...current]);
+      setMessage("Image importee dans la mediatheque.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Upload impossible");
+    } finally {
+      setSaving(false);
+      event.target.value = "";
+    }
+  }
+
+  async function addUrl(event: React.FormEvent) {
+    event.preventDefault();
+    if (!url.trim()) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      const created = await api.addHotelFileUrl(hotelId, { url: url.trim(), originalName: name.trim() || undefined }, token);
+      setFiles((current) => [created, ...current]);
+      setUrl("");
+      setName("");
+      setMessage("URL image ajoutee a la mediatheque.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Ajout URL impossible");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function setAsLogo(file: any) {
+    setSaving(true);
+    setMessage("");
+    try {
+      const logoUrl = mediaUrl(file.url);
+      const updated = await api.updateHotel(hotelId, { logoUrl }, token);
+      setHotel(updated);
+      setMessage("Logo hotel mis a jour. Il sera utilise cote app client.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Mise a jour logo impossible");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeFile(file: any) {
+    setSaving(true);
+    setMessage("");
+    try {
+      await api.deleteFile(file.id, token);
+      setFiles((current) => current.filter((item) => item.id !== file.id));
+      setMessage("Image retiree de la mediatheque.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Suppression impossible");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <PageHeader eyebrow="Mediatheque hotel" title="Images et logo" description="Stockage prive des visuels utilises pour personnaliser l'app client" />
+      {message ? <p className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-200">{message}</p> : null}
+      <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/10 text-sky-300">
+                <Upload className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="font-semibold tracking-tight text-white">Upload fichier</h2>
+                <p className="mt-1 text-xs text-slate-500">PNG, JPG, WebP jusqu'a 10 Mo.</p>
+              </div>
+            </div>
+            <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center transition hover:border-sky-300/40 hover:bg-sky-300/10">
+              <ImageIcon className="h-8 w-8 text-slate-400" />
+              <span className="mt-3 text-sm font-medium text-white">{saving ? "Traitement..." : "Choisir une image"}</span>
+              <span className="mt-1 text-xs text-slate-500">Elle sera disponible pour le logo ou les contenus hotel.</span>
+              <input type="file" accept="image/*" className="sr-only" disabled={saving} onChange={(event) => void uploadFile(event)} />
+            </label>
+          </div>
+
+          <form onSubmit={addUrl} className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+                <Link2 className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="font-semibold tracking-tight text-white">Ajouter par URL</h2>
+                <p className="mt-1 text-xs text-slate-500">Reference distante, pratique pour logos deja heberges.</p>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              <FieldDark label="URL image" value={url} onChange={setUrl} placeholder="https://..." required />
+              <FieldDark label="Nom interne" value={name} onChange={setName} placeholder="Logo facade, hero lobby..." />
+              <button disabled={saving || !url.trim()} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200 focus:outline-none focus:ring-4 focus:ring-emerald-300/20 disabled:opacity-60">
+                <Link2 className="h-4 w-4" />
+                Ajouter l'URL
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+          <div className="flex flex-col gap-3 border-b border-white/[0.07] pb-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-white">Bibliotheque</h2>
+              <p className="mt-1 text-sm text-slate-500">{files.length} fichier(s). Logo actuel : {hotel?.logoUrl ? "configure" : "non configure"}.</p>
+            </div>
+            <button type="button" onClick={() => void loadMedia()} className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/[0.07]">Actualiser</button>
+          </div>
+          {loading ? <LoadingPanel /> : null}
+          {!loading && files.length === 0 ? <EmptyState icon={<ImageIcon className="h-6 w-6" />} title="Aucune image" description="Ajoutez un logo ou des visuels pour personnaliser l'experience client." /> : null}
+          {!loading && files.length > 0 ? (
+            <div className="mt-5 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {files.map((file) => {
+                const previewUrl = mediaUrl(file.url);
+                const isLogo = hotel?.logoUrl === previewUrl || hotel?.logoUrl === file.url;
+                return (
+                  <article key={file.id} className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#09090b] shadow-lg shadow-black/20">
+                    <div className="aspect-[4/3] bg-slate-950">
+                      <img src={previewUrl} alt={file.originalName} className="h-full w-full object-cover" loading="lazy" />
+                    </div>
+                    <div className="space-y-3 p-4">
+                      <div>
+                        <p className="truncate text-sm font-semibold text-white">{file.originalName}</p>
+                        <p className="mt-1 truncate text-[11px] text-slate-500">{file.storageProvider} - {file.mimeType}</p>
+                      </div>
+                      {isLogo ? <span className="inline-flex rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100">Logo actif</span> : null}
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => void setAsLogo(file)} disabled={saving} className="rounded-xl border border-sky-300/20 bg-sky-300/10 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:bg-sky-300/15 disabled:opacity-60">Utiliser logo</button>
+                        <button type="button" onClick={() => void navigator.clipboard?.writeText(previewUrl)} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/[0.07]">Copier</button>
+                        <button type="button" onClick={() => void removeFile(file)} disabled={saving} className="rounded-xl border border-red-300/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-100 transition hover:bg-red-500/15 disabled:opacity-60">Supprimer</button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       </section>
     </div>
@@ -1847,6 +2028,27 @@ function InfoPill({ icon, label, value }: { icon: React.ReactNode; label: string
       <p className="mt-2 truncate text-sm font-medium text-slate-200">{value}</p>
     </div>
   );
+}
+
+function FieldDark({ label, value, onChange, placeholder, required = false }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; required?: boolean }) {
+  return (
+    <label className="block space-y-2">
+      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <input
+        className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-300/50 focus:ring-4 focus:ring-sky-300/10"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        required={required}
+      />
+    </label>
+  );
+}
+
+function mediaUrl(url: string) {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${API_URL}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
 function DataView({ title, loader }: { title: string; loader: () => Promise<any[]> }) {

@@ -135,6 +135,18 @@ export const api = {
     token,
     body: JSON.stringify(body)
   }),
+  hotelFiles: (hotelId: string, token: string) => request<any[]>(`/api/storage/hotels/${hotelId}/files`, { token }),
+  uploadHotelFile: (hotelId: string, file: File, token: string) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<any>(`/api/storage/hotels/${hotelId}/upload`, { method: "POST", token, body });
+  },
+  addHotelFileUrl: (hotelId: string, body: { url: string; originalName?: string }, token: string) => request<any>(`/api/storage/hotels/${hotelId}/files/url`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body)
+  }),
+  deleteFile: (fileId: string, token: string) => request<{ ok: boolean }>(`/api/storage/${fileId}`, { method: "DELETE", token }),
   hotelSettings: (hotelId: string, token: string) => request<any>(`/api/hotels/${hotelId}/settings`, { token }),
   updateHotelSettings: (hotelId: string, body: SettingsPayload, token: string) => request<any>(`/api/hotels/${hotelId}/settings`, {
     method: "PATCH",
