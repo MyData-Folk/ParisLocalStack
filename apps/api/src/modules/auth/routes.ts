@@ -17,6 +17,7 @@ authRouter.post("/login", validateBody(loginSchema), asyncHandler(async (req, re
     include: { hotels: true }
   });
   if (!user) return res.status(401).json({ error: "Invalid credentials" });
+  if (user.status !== "active") return res.status(403).json({ error: "Account disabled" });
 
   const ok = await bcrypt.compare(req.body.password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: "Invalid credentials" });
@@ -29,6 +30,7 @@ authRouter.post("/login", validateBody(loginSchema), asyncHandler(async (req, re
       email: user.email,
       name: user.name,
       role: user.role,
+      status: user.status,
       hotelIds: user.hotels.map((hotelUser) => hotelUser.hotelId)
     }
   });

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const roles = ["super_admin", "hotel_admin", "receptionist", "guest"] as const;
+export const adminManagedHotelRoles = ["hotel_admin", "receptionist"] as const;
+export const userStatuses = ["active", "inactive"] as const;
 export const hotelStatuses = ["active", "inactive", "draft"] as const;
 export const requestStatuses = ["new", "in_progress", "done", "urgent", "closed"] as const;
 export const priorities = ["low", "medium", "high", "urgent"] as const;
@@ -37,6 +39,14 @@ export const receptionUserCreateSchema = z.object({
   email: z.string().email().optional(),
   password: z.string().min(8).optional(),
   name: z.string().min(2).optional()
+});
+
+export const adminUserUpdateSchema = z.object({
+  email: z.string().email().optional(),
+  password: z.string().min(8).optional(),
+  name: z.string().min(2).optional(),
+  role: z.enum(adminManagedHotelRoles).optional(),
+  status: z.enum(userStatuses).optional()
 });
 
 export const guestCreateSchema = z.object({

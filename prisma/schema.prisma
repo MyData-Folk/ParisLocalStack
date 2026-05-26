@@ -26,6 +26,7 @@ model User {
   passwordHash String      @map("password_hash")
   name         String
   role         UserRole
+  status       String      @default("active")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
   hotels       HotelUser[]

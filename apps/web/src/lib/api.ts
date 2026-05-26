@@ -1,7 +1,7 @@
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
 type ApiOptions = RequestInit & { token?: string };
-export type ApiUser = { id: string; email: string; name: string; role: string; hotelIds: string[] };
+export type ApiUser = { id: string; email: string; name: string; role: string; status?: string; hotelIds: string[] };
 export type ApiAuth = { token: string; user: ApiUser };
 export type HotelPayload = {
   name: string;
@@ -126,6 +126,12 @@ export const api = {
   }),
   createReceptionUser: (hotelId: string, body: { email?: string; password?: string; name?: string }, token: string) => request<any>(`/api/hotels/${hotelId}/reception-user`, {
     method: "POST",
+    token,
+    body: JSON.stringify(body)
+  }),
+  hotelUsers: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/users`, { token }),
+  updateHotelUser: (hotelId: string, userId: string, body: { email?: string; password?: string; name?: string; role?: string; status?: string }, token: string) => request<any>(`/api/hotels/${hotelId}/users/${userId}`, {
+    method: "PATCH",
     token,
     body: JSON.stringify(body)
   }),

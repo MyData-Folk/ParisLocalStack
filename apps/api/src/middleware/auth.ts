@@ -20,12 +20,14 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       include: { hotels: true }
     });
     if (!user) return res.status(401).json({ error: "Invalid token" });
+    if (user.status !== "active") return res.status(403).json({ error: "Account disabled" });
 
     req.user = {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
+      status: user.status,
       hotelIds: user.hotels.map((hotelUser) => hotelUser.hotelId)
     };
     return next();
