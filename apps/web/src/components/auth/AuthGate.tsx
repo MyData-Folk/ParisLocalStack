@@ -15,14 +15,32 @@ export function AuthGate({ title, subtitle, defaultEmail = "reception@vendome.te
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("ChangeMe123!");
   const [submitted, setSubmitted] = useState(false);
+  const [sessionNotice, setSessionNotice] = useState(() => {
+    const notice = sessionStorage.getItem("auth-notice") || "";
+    if (notice) sessionStorage.removeItem("auth-notice");
+    return notice;
+  });
 
   useEffect(() => {
     void restoreSession();
   }, [restoreSession]);
 
+  useEffect(() => {
+    setEmail(defaultEmail);
+  }, [defaultEmail]);
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const notice = sessionStorage.getItem("auth-notice") || "";
+    if (!notice) return;
+    sessionStorage.removeItem("auth-notice");
+    setSessionNotice(notice);
+  }, [isAuthenticated]);
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setSubmitted(true);
+    setSessionNotice("");
     await login(email, password);
   }
 
@@ -40,6 +58,9 @@ export function AuthGate({ title, subtitle, defaultEmail = "reception@vendome.te
   return (
     <PrivateShell title={title} subtitle={subtitle}>
       <form onSubmit={submit} className="mt-6 space-y-4">
+        {sessionNotice ? (
+          <p className="rounded-xl border border-sky-300/20 bg-sky-300/10 px-4 py-3 text-sm leading-6 text-sky-100">{sessionNotice}</p>
+        ) : null}
         <label className="block space-y-2">
           <span className="text-sm font-medium text-slate-300">Adresse email</span>
           <span className="relative block">
