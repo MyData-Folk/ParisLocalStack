@@ -53,18 +53,35 @@ if (config.nodeEnv === "production") {
   }
 }
 
-export function isAllowedOrigin(origin?: string) {
-  if (!origin) return true;
-  const configured = config.corsOrigin.split(",").map((item) => item.trim()).filter(Boolean);
-  if (configured.includes(origin) || configured.includes("*")) return true;
+if (config.nodeEnv === "production") {
+  if (!process.env.CORS_ORIGIN) {
+    console.warn("WARNING: CORS_ORIGIN not set, using restrictive default");
+  }
+}
 
-  try {
-    const hostname = new URL(origin).hostname;
-    return hostname === "welcomeparis.hotelmanager.fr"
-      || hostname.endsWith(".welcomeparis.hotelmanager.fr")
-      || hostname === "localhost"
-      || hostname.endsWith(".localhost");
-  } catch {
-    return false;
+export function isAllowedOrigin(origin?: string): boolean {
+  if (!origin) return false;
+
+  if (config.nodeEnv === "production") {
+    const configuredOrigins = (process.env.CORS_ORIGIN || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item && item !== "*");
+
+    if (configuredOrigins.includes(origin)) {
+      return true;
+    }
+
+    try {
+      const url = new URL(origin);
+      if (url.protocol !== "https:") return false;
+      const hostname = url.hostname;
+      return hostname === "welcomeparis.hotelmanager.fr"
+        || hostname.endsWith(".welcomeparis.hotelmanager.fr");
+    } catch {
+      return false;
+    }
+  } else {
+    return origin === "http://localhost:5173";
   }
 }
