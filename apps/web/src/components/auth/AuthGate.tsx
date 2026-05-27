@@ -11,10 +11,11 @@ type AuthGateProps = {
 };
 
 export function AuthGate({ title, subtitle, defaultEmail = "reception@vendome.test", allowedRoles, children }: AuthGateProps) {
-  const { currentUser, isAuthenticated, isAuthLoading, authError, login, restoreSession } = useAppStore();
+  const { currentUser, token, isAuthenticated, isAuthLoading, authError, login, logout, restoreSession } = useAppStore();
   const [email, setEmail] = useState(defaultEmail);
-  const [password, setPassword] = useState("ChangeMe123!");
+  const [password, setPassword] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [sessionNotice, setSessionNotice] = useState(() => {
     const notice = sessionStorage.getItem("auth-notice") || "";
     if (notice) sessionStorage.removeItem("auth-notice");
@@ -22,8 +23,19 @@ export function AuthGate({ title, subtitle, defaultEmail = "reception@vendome.te
   });
 
   useEffect(() => {
-    void restoreSession();
-  }, [restoreSession]);
+    let mounted = true;
+    if (!token) {
+      setSessionChecked(true);
+      return;
+    }
+    setSessionChecked(false);
+    void restoreSession().finally(() => {
+      if (mounted) setSessionChecked(true);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [restoreSession, token]);
 
   useEffect(() => {
     setEmail(defaultEmail);
@@ -44,11 +56,37 @@ export function AuthGate({ title, subtitle, defaultEmail = "reception@vendome.te
     await login(email, password);
   }
 
+  async function switchAccount() {
+    await logout();
+    setPassword("");
+    setSubmitted(false);
+    setSessionNotice("Session nettoyee. Connectez-vous avec l'identifiant de cet espace.");
+  }
+
+  if (!sessionChecked) {
+    return (
+      <PrivateShell title={title} subtitle="Verification de la session en cours...">
+        <div className="mt-6 rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-300">
+          Validation securisee du token avant affichage de l'espace prive.
+        </div>
+      </PrivateShell>
+    );
+  }
+
   if (isAuthenticated && currentUser) {
     if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
       return (
         <PrivateShell title="Acces refuse">
-          <p className="text-sm text-slate-400">Votre role ne permet pas d'acceder a cet espace.</p>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-400">Votre role ne permet pas d'acceder a cet espace.</p>
+            <button
+              type="button"
+              onClick={() => void switchAccount()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-amber-300/15"
+            >
+              Utiliser un autre identifiant
+            </button>
+          </div>
         </PrivateShell>
       );
     }
