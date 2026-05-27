@@ -33,6 +33,26 @@ if (config.nodeEnv === "production") {
   }
 }
 
+const databaseUrlValue = process.env.DATABASE_URL;
+const fallbackDatabaseUrl = "postgresql://paris_local:paris_local@localhost:5432/paris_local?schema=public";
+
+if (config.nodeEnv === "production") {
+  if (!databaseUrlValue || databaseUrlValue === fallbackDatabaseUrl) {
+    console.error("FATAL: DATABASE_URL is not set for production");
+    process.exit(1);
+  }
+  if (!databaseUrlValue.startsWith("postgresql://") && !databaseUrlValue.startsWith("postgres://")) {
+    console.error("FATAL: DATABASE_URL format is invalid");
+    process.exit(1);
+  }
+} else {
+  if (!databaseUrlValue || databaseUrlValue === fallbackDatabaseUrl) {
+    console.warn("WARNING: DATABASE_URL is not set or is using the development fallback.");
+  } else if (!databaseUrlValue.startsWith("postgresql://") && !databaseUrlValue.startsWith("postgres://")) {
+    console.warn("WARNING: DATABASE_URL format is invalid.");
+  }
+}
+
 export function isAllowedOrigin(origin?: string) {
   if (!origin) return true;
   const configured = config.corsOrigin.split(",").map((item) => item.trim()).filter(Boolean);
