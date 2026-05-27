@@ -20,13 +20,32 @@ import { errorHandler, notFound } from "./middleware/errors.js";
 
 export function createApp() {
   const app = express();
-  const publicLimiter = rateLimit({ windowMs: 60_000, limit: 120 });
+  
+  const publicLimiter = rateLimit({
+    windowMs: 60_000,
+    limit: 60,
+    message: { error: "Too many requests, please try again later" },
+    standardHeaders: true,
+    legacyHeaders: false
+  });
+
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60_000, // 15 minutes
+    limit: 10,
+    message: { error: "Too many login attempts, please try again later" },
+    standardHeaders: true,
+    legacyHeaders: false
+  });
 
   app.set("trust proxy", 1);
   app.use(helmet());
   app.use(cors({
     origin: (origin, callback) => {
-      callback(null, isAllowedOrigin(origin));
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
     },
     credentials: true
   }));
@@ -34,6 +53,7 @@ export function createApp() {
   app.use("/uploads", express.static(path.resolve(config.uploadDir)));
 
   app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
+  app.post("/api/auth/login", authLimiter);
   app.use("/api/auth", authRouter);
   app.use("/api/hotels", hotelsRouter);
   app.use("/api/public/hotels", publicLimiter, publicHotelsRouter);

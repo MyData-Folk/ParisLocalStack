@@ -1,103 +1,46 @@
 import bcrypt from "bcryptjs";
 import { PrismaClient, UserRole } from "@prisma/client";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const prisma = new PrismaClient();
 
 export async function seedProduction() {
-  const passwordHash = await bcrypt.hash("ChangeMe123!", 12);
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
 
-  const hotel = await prisma.hotel.upsert({
-    where: { slug: "vendome" },
-    update: {},
-    create: {
-      name: "Hotel Vendome",
-      slug: "vendome",
-      description: "Digital concierge demo hotel in Paris.",
-      address: "1 Place Vendome",
-      city: "Paris",
-      country: "France",
-      phone: "+33 1 00 00 00 00",
-      email: "contact@vendome.example",
-      website: "https://vendome.example",
-      primaryColor: "#c9a84c",
-      secondaryColor: "#0f172a",
-      status: "active",
-      settings: {
-        create: {
-          wifiName: "Vendome Guests",
-          wifiPassword: "Paris2026!",
-          breakfastHours: "07:00 - 10:30",
-          checkinTime: "15:00",
-          checkoutTime: "12:00",
-          roomServiceHours: "07:00 - 23:00",
-          receptionPhone: "+33 1 00 00 00 00",
-          whatsappNumber: "+33 6 00 00 00 00",
-          guestTheme: "parisian_boutique",
-          languages: ["fr", "en"],
-          modules: { messages: true, requests: true, reviews: true, recommendations: true }
-        }
-      },
-      recommendations: {
-        createMany: {
-          data: [
-            {
-              category: "restaurant",
-              name: "Le Petit Vendome",
-              description: "Classic Parisian bistro close to the hotel.",
-              address: "8 Rue des Capucines, Paris",
-              distance: "300m",
-              isFeatured: true
-            },
-            {
-              category: "transport",
-              name: "Metro Opera",
-              description: "Metro lines 3, 7 and 8.",
-              address: "Place de l'Opera, Paris",
-              distance: "450m",
-              isFeatured: false
-            }
-          ]
-        }
-      }
-    }
-  });
+  if (!adminPassword) {
+    console.error("FATAL: SEED_ADMIN_PASSWORD environment variable is required for production seeding.");
+    process.exit(1);
+  }
+
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
+  const email = "admin@paris-local.test";
+
+  console.log(`Seeding production super admin user: ${email}...`);
 
   const superAdmin = await prisma.user.upsert({
-    where: { email: "admin@paris-local.test" },
-    update: {},
+    where: { email },
+    update: {
+      passwordHash
+    },
     create: {
-      email: "admin@paris-local.test",
+      email,
       passwordHash,
       name: "Paris Local Admin",
-      role: UserRole.super_admin
+      role: UserRole.super_admin,
+      status: "active"
     }
   });
 
-  const receptionist = await prisma.user.upsert({
-    where: { email: "reception@vendome.test" },
-    update: {},
-    create: {
-      email: "reception@vendome.test",
-      passwordHash,
-      name: "Reception Vendome",
-      role: UserRole.receptionist
-    }
-  });
-
-  await prisma.hotelUser.upsert({
-    where: { hotelId_userId: { hotelId: hotel.id, userId: superAdmin.id } },
-    update: {},
-    create: { hotelId: hotel.id, userId: superAdmin.id, role: UserRole.super_admin }
-  });
-
-  await prisma.hotelUser.upsert({
-    where: { hotelId_userId: { hotelId: hotel.id, userId: receptionist.id } },
-    update: {},
-    create: { hotelId: hotel.id, userId: receptionist.id, role: UserRole.receptionist }
-  });
+  console.log(`Production super admin seeded successfully (ID: ${superAdmin.id}).`);
 }
 
 seedProduction()
+  .catch((err) => {
+    console.error("Error during production seeding:", err);
+    process.exit(1);
+  })
   .finally(async () => {
     await prisma.$disconnect();
   });
