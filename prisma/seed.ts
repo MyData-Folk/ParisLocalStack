@@ -4,7 +4,13 @@ import { PrismaClient, UserRole } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash("ChangeMe123!", 12);
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD || "ChangeMe123!";
+
+  if (process.env.NODE_ENV === "production" && !process.env.SEED_ADMIN_PASSWORD) {
+    throw new Error("SEED_ADMIN_PASSWORD environment variable is required in production for seeding.");
+  }
+
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   const hotel = await prisma.hotel.upsert({
     where: { slug: "vendome" },

@@ -538,8 +538,8 @@ Gestion utilisateurs actuelle :
 - à la création d'un hôtel, un compte réception peut être provisionné.
 
 Comptes seed connus :
-- Super Admin : `admin@paris-local.test` / `ChangeMe123!`
-- Réception Vendôme : `reception@vendome.test` / `ChangeMe123!`
+- Super Admin : `admin@paris-local.test` / `<voir SEED_ADMIN_PASSWORD dans Coolify>`
+- Réception Vendôme : `reception@vendome.test` / `<voir SEED_ADMIN_PASSWORD dans Coolify>`
 - Réception nouveaux hôtels : format fréquent `reception+{slug}@welcomeparis.hotelmanager.fr` / mot de passe temporaire selon provisioning.
 
 ## 10. Variables d'environnement importantes
@@ -549,8 +549,8 @@ Variables principales :
 ```env
 NODE_ENV=development
 
-DATABASE_URL=postgresql://paris_local:paris_local@localhost:5432/paris_local?schema=public
-JWT_SECRET=change-me-with-a-long-random-secret
+DATABASE_URL=<voir DATABASE_URL dans Coolify>
+JWT_SECRET=<générer un secret de 32+ caractères>
 
 API_PORT=4000
 WEB_URL=http://localhost:5173
@@ -565,7 +565,7 @@ PostgreSQL local Docker :
 
 ```env
 POSTGRES_USER=paris_local
-POSTGRES_PASSWORD=paris_local
+POSTGRES_PASSWORD=<voir DATABASE_URL dans Coolify>
 POSTGRES_DB=paris_local
 ```
 
@@ -583,7 +583,7 @@ MinIO local optionnel :
 
 ```env
 MINIO_ROOT_USER=minio
-MINIO_ROOT_PASSWORD=minio-password-change-me
+MINIO_ROOT_PASSWORD=<générer un mot de passe fort>
 ```
 
 Intégrations futures :
