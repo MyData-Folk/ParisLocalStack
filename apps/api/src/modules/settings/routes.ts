@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { settingsUpdateSchema } from "@paris-local/shared";
 import { prisma } from "../../database/prisma.js";
-import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
+import { authenticate, requireHotelAccess, requireRole } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendOk } from "../../utils/http.js";
@@ -44,7 +44,7 @@ settingsRouter.get("/hotels/:hotelId/settings", authenticate, requireHotelAccess
   return sendOk(res, settings);
 }));
 
-settingsRouter.patch("/hotels/:hotelId/settings", authenticate, requireHotelAccess("hotelId"), validateBody(settingsUpdateSchema), asyncHandler(async (req, res) => {
+settingsRouter.patch("/hotels/:hotelId/settings", authenticate, requireHotelAccess("hotelId"), requireRole("super_admin", "hotel_admin"), validateBody(settingsUpdateSchema), asyncHandler(async (req, res) => {
   const settings = await prisma.hotelSettings.upsert({
     where: { hotelId: req.params.hotelId },
     update: req.body,
