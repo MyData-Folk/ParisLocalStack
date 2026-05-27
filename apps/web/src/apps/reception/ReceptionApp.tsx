@@ -10,6 +10,7 @@ import { getSocket, joinHotelRoom } from "../../lib/socket";
 import { resolveTenantFromHostname } from "../../lib/tenant";
 import { useAppStore } from "../../stores/appStore";
 import { ReceptionShell } from "./components/ReceptionShell";
+import { useReceptionHotel } from "./hooks/useReceptionHotel";
 
 import { MessageItem, Conversation, FilterKey } from "./reception.types";
 
@@ -31,47 +32,7 @@ export function ReceptionApp({ basePath = "" }: { basePath?: string }) {
 
 function ReceptionDashboard({ basePath }: { basePath: string }) {
   const { currentUser, token, logout } = useAppStore();
-  const tenant = resolveTenantFromHostname();
-  const tenantSlug = tenant.kind === "reception" ? tenant.hotelSlug : null;
-  const [hotelContext, setHotelContext] = useState<any | null>(null);
-  const [contextLoading, setContextLoading] = useState(true);
-  const [contextError, setContextError] = useState("");
-
-  useEffect(() => {
-    if (!token || !currentUser) return;
-    setContextLoading(true);
-    setContextError("");
-    const loader = tenantSlug
-      ? api.hotelBySlug(tenantSlug)
-      : currentUser.hotelIds[0]
-        ? api.hotel(currentUser.hotelIds[0], token)
-        : Promise.resolve(null);
-    void loader
-      .then((hotel) => {
-        if (!hotel) {
-          setHotelContext(null);
-          setContextError("Aucun hotel associe a ce compte.");
-          return;
-        }
-        const allowed = currentUser.role === "super_admin" || currentUser.hotelIds.includes(hotel.id);
-        if (!allowed) {
-          setHotelContext(null);
-          sessionStorage.setItem(
-            "auth-notice",
-            `La session precedente appartenait a un autre hotel. Elle a ete nettoyee pour ${hotel.name}. Reconnectez-vous avec le compte reception de cet hotel.`
-          );
-          void logout();
-          setContextError("");
-          return;
-        }
-        setHotelContext(hotel);
-      })
-      .catch(() => {
-        setHotelContext(null);
-        setContextError(tenantSlug ? `Hotel introuvable pour le sous-domaine admin-${tenantSlug}.` : "Impossible de charger le contexte hotel.");
-      })
-      .finally(() => setContextLoading(false));
-  }, [token, currentUser?.id, currentUser?.role, currentUser?.hotelIds.join(","), tenantSlug]);
+  const { hotelSlug, hotel: hotelContext, isLoading: contextLoading, error: contextError } = useReceptionHotel(currentUser, token, logout);
 
   if (!currentUser || !token) return null;
 
@@ -80,12 +41,12 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
     <ReceptionShell
       currentUser={currentUser}
       hotelContext={hotelContext}
-      tenantSlug={tenantSlug}
+      tenantSlug={hotelSlug}
       basePath={basePath}
       logout={logout}
     >
       {contextLoading ? <LoadingPanel /> : null}
-      {!contextLoading && contextError ? <TenantContextError message={contextError} tenantSlug={tenantSlug} /> : null}
+      {!contextLoading && contextError ? <TenantContextError message={contextError} tenantSlug={hotelSlug} /> : null}
       {!contextLoading && hotelContext ? (
         <Routes>
           <Route index element={<Navigate to={`${basePath}/dashboard`} replace />} />
