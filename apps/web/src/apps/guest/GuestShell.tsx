@@ -96,9 +96,13 @@ export function GuestShell() {
   }, [hotelSlug]);
 
   useEffect(() => {
-    if (!hotel?.id) return undefined;
-    return joinHotelRoom(hotel.id);
-  }, [hotel?.id]);
+    if (!hotel?.id || !session) return undefined;
+    return joinHotelRoom(hotel.id, {
+      guestId: session.guestId,
+      stayId: session.stayId,
+      hotelId: hotel.id
+    });
+  }, [hotel?.id, session]);
 
   useEffect(() => {
     if (!session) return;
@@ -108,7 +112,11 @@ export function GuestShell() {
   useEffect(() => {
     if (!session || !hotel?.id) return undefined;
 
-    const socket = getSocket();
+    const socket = getSocket({
+      guestId: session.guestId,
+      stayId: session.stayId,
+      hotelId: hotel.id
+    });
     const onMessage = (message: MessageItem) => {
       if (message.guestId !== session.guestId || message.stayId !== session.stayId) return;
       setMessages((current) => upsertById(current, message).sort(sortByCreatedAtAsc));
@@ -127,13 +135,13 @@ export function GuestShell() {
       showToast(setToast, `Statut mis a jour : ${requestStatusLabel(request.status)}`);
     };
 
-    socket.on("message:new", onMessage);
+    socket.on("reply:new", onMessage);
     socket.on("message:status", onMessageStatus);
     socket.on("request:new", onRequest);
     socket.on("request:status", onRequestStatus);
 
     return () => {
-      socket.off("message:new", onMessage);
+      socket.off("reply:new", onMessage);
       socket.off("message:status", onMessageStatus);
       socket.off("request:new", onRequest);
       socket.off("request:status", onRequestStatus);
