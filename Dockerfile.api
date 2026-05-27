@@ -24,5 +24,7 @@ RUN npm install --omit=dev
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/packages/shared/dist packages/shared/dist
 RUN npm run prisma:generate
+COPY scripts/entrypoint.sh ./scripts/entrypoint.sh
+RUN chmod +x ./scripts/entrypoint.sh
 EXPOSE 4000
-CMD ["sh", "-c", "npx prisma migrate deploy && node apps/api/dist/database/seedProduction.js && npm run start:api"]
+ENTRYPOINT ["sh", "/app/scripts/entrypoint.sh"]
