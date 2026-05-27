@@ -2,6 +2,7 @@
 // HOTEL TYPES
 // =============================================
 
+// @legacy - utilisé uniquement par apps/web/src/pages/ orphelines
 export interface Hotel {
   id: string;
   name: string;
