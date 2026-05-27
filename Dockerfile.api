@@ -27,4 +27,6 @@ RUN npm run prisma:generate
 COPY scripts/entrypoint.sh ./scripts/entrypoint.sh
 RUN chmod +x ./scripts/entrypoint.sh
 EXPOSE 4000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget -qO- http://localhost:${API_PORT:-4000}/health || exit 1
 ENTRYPOINT ["sh", "/app/scripts/entrypoint.sh"]
