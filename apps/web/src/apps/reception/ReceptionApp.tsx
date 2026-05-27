@@ -6,7 +6,7 @@ import { AuthGate } from "../../components/auth/AuthGate";
 import { QrCodePdfButton } from "../../components/QrCodePdfButton";
 import { API_URL, api } from "../../lib/api";
 import { guestUrl } from "../../lib/hotelOnboarding";
-import { getSocket, joinHotelRoom } from "../../lib/socket";
+import { getSocket } from "../../lib/socket";
 import { resolveTenantFromHostname } from "../../lib/tenant";
 import { useAppStore } from "../../stores/appStore";
 import { ReceptionShell } from "./components/ReceptionShell";
@@ -397,8 +397,6 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
     void loadMessages();
   }, [hotelId, token]);
 
-  useEffect(() => joinHotelRoom(hotelId), [hotelId]);
-
   useEffect(() => {
     const socket = getSocket();
     const onMessage = (message: MessageItem) => {
@@ -589,8 +587,6 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
     void loadRequests();
   }, [hotelId, token]);
 
-  useEffect(() => joinHotelRoom(hotelId), [hotelId]);
-
   useEffect(() => {
     const socket = getSocket();
     const onMessage = (message: any) => {
@@ -731,8 +727,6 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
   useEffect(() => {
     void loadReviews();
   }, [hotelId, token]);
-
-  useEffect(() => joinHotelRoom(hotelId), [hotelId]);
 
   useEffect(() => {
     const socket = getSocket();
