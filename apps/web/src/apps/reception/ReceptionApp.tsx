@@ -1913,6 +1913,23 @@ function mediaUrl(url: string) {
   return `${API_URL}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
+type GuestTheme = "parisian_boutique" | "modern_minimal" | "palace_luxury";
+
+const GUEST_THEMES: { value: GuestTheme; label: string; description: string; accent: string }[] = [
+  { value: "parisian_boutique", label: "Parisian Boutique", description: "Elegant, chaleureux, dore", accent: "from-amber-800/40 to-amber-900/20 border-amber-600/30 text-amber-200" },
+  { value: "modern_minimal", label: "Modern Minimal", description: "Epure, contemporain, blanc", accent: "from-slate-700/40 to-slate-800/20 border-slate-500/30 text-slate-200" },
+  { value: "palace_luxury", label: "Palace Luxury", description: "Prestige, profond, or royal", accent: "from-purple-800/40 to-purple-900/20 border-purple-600/30 text-purple-200" },
+];
+
+const DEFAULT_MODULES: { key: string; label: string; description: string }[] = [
+  { key: "messages", label: "Messagerie client", description: "Le client peut envoyer des messages a la reception" },
+  { key: "service_requests", label: "Demandes de service", description: "Taxi, room service, linge, assistance..." },
+  { key: "reviews", label: "Avis clients", description: "Collecte de satisfaction apres le sejour" },
+  { key: "recommendations", label: "Recommandations locales", description: "Restaurants, musees, transports a proximite" },
+  { key: "wifi", label: "Affichage Wi-Fi", description: "Code Wi-Fi visible dans l'app client" },
+  { key: "breakfast", label: "Horaires petit-dejeuner", description: "Affichage des horaires dans l'app client" },
+];
+
 function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1927,6 +1944,10 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [roomServiceHours, setRoomServiceHours] = useState("");
   const [receptionPhone, setReceptionPhone] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [guestTheme, setGuestTheme] = useState<GuestTheme>("parisian_boutique");
+  const [modules, setModules] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(DEFAULT_MODULES.map((m) => [m.key, true]))
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -1942,6 +1963,10 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
           setRoomServiceHours(settings.roomServiceHours ?? "");
           setReceptionPhone(settings.receptionPhone ?? "");
           setWhatsappNumber(settings.whatsappNumber ?? "");
+          if (settings.guestTheme) setGuestTheme(settings.guestTheme as GuestTheme);
+          if (settings.modules && typeof settings.modules === "object") {
+            setModules((prev) => ({ ...prev, ...(settings.modules as Record<string, boolean>) }));
+          }
         }
       })
       .catch((err) => {
@@ -1951,6 +1976,10 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
         setLoading(false);
       });
   }, [hotelId, token]);
+
+  function toggleModule(key: string) {
+    setModules((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1970,6 +1999,8 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
           roomServiceHours,
           receptionPhone,
           whatsappNumber,
+          guestTheme,
+          modules,
         },
         token
       );
@@ -1985,22 +2016,89 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
   if (loading) return <LoadingPanel />;
 
   return (
-    <div className="space-y-5">
-      <PageHeader eyebrow="Configuration" title="Parametres hotelier" description="Personnalisez les services de l'hotel, informations d'acces et contacts direct" />
+    <div className="space-y-6">
+      <PageHeader eyebrow="Configuration" title="Parametres hotelier" description="Personnalisez les services, le theme et les modules actifs de l'app client" />
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
       {success && <p className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">Parametres enregistres avec succes.</p>}
 
-      <form onSubmit={handleSubmit} className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20 space-y-6">
-        <div className="grid gap-5 md:grid-cols-2">
-          <FieldDark label="Nom du reseau Wi-Fi" value={wifiName} onChange={setWifiName} placeholder="ex: Hotel-Guest" />
-          <FieldDark label="Mot de passe Wi-Fi" value={wifiPassword} onChange={setWifiPassword} placeholder="ex: Paris2026!" />
-          <FieldDark label="Horaires petit-dejeuner" value={breakfastHours} onChange={setBreakfastHours} placeholder="ex: 07:00 - 10:30" />
-          <FieldDark label="Heure d'arrivee (Check-in)" value={checkinTime} onChange={setCheckinTime} placeholder="ex: 15:00" />
-          <FieldDark label="Heure de depart (Check-out)" value={checkoutTime} onChange={setCheckoutTime} placeholder="ex: 12:00" />
-          <FieldDark label="Horaires du service d'etage" value={roomServiceHours} onChange={setRoomServiceHours} placeholder="ex: 07:00 - 23:00" />
-          <FieldDark label="Telephone de la reception" value={receptionPhone} onChange={setReceptionPhone} placeholder="ex: +33 1 00 00 00 00" />
-          <FieldDark label="Numero WhatsApp" value={whatsappNumber} onChange={setWhatsappNumber} placeholder="ex: +33 6 00 00 00 00" />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Section services */}
+        <section className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20 space-y-5">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Informations & services</h2>
+          <div className="grid gap-5 md:grid-cols-2">
+            <FieldDark label="Nom du reseau Wi-Fi" value={wifiName} onChange={setWifiName} placeholder="ex: Hotel-Guest" />
+            <FieldDark label="Mot de passe Wi-Fi" value={wifiPassword} onChange={setWifiPassword} placeholder="ex: Paris2026!" />
+            <FieldDark label="Horaires petit-dejeuner" value={breakfastHours} onChange={setBreakfastHours} placeholder="ex: 07:00 - 10:30" />
+            <FieldDark label="Heure d'arrivee (Check-in)" value={checkinTime} onChange={setCheckinTime} placeholder="ex: 15:00" />
+            <FieldDark label="Heure de depart (Check-out)" value={checkoutTime} onChange={setCheckoutTime} placeholder="ex: 12:00" />
+            <FieldDark label="Horaires du service d'etage" value={roomServiceHours} onChange={setRoomServiceHours} placeholder="ex: 07:00 - 23:00" />
+            <FieldDark label="Telephone de la reception" value={receptionPhone} onChange={setReceptionPhone} placeholder="ex: +33 1 00 00 00 00" />
+            <FieldDark label="Numero WhatsApp" value={whatsappNumber} onChange={setWhatsappNumber} placeholder="ex: +33 6 00 00 00 00" />
+          </div>
+        </section>
+
+        {/* Section theme Guest App */}
+        <section className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Theme de l'app client</h2>
+            <p className="mt-1 text-xs text-slate-500">Apparence visuelle de l'application affichee aux clients</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {GUEST_THEMES.map((theme) => (
+              <button
+                key={theme.value}
+                type="button"
+                onClick={() => setGuestTheme(theme.value)}
+                className={`relative flex flex-col gap-2 rounded-xl border bg-gradient-to-br p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-sky-300/40 ${
+                  guestTheme === theme.value
+                    ? theme.accent + " ring-2 ring-sky-300/50"
+                    : "border-white/[0.07] from-white/[0.03] to-transparent text-slate-400 hover:border-white/20"
+                }`}
+              >
+                {guestTheme === theme.value && (
+                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-sky-300 text-slate-950">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  </span>
+                )}
+                <span className="text-sm font-semibold">{theme.label}</span>
+                <span className="text-xs opacity-70">{theme.description}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Section modules */}
+        <section className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Modules actifs</h2>
+            <p className="mt-1 text-xs text-slate-500">Choisissez quelles fonctionnalites sont visibles dans l'app client</p>
+          </div>
+          <div className="divide-y divide-white/[0.05]">
+            {DEFAULT_MODULES.map((mod) => (
+              <div key={mod.key} className="flex items-center justify-between gap-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-200">{mod.label}</p>
+                  <p className="text-xs text-slate-500">{mod.description}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleModule(mod.key)}
+                  role="switch"
+                  aria-checked={!!modules[mod.key]}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-sky-300/40 ${
+                    modules[mod.key] ? "bg-sky-400" : "bg-slate-700"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform ${
+                      modules[mod.key] ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <button disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:opacity-60">
           {saving ? "Enregistrement..." : "Enregistrer les parametres"}
