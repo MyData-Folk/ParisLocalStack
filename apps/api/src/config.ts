@@ -13,6 +13,11 @@ export const config = {
   webUrl: process.env.WEB_URL ?? "http://localhost:5173"
 };
 
+if (config.nodeEnv === "production" && !process.env.JWT_SECRET) {
+  console.error("FATAL: JWT_SECRET environment variable is required in production.");
+  process.exit(1);
+}
+
 export function isAllowedOrigin(origin?: string) {
   if (!origin) return true;
   const configured = config.corsOrigin.split(",").map((item) => item.trim()).filter(Boolean);

@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Hotel, AppNotification } from '../types';
-import { mockHotels } from '../lib/mockData';
 import { api, type ApiUser } from '../lib/api';
 
 // TODO: clean up orphaned apps/web/src/pages screens that still depend on mockData in a separate ticket.
@@ -43,25 +42,7 @@ interface AppState {
   clearNotifications: () => void;
 }
 
-const initialNotifications: AppNotification[] = [
-  {
-    id: 'notif-demo-1',
-    type: 'warning',
-    title: 'Avis client à traiter',
-    message: 'Un client a signalé un problème de climatisation en chambre 204.',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-  },
-  {
-    id: 'notif-demo-2',
-    type: 'info',
-    title: 'Nouveau scan QR code',
-    message: 'Un client vient d’ouvrir l’application concierge depuis le hall.',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-  },
-];
-
+const initialNotifications: AppNotification[] = [];
 const toAuthUser = (user: ApiUser): AuthUser => {
   const [firstName = user.name, ...rest] = user.name.trim().split(/\s+/);
   return {
@@ -70,12 +51,6 @@ const toAuthUser = (user: ApiUser): AuthUser => {
     lastName: rest.join(' '),
     hotelId: user.hotelIds[0],
   };
-};
-
-const getHotelForUser = (user: AuthUser): Hotel | null => {
-  // TODO: replace mockHotels with API-backed hotel context when orphaned mock pages are cleaned up.
-  if (user.hotelId) return mockHotels.find(h => h.id === user.hotelId) || mockHotels[0] || null;
-  return mockHotels[0] || null;
 };
 
 const countUnread = (notifications: AppNotification[]) => notifications.filter(n => !n.isRead).length;
@@ -89,7 +64,7 @@ export const useAppStore = create<AppState>()(
       isAuthLoading: false,
       authError: null,
       currentHotel: null,
-      hotels: mockHotels,
+      hotels: [],
       sidebarOpen: true,
       activeView: 'dashboard',
       notifications: initialNotifications,
@@ -106,7 +81,7 @@ export const useAppStore = create<AppState>()(
             isAuthenticated: true,
             isAuthLoading: false,
             authError: null,
-            currentHotel: getHotelForUser(user),
+            currentHotel: null,
             activeView: 'dashboard',
           });
           return true;
@@ -149,7 +124,7 @@ export const useAppStore = create<AppState>()(
             isAuthenticated: true,
             isAuthLoading: false,
             authError: null,
-            currentHotel: getHotelForUser(user),
+            currentHotel: null,
           });
           return true;
         } catch {
