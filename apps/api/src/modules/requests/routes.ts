@@ -20,7 +20,7 @@ publicRequestsRouter.post("/", validateBody(serviceRequestCreateSchema), asyncHa
     data: { ...req.body, hotelId: hotel.id, status: "new" },
     include: { guest: { select: publicGuestSelect }, stay: true }
   });
-  req.app.get("io")?.to(`hotel:${hotel.id}`).emit("request:new", request);
+  req.app.get("io")?.to(`hotel:staff:${hotel.id}`).emit("request:new", request);
   return sendCreated(res, request);
 }));
 
@@ -62,6 +62,8 @@ requestsRouter.patch("/requests/:id/status", authenticate, asyncHandler(async (r
     data: { status: req.body.status },
     include: { guest: true, stay: true }
   });
-  req.app.get("io")?.to(`hotel:${request.hotelId}`).emit("request:status", updated);
+  const io = req.app.get("io");
+  io?.to(`hotel:staff:${request.hotelId}`).emit("request:status", updated);
+  io?.to(`hotel:guest:${request.hotelId}`).emit("request:status", updated);
   return sendOk(res, updated);
 }));
