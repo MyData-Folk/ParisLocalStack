@@ -182,5 +182,13 @@ export const api = {
     method: "PATCH",
     token,
     body: JSON.stringify({ status })
-  })
+  }),
+  hotelAnalytics: (hotelId: string, token: string) => request<{
+    events: number;
+    guests: number;
+    messages: number;
+    requests: number;
+    reviews: number;
+    avgRating: number;
+  }>(`/api/hotels/${hotelId}/analytics`, { token })
 };

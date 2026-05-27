@@ -58,7 +58,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
           <Route path={routePath("/reviews")} element={<ReviewsView hotelId={hotelContext.id} token={token} />} />
           <Route path={routePath("/qr")} element={<ReceptionQrView hotelId={hotelContext.id} token={token} />} />
           <Route path={routePath("/media")} element={<MediaLibraryView hotelId={hotelContext.id} token={token} />} />
-          <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
+          <Route path={routePath("/analytics")} element={<AnalyticsView hotelId={hotelContext.id} token={token} />} />
           <Route path={routePath("/settings")} element={<SettingsView hotelId={hotelContext.id} token={token} />} />
         </Routes>
       ) : null}
@@ -2010,20 +2010,133 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
   );
 }
 
-function DataView({ title, loader }: { title: string; loader: () => Promise<any[]> }) {
-  const [items, setItems] = useState<any[]>([]);
+type AnalyticsData = { events: number; guests: number; messages: number; requests: number; reviews: number; avgRating: number };
+
+function AnalyticsView({ hotelId, token }: { hotelId: string; token: string }) {
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setLoading(true);
     setError("");
-    void loader().then(setItems).catch((err) => setError(err instanceof Error ? err.message : "Erreur de chargement"));
-  }, [title]);
+    api.hotelAnalytics(hotelId, token)
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err.message : "Impossible de charger les statistiques"))
+      .finally(() => setLoading(false));
+  }, [hotelId, token]);
+
+  if (loading) return <LoadingPanel />;
 
   return (
-    <div className="space-y-5">
-      <PageHeader eyebrow="Module reception" title={title} description="Espace operationnel en preparation" />
+    <div className="space-y-6">
+      <PageHeader eyebrow="Tableau de bord" title="Analytics" description="Vue d'ensemble de l'activite de l'hotel" />
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
-      {!error && items.length === 0 && <EmptyState icon={<Activity className="h-6 w-6" />} title="Aucune donnee" description="Ce module sera enrichi dans les prochaines iterations produit." />}
+      {data && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <AnalyticsKpiCard
+              icon={<Users className="h-5 w-5" />}
+              label="Clients enregistres"
+              value={data.guests}
+              color="sky"
+            />
+            <AnalyticsKpiCard
+              icon={<MessageSquare className="h-5 w-5" />}
+              label="Messages recus"
+              value={data.messages}
+              color="violet"
+            />
+            <AnalyticsKpiCard
+              icon={<ListChecks className="h-5 w-5" />}
+              label="Demandes de service"
+              value={data.requests}
+              color="amber"
+            />
+            <AnalyticsKpiCard
+              icon={<Star className="h-5 w-5" />}
+              label="Avis clients"
+              value={data.reviews}
+              color="emerald"
+            />
+            <AnalyticsKpiCard
+              icon={<Activity className="h-5 w-5" />}
+              label="Evenements analytiques"
+              value={data.events}
+              color="rose"
+            />
+            <div className="flex flex-col justify-between rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+              <div className="flex items-start justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-300">
+                  <Star className="h-5 w-5" />
+                </span>
+                <span className="rounded-lg bg-white/5 px-2 py-0.5 text-xs text-slate-400">Moyenne</span>
+              </div>
+              <div className="mt-4">
+                <p className="text-3xl font-bold tracking-tight text-white">
+                  {data.avgRating > 0 ? data.avgRating.toFixed(1) : "—"}
+                  {data.avgRating > 0 && <span className="ml-1 text-base font-normal text-slate-400">/5</span>}
+                </p>
+                <p className="mt-1 text-sm text-slate-400">Note moyenne des avis</p>
+                {data.avgRating > 0 && (
+                  <div className="mt-2 flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${
+                          star <= Math.round(data.avgRating)
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-slate-600"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          {data.guests === 0 && data.messages === 0 && data.requests === 0 && (
+            <EmptyState
+              icon={<Activity className="h-6 w-6" />}
+              title="Aucune donnee encore"
+              description="Les statistiques s'alimentent automatiquement lorsque des clients utilisent l'application."
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function AnalyticsKpiCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  color: "sky" | "violet" | "amber" | "emerald" | "rose";
+}) {
+  const palette: Record<string, string> = {
+    sky: "bg-sky-500/15 text-sky-300",
+    violet: "bg-violet-500/15 text-violet-300",
+    amber: "bg-amber-500/15 text-amber-300",
+    emerald: "bg-emerald-500/15 text-emerald-300",
+    rose: "bg-rose-500/15 text-rose-300",
+  };
+  return (
+    <div className="flex flex-col justify-between rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
+      <div className="flex items-start justify-between">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${palette[color]}`}>
+          {icon}
+        </span>
+      </div>
+      <div className="mt-4">
+        <p className="text-3xl font-bold tracking-tight text-white">{value.toLocaleString("fr-FR")}</p>
+        <p className="mt-1 text-sm text-slate-400">{label}</p>
+      </div>
     </div>
   );
 }
