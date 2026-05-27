@@ -1,6 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ShieldCheck, Activity, Inbox, ListChecks, Users, Archive, Star, QrCode, Image as ImageIcon, BarChart3, Settings, Radio, LogOut } from "lucide-react";
+import { useReceptionNotifications } from "../hooks/useReceptionNotifications";
+import { useNotificationSound } from "../hooks/useNotificationSound";
+import { useDesktopNotifications } from "../hooks/useDesktopNotifications";
+import { NotificationBell } from "./NotificationBell";
 
 interface ReceptionShellProps {
   currentUser: any;
@@ -20,15 +24,18 @@ function ReceptionNavGroup({ label, children }: { label: string; children: React
   );
 }
 
-function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+function NavItem({ to, icon, label, badge }: { to: string; icon: React.ReactNode; label: string; badge?: React.ReactNode }) {
   const location = useLocation();
   const active = location.pathname === to;
   return (
-    <Link to={to} className={`group flex items-center gap-3 rounded-xl border px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-sky-400/15 ${active ? "border-sky-400/25 bg-sky-400/10 text-sky-100 shadow-sm" : "border-transparent text-zinc-400 hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-white"}`}>
-      <span className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${active ? "bg-sky-400 text-zinc-950" : "bg-white/[0.04] text-zinc-500 group-hover:text-white"}`}>
-        {icon}
+    <Link to={to} className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-sky-400/15 ${active ? "border-sky-400/25 bg-sky-400/10 text-sky-100 shadow-sm" : "border-transparent text-zinc-400 hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-white"}`}>
+      <span className="flex min-w-0 items-center gap-3">
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition ${active ? "bg-sky-400 text-zinc-950" : "bg-white/[0.04] text-zinc-500 group-hover:text-white"}`}>
+          {icon}
+        </span>
+        <span className="truncate">{label}</span>
       </span>
-      <span className="truncate">{label}</span>
+      {badge}
     </Link>
   );
 }
@@ -41,6 +48,28 @@ export function ReceptionShell({
   logout,
   children
 }: ReceptionShellProps) {
+  const hotelId = hotelContext?.id;
+  const {
+    unreadMessages,
+    unreadRequests,
+    totalUnread,
+    clearMessages,
+    clearRequests
+  } = useReceptionNotifications(hotelId);
+
+  const { playPing } = useNotificationSound();
+  const { requestPermission, notify } = useDesktopNotifications();
+
+  const prevTotalUnreadRef = React.useRef(totalUnread);
+
+  React.useEffect(() => {
+    if (totalUnread > prevTotalUnreadRef.current) {
+      playPing();
+      notify("Paris Local - Alerte Réception", "Vous avez reçu un nouveau message ou une nouvelle demande.");
+    }
+    prevTotalUnreadRef.current = totalUnread;
+  }, [totalUnread, playPing, notify]);
+
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 lg:flex">
       <aside className="border-b border-white/[0.07] bg-[#111115]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[280px] lg:flex-col lg:border-b-0 lg:border-r lg:p-5">
@@ -62,8 +91,30 @@ export function ReceptionShell({
         <nav className="mt-4 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-5">
           <ReceptionNavGroup label="Operations">
             <NavItem to={`${basePath}/dashboard`} icon={<Activity className="h-4 w-4" />} label="Dashboard" />
-            <NavItem to={`${basePath}/inbox`} icon={<Inbox className="h-4 w-4" />} label="Messagerie" />
-            <NavItem to={`${basePath}/requests`} icon={<ListChecks className="h-4 w-4" />} label="Demandes" />
+            <NavItem
+              to={`${basePath}/inbox`}
+              icon={<Inbox className="h-4 w-4" />}
+              label="Messagerie"
+              badge={
+                unreadMessages > 0 ? (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-300 ring-1 ring-amber-500/30">
+                    {unreadMessages}
+                  </span>
+                ) : undefined
+              }
+            />
+            <NavItem
+              to={`${basePath}/requests`}
+              icon={<ListChecks className="h-4 w-4" />}
+              label="Demandes"
+              badge={
+                unreadRequests > 0 ? (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500/20 px-1.5 text-[10px] font-bold text-red-300 ring-1 ring-red-500/30">
+                    {unreadRequests}
+                  </span>
+                ) : undefined
+              }
+            />
           </ReceptionNavGroup>
           <ReceptionNavGroup label="Clients">
             <NavItem to={`${basePath}/guests`} icon={<Users className="h-4 w-4" />} label="Clients presents" />
@@ -95,9 +146,20 @@ export function ReceptionShell({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Front desk</p>
               <p className="text-sm font-medium text-zinc-200">Messages, demandes, CRM et satisfaction</p>
             </div>
-            <div className="hidden items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100 sm:flex">
-              <Radio className="h-3.5 w-3.5" />
-              Live
+            <div className="flex items-center gap-3">
+              <NotificationBell
+                unreadMessages={unreadMessages}
+                unreadRequests={unreadRequests}
+                onClear={() => {
+                  clearMessages();
+                  clearRequests();
+                }}
+                onRequestPermission={requestPermission}
+              />
+              <div className="hidden items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100 sm:flex">
+                <Radio className="h-3.5 w-3.5" />
+                Live
+              </div>
             </div>
           </div>
         </div>
