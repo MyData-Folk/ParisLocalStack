@@ -10,7 +10,31 @@ export const settingsRouter = Router();
 export const publicSettingsRouter = Router({ mergeParams: true });
 
 publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
-  const hotel = await prisma.hotel.findUnique({ where: { slug: req.params.hotelSlug }, include: { settings: true } });
+  const hotel = await prisma.hotel.findUnique({
+    where: { slug: req.params.hotelSlug },
+    select: {
+      status: true,
+      settings: {
+        select: {
+          id: true,
+          hotelId: true,
+          wifiName: true,
+          // wifiPassword is excluded
+          breakfastHours: true,
+          checkinTime: true,
+          checkoutTime: true,
+          roomServiceHours: true,
+          receptionPhone: true,
+          // whatsappNumber is excluded
+          guestTheme: true,
+          languages: true,
+          modules: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }
+    }
+  });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
   return sendOk(res, hotel.settings);
 }));

@@ -173,7 +173,7 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
             <Route path={routePath("/qr")} element={<ReceptionQrView hotelId={hotelContext.id} token={token} />} />
             <Route path={routePath("/media")} element={<MediaLibraryView hotelId={hotelContext.id} token={token} />} />
             <Route path={routePath("/analytics")} element={<DataView title="Analytics" loader={() => Promise.resolve([])} />} />
-            <Route path={routePath("/settings")} element={<DataView title="Settings" loader={() => Promise.resolve([])} />} />
+            <Route path={routePath("/settings")} element={<SettingsView hotelId={hotelContext.id} token={token} />} />
           </Routes>
         ) : null}
         </div>
@@ -2049,6 +2049,103 @@ function mediaUrl(url: string) {
   if (!url) return "";
   if (/^https?:\/\//i.test(url)) return url;
   return `${API_URL}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const [wifiName, setWifiName] = useState("");
+  const [wifiPassword, setWifiPassword] = useState("");
+  const [breakfastHours, setBreakfastHours] = useState("");
+  const [checkinTime, setCheckinTime] = useState("");
+  const [checkoutTime, setCheckoutTime] = useState("");
+  const [roomServiceHours, setRoomServiceHours] = useState("");
+  const [receptionPhone, setReceptionPhone] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    api.hotelSettings(hotelId, token)
+      .then((settings) => {
+        if (settings) {
+          setWifiName(settings.wifiName ?? "");
+          setWifiPassword(settings.wifiPassword ?? "");
+          setBreakfastHours(settings.breakfastHours ?? "");
+          setCheckinTime(settings.checkinTime ?? "");
+          setCheckoutTime(settings.checkoutTime ?? "");
+          setRoomServiceHours(settings.roomServiceHours ?? "");
+          setReceptionPhone(settings.receptionPhone ?? "");
+          setWhatsappNumber(settings.whatsappNumber ?? "");
+        }
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Impossible de charger les parametres");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [hotelId, token]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      await api.updateHotelSettings(
+        hotelId,
+        {
+          wifiName,
+          wifiPassword,
+          breakfastHours,
+          checkinTime,
+          checkoutTime,
+          roomServiceHours,
+          receptionPhone,
+          whatsappNumber,
+        },
+        token
+      );
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible d'enregistrer les parametres");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <LoadingPanel />;
+
+  return (
+    <div className="space-y-5">
+      <PageHeader eyebrow="Configuration" title="Parametres hotelier" description="Personnalisez les services de l'hotel, informations d'acces et contacts direct" />
+      {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
+      {success && <p className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">Parametres enregistres avec succes.</p>}
+
+      <form onSubmit={handleSubmit} className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20 space-y-6">
+        <div className="grid gap-5 md:grid-cols-2">
+          <FieldDark label="Nom du reseau Wi-Fi" value={wifiName} onChange={setWifiName} placeholder="ex: Hotel-Guest" />
+          <FieldDark label="Mot de passe Wi-Fi" value={wifiPassword} onChange={setWifiPassword} placeholder="ex: Paris2026!" />
+          <FieldDark label="Horaires petit-dejeuner" value={breakfastHours} onChange={setBreakfastHours} placeholder="ex: 07:00 - 10:30" />
+          <FieldDark label="Heure d'arrivee (Check-in)" value={checkinTime} onChange={setCheckinTime} placeholder="ex: 15:00" />
+          <FieldDark label="Heure de depart (Check-out)" value={checkoutTime} onChange={setCheckoutTime} placeholder="ex: 12:00" />
+          <FieldDark label="Horaires du service d'etage" value={roomServiceHours} onChange={setRoomServiceHours} placeholder="ex: 07:00 - 23:00" />
+          <FieldDark label="Telephone de la reception" value={receptionPhone} onChange={setReceptionPhone} placeholder="ex: +33 1 00 00 00 00" />
+          <FieldDark label="Numero WhatsApp" value={whatsappNumber} onChange={setWhatsappNumber} placeholder="ex: +33 6 00 00 00 00" />
+        </div>
+
+        <button disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:opacity-60">
+          {saving ? "Enregistrement..." : "Enregistrer les parametres"}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 function DataView({ title, loader }: { title: string; loader: () => Promise<any[]> }) {
