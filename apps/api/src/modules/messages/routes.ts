@@ -9,22 +9,25 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
 import { publicGuestSelect } from "../../utils/publicSelects.js";
 import { validateGuestStayScope } from "../../utils/tenantScope.js";
+import { staffRoom, guestRoom } from "../../socket.js";
 
 export const messagesRouter = Router();
 export const publicMessagesRouter = Router({ mergeParams: true });
 
 function emitMessage(req: Request, hotelId: string, payload: any) {
   const io = req.app.get("io") as Server | undefined;
-  if (payload?.senderType === "reception") {
-    io?.to(`hotel:guest:${hotelId}`).emit("reply:new", payload);
-  } else {
-    io?.to(`hotel:staff:${hotelId}`).emit("message:new", payload);
+  io?.to(staffRoom(hotelId)).emit("message:new", payload);
+  if (payload?.senderType === "reception" && payload?.guestId) {
+    io?.to(guestRoom(hotelId, payload.guestId)).emit("reply:new", payload);
   }
 }
 
-function emitMessageStatus(req: Request, hotelId: string, payload: unknown) {
+function emitMessageStatus(req: Request, hotelId: string, payload: any) {
   const io = req.app.get("io") as Server | undefined;
-  io?.to(`hotel:staff:${hotelId}`).emit("message:status", payload);
+  io?.to(staffRoom(hotelId)).emit("message:status", payload);
+  if (payload?.guestId) {
+    io?.to(guestRoom(hotelId, payload.guestId)).emit("message:status", payload);
+  }
 }
 
 publicMessagesRouter.post("/", validateBody(messageCreateSchema), asyncHandler(async (req, res) => {

@@ -8,6 +8,14 @@ type JwtPayload = {
   sub: string;
 };
 
+export function staffRoom(hotelId: string) {
+  return `hotel:${hotelId}:staff`;
+}
+
+export function guestRoom(hotelId: string, guestId: string) {
+  return `hotel:${hotelId}:guest:${guestId}`;
+}
+
 export function createSocketServer(httpServer: HttpServer) {
   const io = new Server(httpServer, {
     cors: {
@@ -23,7 +31,6 @@ export function createSocketServer(httpServer: HttpServer) {
       const auth = socket.handshake.auth || {};
       const headers = socket.handshake.headers || {};
       
-      // 1. Staff Path
       let token = auth.token;
       if (!token && typeof headers.authorization === "string" && headers.authorization.startsWith("Bearer ")) {
         token = headers.authorization.slice(7);
@@ -57,9 +64,18 @@ export function createSocketServer(httpServer: HttpServer) {
         }
       }
 
-      // 2. Guest Path
       const { guestId, stayId, hotelId } = auth;
       if (guestId && stayId && hotelId) {
+        const hotel = await prisma.hotel.findUnique({ where: { id: hotelId } });
+        if (!hotel || hotel.status !== "active") {
+          return next(new Error("unauthorized"));
+        }
+
+        const guest = await prisma.guest.findUnique({ where: { id: guestId } });
+        if (!guest || guest.hotelId !== hotelId) {
+          return next(new Error("unauthorized"));
+        }
+
         const stay = await prisma.stay.findFirst({
           where: {
             id: stayId,
@@ -68,7 +84,6 @@ export function createSocketServer(httpServer: HttpServer) {
             status: "active"
           }
         });
-
         if (!stay) {
           return next(new Error("unauthorized"));
         }
@@ -82,7 +97,6 @@ export function createSocketServer(httpServer: HttpServer) {
         return next();
       }
 
-      // Neither path matched
       return next(new Error("unauthorized"));
     } catch (err) {
       return next(new Error("unauthorized"));
@@ -95,15 +109,13 @@ export function createSocketServer(httpServer: HttpServer) {
       if (!user) return;
 
       if (user.role === "guest") {
-        // A guest can only join their own hotel's guest room
-        if (user.hotelId === hotelId) {
-          socket.join(`hotel:guest:${hotelId}`);
+        if (user.hotelId === hotelId && user.guestId) {
+          socket.join(guestRoom(hotelId, user.guestId));
         }
       } else {
-        // Staff validation
         const hasAccess = user.role === "super_admin" || user.hotelIds.includes(hotelId);
         if (hasAccess) {
-          socket.join(`hotel:staff:${hotelId}`);
+          socket.join(staffRoom(hotelId));
         }
       }
     });
@@ -113,9 +125,9 @@ export function createSocketServer(httpServer: HttpServer) {
       if (!user) return;
 
       if (user.role === "guest") {
-        socket.leave(`hotel:guest:${hotelId}`);
+        socket.leave(guestRoom(hotelId, user.guestId));
       } else {
-        socket.leave(`hotel:staff:${hotelId}`);
+        socket.leave(staffRoom(hotelId));
       }
     });
   });
