@@ -1649,8 +1649,9 @@ function requestPrimaryDetail(request: any) {
   const details = request.details ?? {};
   if (request.type === "taxi") return taxiRequestDestination(details);
   if (request.type === "restaurant") return `${details.people ?? "-"} pers.${details.cuisine ? ` - ${details.cuisine}` : ""}${details.area ? ` - ${details.area}` : ""}`;
-  if (request.type === "room_service") return `${details.requestType ?? "Room service"}${details.quantity ? ` x${details.quantity}` : ""}`;
+  if (request.type === "room_service") return `${details.category || details.requestType || "Room service"}${details.quantity ? ` x${details.quantity}` : ""}`;
   if (request.type === "towels") return `${details.quantity ?? 1} ${details.itemType ?? "linge"}`;
+  if (request.type === "maintenance") return details.category ?? "Maintenance";
   return details.subject ?? request.description ?? "-";
 }
 
@@ -1678,7 +1679,37 @@ function requestDetailsEntries(request: any): Array<[string, string]> {
       ["Quartier", String(details.area ?? "-")],
       ["Restaurant", String(details.restaurantName ?? "-")],
       ["Contraintes", String(details.dietaryRestrictions ?? "-")],
+      ["Occasion speciale", String(details.occasion ?? "-")],
       ["Note", String(details.notes ?? "-")]
+    ];
+    return entries.filter(([, value]) => value && value !== "-");
+  }
+  if (request.type === "room_service") {
+    const category = details.category || details.requestType || "-";
+    const entries: Array<[string, string]> = [
+      ["Categorie", String(category)],
+      ["Quantite", String(details.quantity ?? "1")],
+      ["Urgent", details.asap ? "Oui" : "Non"],
+      ["Heure souhaitee", String(details.requestedTime ?? "-")],
+      ["Commentaire", String(details.notes ?? "-")]
+    ];
+    return entries.filter(([, value]) => value && value !== "-");
+  }
+  if (request.type === "towels") {
+    const entries: Array<[string, string]> = [
+      ["Article", String(details.itemType ?? "-")],
+      ["Quantite", String(details.quantity ?? "1")],
+      ["Urgent", details.urgent ? "Oui" : "Non"],
+      ["Commentaire", String(details.notes ?? "-")]
+    ];
+    return entries.filter(([, value]) => value && value !== "-");
+  }
+  if (request.type === "maintenance") {
+    const entries: Array<[string, string]> = [
+      ["Categorie", String(details.category ?? "-")],
+      ["Description", String(details.description ?? "-")],
+      ["Urgent", details.urgent ? "Oui" : "Non"],
+      ["Disponibilite", String(details.availability ? details.availability : "-")]
     ];
     return entries.filter(([, value]) => value && value !== "-");
   }
