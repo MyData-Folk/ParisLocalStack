@@ -72,16 +72,23 @@ Application React unique dans `apps/web`.
 Elle sert plusieurs surfaces selon le hostname et les routes :
 - Guest App : application client hôtel mobile-first ;
 - Reception App : dashboard opérationnel de l'hôtel ;
-- Admin App : console Super Admin ;
+- Super Admin : console de gestion de la plateforme (startup ParisLocalStack) ;
+- Admin Hôtel : espace directeur hôtel client B2B ;
 - Generator App : assistant de création/configuration hôtel.
 
 Le frontend ne doit jamais être dupliqué par hôtel. Tous les hôtels passent par le même build React.
 
 Rôles des grandes surfaces :
-- Guest App : onboarding client, séjour, services, messagerie, guide local, avis ;
-- Reception App : inbox, demandes, clients présents, historique CRM, avis, QR code, médias ;
-- Admin App : hôtels, utilisateurs, onboarding hôtel, liens, QR, thèmes, recommandations ;
+- Guest App (Client final = voyageur) : onboarding client, séjour, services, messagerie, guide local, avis ;
+  Route : `/h/:hotelSlug/*`
+- Reception App (staff hôtel = receptionist) : inbox, demandes, clients présents, historique CRM, avis, QR code, médias ;
+  Route : `/reception/*`
+- Admin Hôtel (client B2B hôtelier = hotel_admin) : profil hôtel, settings, recommandations, thème, analytics, QR code, CRM export ;
+  Route : `/hotel-admin/*`
+- Super Admin (startup ParisLocalStack = super_admin) : hôtels, utilisateurs, onboarding hôtel, liens, QR, thèmes, déploiements ;
+  Route : `/admin/*`
 - Generator App : wizard de configuration hôtel, branding, modules, preview, QR.
+  Route : `/generator/*`
 
 ### Backend
 
@@ -513,6 +520,12 @@ Prochaines priorités produit raisonnables :
 5. CRM exports avancés (CSV, filtres segmentation).
 6. Monitoring/backups PostgreSQL automatiques.
 7. Démos commerciales (3 hôtels, landing page).
+
+Prochaines phases en cours ou planifiées :
+Phase 6 — Espace Admin Hôtel (en cours)
+Phase 7 — CRM exports avancés (CSV, filtres segmentation)
+Phase 8 — Observabilité + backups PostgreSQL automatiques
+Phase 9 — Démos commerciales (3 hôtels, landing page)
 
 ## 9. Authentification & Rôles
 
