@@ -1,7 +1,7 @@
 import { CheckCircle2 } from "lucide-react";
 import { guestThemeIds, guestThemes, type GuestThemeId } from "../../../themes";
 
-export function Field({ label, value, onChange, placeholder, helper, type = "text", required = false }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; helper?: string; type?: string; required?: boolean }) {
+export function Field({ label, value, onChange, placeholder, helper, type = "text", required = false, list }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; helper?: string; type?: string; required?: boolean; list?: string }) {
   return (
     <label className="block space-y-2">
       <span className="text-sm font-medium text-slate-300">{label}</span>
@@ -12,6 +12,7 @@ export function Field({ label, value, onChange, placeholder, helper, type = "tex
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         required={required}
+        list={list}
       />
       {helper ? <span className="text-xs text-slate-500">{helper}</span> : null}
     </label>

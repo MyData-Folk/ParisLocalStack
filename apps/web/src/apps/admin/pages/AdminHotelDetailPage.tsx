@@ -1,7 +1,7 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Palette, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Loader2, Palette, Trash2, Upload, Users, X } from "lucide-react";
 import { api } from "../../../lib/api";
 import { useAppStore } from "../../../stores/appStore";
 import { resolveGuestTheme, type GuestThemeId } from "../../../themes";
@@ -162,6 +162,8 @@ export function AdminHotelDetailPage() {
             </div>
             <ReceptionAccessCard hotel={hotel} access={receptionAccess} message={receptionAccessMessage} saving={receptionAccessSaving} onCreate={() => void createReceptionAccess()} />
             <RecommendationManager
+              hotelId={hotel.id}
+              token={token!}
               recommendations={recommendations}
               form={recommendationForm}
               editingId={editingRecommendationId}
@@ -183,7 +185,16 @@ export function AdminHotelDetailPage() {
   );
 }
 
+const CATEGORY_SUGGESTIONS = [
+  "Restaurants","Bars","Cafes","Boulangeries","Musees","Monuments","Shopping","Transports",
+  "Pharmacies","Supermarches","Croisieres","Tours en bus","Experiences locales","Spectacles",
+  "Jazz clubs","Marches locaux","Famille","Romantique","Business","Bien-etre","Partenaire hotel",
+  "Coup de coeur","Bons plans quartier"
+];
+
 export function RecommendationManager({
+  hotelId,
+  token,
   recommendations,
   form,
   editingId,
@@ -194,6 +205,8 @@ export function RecommendationManager({
   onToggle,
   onCancel
 }: {
+  hotelId: string;
+  token: string;
   recommendations: any[];
   form: RecommendationFormState;
   editingId: string | null;
@@ -204,8 +217,40 @@ export function RecommendationManager({
   onToggle: (recommendation: any, changes: Record<string, unknown>) => void;
   onCancel: () => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState("");
+
   function update<K extends keyof RecommendationFormState>(field: K, value: RecommendationFormState[K]) {
     onFormChange((current) => ({ ...current, [field]: value }));
+  }
+
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImageUploadError("");
+
+    if (!file.type.startsWith("image/")) {
+      setImageUploadError("Seules les images sont acceptees.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setImageUploadError("L'image ne doit pas depasser 10 Mo.");
+      event.target.value = "";
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const uploaded = await api.uploadHotelFile(hotelId, file, token);
+      update("imageUrl", uploaded.url ?? "");
+    } catch {
+      setImageUploadError("L'upload a echoue. Reessayez ou collez une URL manuellement.");
+    } finally {
+      setImageUploading(false);
+      event.target.value = "";
+    }
   }
 
   return (
@@ -219,14 +264,61 @@ export function RecommendationManager({
         <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400">{recommendations.length} adresse(s)</span>
       </div>
       <form onSubmit={onSubmit} className="mt-5 grid gap-4 md:grid-cols-2">
-        <Field label="Categorie" value={form.category} onChange={(value) => update("category", value)} placeholder="restaurants, metro, bons plans..." required />
+        <Field label="Categorie" value={form.category} onChange={(value) => update("category", value)} placeholder="restaurants, metro, bons plans..." required list="category-suggestions" />
         <Field label="Nom" value={form.name} onChange={(value) => update("name", value)} placeholder="Cafe de la Paix" required />
         <Field label="Description" value={form.description} onChange={(value) => update("description", value)} placeholder="Adresse selectionnee par l'hotel" />
         <Field label="Adresse" value={form.address} onChange={(value) => update("address", value)} placeholder="5 place..." />
         <Field label="Telephone" value={form.phone} onChange={(value) => update("phone", value)} placeholder="+33..." />
         <Field label="Site web" value={form.website} onChange={(value) => update("website", value)} placeholder="https://..." />
         <Field label="Distance" value={form.distance} onChange={(value) => update("distance", value)} placeholder="8 min a pied" />
-        <Field label="Image URL" value={form.imageUrl} onChange={(value) => update("imageUrl", value)} placeholder="https://..." />
+
+        <div className="md:col-span-2 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Image</p>
+          <p className="text-xs text-slate-500">Cette image sera affichee dans la Guest App.</p>
+
+          {form.imageUrl ? (
+            <div className="relative overflow-hidden rounded-xl border border-white/10">
+              <img src={form.imageUrl} alt="Apercu recommandation" className="h-40 w-full object-cover" />
+              <button
+                type="button"
+                title="Retirer l'image"
+                onClick={() => update("imageUrl", "")}
+                className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg bg-slate-950/80 text-slate-200 backdrop-blur transition hover:bg-red-500/20 hover:text-red-200"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={imageUploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-white/10 disabled:opacity-50"
+            >
+              {imageUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {imageUploading ? "Upload en cours..." : "Choisir une image"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => void handleImageUpload(e)}
+            />
+            <span className="text-xs text-slate-500">Max 10 Mo</span>
+          </div>
+
+          {imageUploadError ? (
+            <p className="rounded-xl border border-red-300/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">{imageUploadError}</p>
+          ) : null}
+        </div>
+
+        <div className="md:col-span-2">
+          <Field label="Ou coller une URL d'image externe" value={form.imageUrl} onChange={(value) => update("imageUrl", value)} placeholder="https://..." type="url" />
+        </div>
+
         <Field label="Horaires" value={form.openingHours} onChange={(value) => update("openingHours", value)} placeholder="09:00 - 22:00" />
         <Field label="Tags" value={form.tags} onChange={(value) => update("tags", value)} placeholder="romantique, terrasse, famille" />
         <Field label="Ordre" type="number" value={form.sortOrder} onChange={(value) => update("sortOrder", value)} />
@@ -272,6 +364,12 @@ export function RecommendationManager({
           </div>
         ))}
       </div>
+
+      <datalist id="category-suggestions">
+        {CATEGORY_SUGGESTIONS.map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
     </div>
   );
 }
