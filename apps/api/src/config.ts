@@ -10,7 +10,13 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
   uploadProvider: process.env.UPLOAD_PROVIDER ?? "local",
   uploadDir: process.env.UPLOAD_DIR ?? "uploads",
-  webUrl: process.env.WEB_URL ?? "http://localhost:5173"
+  webUrl: process.env.WEB_URL ?? "http://localhost:5173",
+  s3Endpoint: process.env.S3_ENDPOINT ?? "",
+  s3Region: process.env.S3_REGION ?? "auto",
+  s3Bucket: process.env.S3_BUCKET ?? "",
+  s3AccessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
+  s3SecretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+  s3PublicBaseUrl: process.env.S3_PUBLIC_BASE_URL ?? ""
 };
 
 const jwtSecretValue = process.env.JWT_SECRET;
@@ -56,6 +62,26 @@ if (config.nodeEnv === "production") {
 if (config.nodeEnv === "production") {
   if (!process.env.CORS_ORIGIN) {
     console.warn("WARNING: CORS_ORIGIN not set, using restrictive default");
+  }
+}
+
+const s3Provider = config.uploadProvider === "s3";
+if (s3Provider) {
+  const missing: string[] = [];
+  if (!config.s3Endpoint) missing.push("S3_ENDPOINT");
+  if (!config.s3Bucket) missing.push("S3_BUCKET");
+  if (!config.s3AccessKeyId) missing.push("S3_ACCESS_KEY_ID");
+  if (!config.s3SecretAccessKey) missing.push("S3_SECRET_ACCESS_KEY");
+  if (!config.s3PublicBaseUrl) missing.push("S3_PUBLIC_BASE_URL");
+  if (missing.length > 0) {
+    const msg = `FATAL: UPLOAD_PROVIDER=s3 requires ${missing.join(", ")}`;
+    if (config.nodeEnv === "production") {
+      console.error(msg);
+      process.exit(1);
+    } else {
+      console.warn(`WARNING: ${msg}. Falling back to local storage.`);
+      config.uploadProvider = "local";
+    }
   }
 }
 

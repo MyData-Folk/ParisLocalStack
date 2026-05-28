@@ -1,23 +1,33 @@
 import { Router } from "express";
-import path from "path";
-import fs from "fs";
 import multer from "multer";
 import { remoteFileCreateSchema } from "@paris-local/shared";
-import { config } from "../../config.js";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
+import { getStorageProvider } from "./provider.js";
 
-fs.mkdirSync(config.uploadDir, { recursive: true });
+const ALLOWED_MIMES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+  "application/pdf",
+  "text/csv"
+];
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, callback) => callback(null, config.uploadDir),
-  filename: (_req, file, callback) => callback(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "-")}`)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    if (ALLOWED_MIMES.includes(file.mimetype)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`File type ${file.mimetype} is not allowed`));
+    }
+  }
 });
-
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 export const storageRouter = Router();
 
@@ -47,15 +57,25 @@ storageRouter.post("/hotels/:hotelId/files/url", authenticate, requireHotelAcces
 
 storageRouter.post("/hotels/:hotelId/upload", authenticate, requireHotelAccess("hotelId"), upload.single("file"), asyncHandler(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Missing file" });
+
+  const provider = getStorageProvider();
+  const result = await provider.upload({
+    buffer: req.file.buffer,
+    originalName: req.file.originalname,
+    mimeType: req.file.mimetype,
+    size: req.file.size,
+    hotelId: req.params.hotelId
+  });
+
   const file = await prisma.file.create({
     data: {
       hotelId: req.params.hotelId,
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      size: req.file.size,
-      url: `/uploads/${req.file.filename}`,
-      storageProvider: config.uploadProvider
+      filename: result.filename,
+      originalName: result.originalName,
+      mimeType: result.mimeType,
+      size: result.size,
+      url: result.url,
+      storageProvider: result.storageProvider
     }
   });
   return sendCreated(res, file);
@@ -65,15 +85,25 @@ storageRouter.post("/upload", authenticate, upload.single("file"), asyncHandler(
   if (!req.file) return res.status(400).json({ error: "Missing file" });
   const hotelId = String(req.body.hotelId ?? "");
   if (req.user?.role !== "super_admin" && !req.user?.hotelIds.includes(hotelId)) return res.status(403).json({ error: "Forbidden" });
+
+  const provider = getStorageProvider();
+  const result = await provider.upload({
+    buffer: req.file.buffer,
+    originalName: req.file.originalname,
+    mimeType: req.file.mimetype,
+    size: req.file.size,
+    hotelId
+  });
+
   const file = await prisma.file.create({
     data: {
       hotelId,
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      size: req.file.size,
-      url: `/uploads/${req.file.filename}`,
-      storageProvider: config.uploadProvider
+      filename: result.filename,
+      originalName: result.originalName,
+      mimeType: result.mimeType,
+      size: result.size,
+      url: result.url,
+      storageProvider: result.storageProvider
     }
   });
   return sendCreated(res, file);
@@ -83,8 +113,16 @@ storageRouter.delete("/:fileId", authenticate, asyncHandler(async (req, res) => 
   const file = await prisma.file.findUnique({ where: { id: req.params.fileId } });
   if (!file) return res.status(404).json({ error: "File not found" });
   if (req.user?.role !== "super_admin" && !req.user?.hotelIds.includes(file.hotelId)) return res.status(403).json({ error: "Forbidden" });
+
+  const provider = getStorageProvider();
+  if (file.storageProvider !== "remote_url") {
+    try {
+      await provider.delete(file.filename);
+    } catch {
+      // Silently ignore provider delete errors to avoid blocking DB cleanup
+    }
+  }
+
   await prisma.file.delete({ where: { id: file.id } });
-  const fullPath = path.join(config.uploadDir, file.filename);
-  if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
   return sendOk(res, { ok: true });
 }));
