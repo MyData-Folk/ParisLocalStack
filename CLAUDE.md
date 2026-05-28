@@ -54,7 +54,14 @@ Exemples :
 - fiche client/séjour et timeline implémentées ;
 - système de thèmes Guest App implémenté ;
 - médiathèque réception privée implémentée ;
-- avis client uniques par séjour avec validation avant publication.
+- avis client uniques par séjour avec validation avant publication ;
+- Socket.IO sécurisé avec authentification JWT (staff) et validation base de données (guest) ;
+- rooms Socket.IO isolées : staff par hôtel, guest par guestId ;
+- CORS strict configuré pour la production ;
+- rate limiting actif sur routes publiques et auth ;
+- migrations contrôlées via prisma migrate deploy au démarrage Docker ;
+- validation cross-tenant sur routes publiques (validateGuestStayScope) ;
+- audit sécurité multi-tenant complété (SECURITY_TENANT_AUDIT.md).
 
 ## 2. Architecture cible (Frontend + Backend + Database)
 
@@ -360,6 +367,8 @@ Storage :
 - table `files`
 - médiathèque réception privée
 - ajout par upload local ou URL distante
+- compatibilité Cloudflare R2 / S3 prévue (variables réservées) ;
+- migration R2 planifiée avant tout upload d'images en production.
 - futur S3/MinIO prévu.
 
 ## 6. Règles de codage & bonnes pratiques
@@ -450,7 +459,7 @@ Points à préserver :
 Risques connus :
 - `localStorage` peut conserver une session d'un hôtel ; la réception nettoie désormais une session incompatible avec le slug courant.
 - `apps/web/src/pages` contient des anciens fichiers orphelins avec mock data.
-- `Dockerfile.api` utilise actuellement `prisma db push --accept-data-loss` au démarrage de production ; c'est pratique pour MVP mais à sécuriser plus tard avec migrations contrôlées.
+- `Dockerfile.api` utilise `prisma migrate deploy` via entrypoint.sh au démarrage — migrations contrôlées, pas de risque de perte de données.
 - Les images ajoutées par URL distante peuvent casser si la source externe disparaît ; futur import S3 recommandé.
 - Ne jamais modifier la configuration DNS/Coolify/wildcard sans demande explicite.
 
@@ -497,14 +506,13 @@ Fonctionnalités déjà présentes ou structurées :
 - thèmes Guest App.
 
 Prochaines priorités produit raisonnables :
-1. Finaliser Settings réception avec branding et modules opérationnels.
-2. Connecter la médiathèque aux hero images / photos guide local.
-3. Ajouter import réel URL vers storage local/S3.
-4. Ajouter monitoring/backup PostgreSQL.
-5. Améliorer les notifications live côté réception.
-6. Ajouter historique d'audit pour changements de statuts.
-7. Ajouter exports CRM plus avancés.
-8. Préparer intégrations Google Maps et RATP sans bloquer le MVP.
+1. Storage Cloudflare R2 — avant tout upload d'images en prod.
+2. Formulaires services structurés (taxi, restaurant, room service, linge) avec affichage lisible côté réception.
+3. Recommandations personnalisables avec images (après R2).
+4. Hotel Admin — espace directeur hôtel autonome.
+5. CRM exports avancés (CSV, filtres segmentation).
+6. Monitoring/backups PostgreSQL automatiques.
+7. Démos commerciales (3 hôtels, landing page).
 
 ## 9. Authentification & Rôles
 
@@ -713,3 +721,26 @@ Rappel de prudence :
 - ne pas modifier la production ou Coolify sans vérifier le build ;
 - ne pas exposer les tokens dans les commits ou logs publics ;
 - après usage, révoquer tout token temporaire fourni en conversation.
+
+## 12. Historique des phases complétées
+
+Phase 0 — Sécurisation Socket.IO ✅
+- Middleware auth JWT staff + validation guest (guestId/stayId/hotelId)
+- Rooms séparées : hotel:{hotelId}:staff / hotel:{hotelId}:guest:{guestId}
+- Émissions corrigées par module (messages, requests, reviews)
+- RBAC PATCH /settings restreint à super_admin + hotel_admin
+- DATABASE_URL guard production (process.exit(1) si absent/invalide)
+- Commits : `022990e`, `5f0574b`, `5b02a84`, `a829681`, `8da47da`, `ca7b5a6`, `e313a59`
+
+Phase 1 — Stabilisation production ✅
+- CORS strict (isAllowedOrigin, sous-domaines welcomeparis.hotelmanager.fr)
+- Rate limiting (60 req/min public, 10 req/15min login)
+- seedProduction.ts sécurisé (SEED_ADMIN_PASSWORD obligatoire)
+- DEPLOYMENT.md créé (procédure complète Coolify)
+- pre-deploy-check.sh créé
+- Commits : `f8758fe`, `be30c57`, `615371b`, `32a22e0`, `33a90e5`
+
+Sécurité multi-tenant ✅
+- validateGuestStayScope sur toutes les routes publiques de création
+- SECURITY_TENANT_AUDIT.md — audit complet documenté
+- Commits : commits récents documentés dans git log
