@@ -25,11 +25,23 @@ export function HotelAdminApp() {
       api.hotels(token)
         .then((allHotels) => {
           setAvailableHotels(allHotels);
+          if (allHotels.length === 0) {
+            setActiveHotel(null);
+            setActiveHotelId("");
+            setErrorHotel("Aucun hotel n'est disponible.");
+            return;
+          }
           const defaultId = currentUser.hotelIds[0] && allHotels.some((h) => h.id === currentUser.hotelIds[0])
             ? currentUser.hotelIds[0]
-            : allHotels[0]?.id ?? "";
+            : allHotels[0].id;
           setActiveHotelId(defaultId);
           return loadHotel(defaultId, token);
+        })
+        .catch(() => {
+          setAvailableHotels([]);
+          setActiveHotel(null);
+          setActiveHotelId("");
+          setErrorHotel("Impossible de charger la liste des hotels.");
         })
         .finally(() => setLoadingHotel(false));
     } else {
