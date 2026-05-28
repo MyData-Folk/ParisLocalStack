@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AdminApp } from "./apps/admin/AdminApp";
 import { GeneratorApp } from "./apps/generator/GeneratorApp";
 import { GuestShell } from "./apps/guest/GuestShell";
+import { HotelAdminApp } from "./apps/hotelAdmin/HotelAdminApp";
 import { ReceptionApp } from "./apps/reception/ReceptionApp";
 import { canonicalGuestUrl, resolveTenantFromHostname } from "./lib/tenant";
 
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/h/:hotelSlug/:section" element={<GuestShell />} />
       <Route path="/reception/*" element={<ReceptionApp basePath="/reception" />} />
       <Route path="/admin/*" element={<AdminApp />} />
+      <Route path="/hotel-admin/*" element={<HotelAdminApp />} />
       <Route path="/generator/*" element={<GeneratorApp />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
