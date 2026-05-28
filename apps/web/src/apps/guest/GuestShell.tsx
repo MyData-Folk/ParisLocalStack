@@ -23,6 +23,7 @@ import {
   Utensils,
   Waves,
   Wifi,
+  Wrench,
   X
 } from "lucide-react";
 import { api } from "../../lib/api";
@@ -689,14 +690,15 @@ function PublishedReviewsPanel({ reviews }: { reviews: any[] }) {
   );
 }
 
-type ServiceTemplate = { type: string; title: string; description: string; priority: "medium" | "urgent"; icon: React.ReactNode };
+type ServiceTemplate = { type: string; title: string; description: string; priority: "medium" | "high" | "urgent"; icon: React.ReactNode };
 
 const serviceTemplates: ServiceTemplate[] = [
   { type: "taxi", title: "Taxi", description: "La reception reserve votre trajet.", priority: "medium", icon: <Car className="h-5 w-5" /> },
   { type: "restaurant", title: "Restaurant", description: "Une table ou une recommandation.", priority: "medium", icon: <Utensils className="h-5 w-5" /> },
   { type: "room_service", title: "Room service", description: "Commande ou demande en chambre.", priority: "medium", icon: <ShoppingBag className="h-5 w-5" /> },
   { type: "towels", title: "Serviettes", description: "Serviettes ou linge supplementaire.", priority: "medium", icon: <Waves className="h-5 w-5" /> },
-  { type: "reception", title: "Assistance reception", description: "Question urgente ou besoin particulier.", priority: "urgent", icon: <ConciergeBell className="h-5 w-5" /> }
+  { type: "reception", title: "Assistance reception", description: "Question urgente ou besoin particulier.", priority: "urgent", icon: <ConciergeBell className="h-5 w-5" /> },
+  { type: "maintenance", title: "Maintenance", description: "Signaler un probleme dans la chambre.", priority: "medium", icon: <Wrench className="h-5 w-5" /> }
 ];
 
 function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }: { service: ServiceTemplate; session: Session; hotelSlug: string; onClose: () => void; onCreated: (request: RequestItem) => void }) {
@@ -747,6 +749,7 @@ function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }
           {service.type === "room_service" ? <RoomServiceFields form={form} update={update} /> : null}
           {service.type === "towels" ? <LinenFields form={form} update={update} /> : null}
           {service.type === "reception" ? <ReceptionAssistanceFields form={form} update={update} /> : null}
+          {service.type === "maintenance" ? <MaintenanceFields form={form} update={update} /> : null}
         </div>
         <button type="submit" disabled={saving} className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarDays className="h-4 w-4" />}
@@ -784,6 +787,13 @@ function RestaurantFields({ form, update }: { form: RequestDetails; update: (fie
       <GuestInput label="Type de cuisine" value={String(form.cuisine ?? "")} onChange={(value) => update("cuisine", value)} />
       <GuestSelect label="Budget" value={String(form.budget ?? "medium")} onChange={(value) => update("budget", value)} options={[["economy", "Economique"], ["medium", "Moyen"], ["premium", "Premium"], ["gastronomic", "Gastronomique"]]} />
       <GuestInput label="Quartier souhaite" value={String(form.area ?? "")} onChange={(value) => update("area", value)} />
+      <GuestSelect label="Occasion speciale" value={String(form.occasion ?? "")} onChange={(value) => update("occasion", value)} options={[
+        ["", "Rien de particulier"],
+        ["Anniversaire", "Anniversaire"],
+        ["Saint-Valentin", "Saint-Valentin"],
+        ["Romantique", "Romantique"],
+        ["Affaires", "Affaires"]
+      ]} />
       <GuestInput label="Restaurant precis optionnel" value={String(form.restaurantName ?? "")} onChange={(value) => update("restaurantName", value)} />
       <GuestInput label="Contraintes alimentaires" value={String(form.dietaryRestrictions ?? "")} onChange={(value) => update("dietaryRestrictions", value)} />
       <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
@@ -796,7 +806,13 @@ function RoomServiceFields({ form, update }: { form: RequestDetails; update: (fi
     <>
       <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.asap)} onChange={(event) => update("asap", event.target.checked)} /> Des que possible</label>
       {!form.asap ? <GuestInput label="Heure souhaitee" type="time" value={String(form.requestedTime ?? "")} onChange={(value) => update("requestedTime", value)} /> : null}
-      <GuestInput label="Type de demande" value={String(form.requestType ?? "")} onChange={(value) => update("requestType", value)} required />
+      <GuestSelect label="Categorie" value={String(form.category ?? "")} onChange={(value) => update("category", value)} options={[
+        ["Petit-dejeuner", "Petit-dejeuner"],
+        ["Boissons", "Boissons"],
+        ["Collations", "Collations"],
+        ["Repas", "Repas"],
+        ["Autre", "Autre"]
+      ]} />
       <GuestInput label="Quantite" type="number" value={String(form.quantity ?? 1)} onChange={(value) => update("quantity", Number(value))} />
       <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
     </>
@@ -820,6 +836,30 @@ function ReceptionAssistanceFields({ form, update }: { form: RequestDetails; upd
       <GuestInput label="Sujet" value={String(form.subject ?? "")} onChange={(value) => update("subject", value)} required />
       <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.urgent)} onChange={(event) => update("urgent", event.target.checked)} /> Urgent</label>
       <GuestTextarea label="Message" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} required />
+    </>
+  );
+}
+
+function MaintenanceFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
+  return (
+    <>
+      <GuestSelect label="Categorie" value={String(form.category ?? "Plomberie")} onChange={(value) => update("category", value)} options={[
+        ["Plomberie", "Plomberie"],
+        ["Electricite / Lumiere", "Electricite / Lumiere"],
+        ["Climatisation / Chauffage", "Climatisation / Chauffage"],
+        ["Serrure / Cle", "Serrure / Cle"],
+        ["TV / Telephone", "TV / Telephone"],
+        ["Mobilier / Equipement", "Mobilier / Equipement"],
+        ["Autre", "Autre"]
+      ]} />
+      <GuestTextarea label="Description" value={String(form.description ?? "")} onChange={(value) => update("description", value)} required />
+      <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.urgent)} onChange={(event) => update("urgent", event.target.checked)} /> Intervention urgente</label>
+      <GuestSelect label="Disponibilite" value={String(form.availability ?? "")} onChange={(value) => update("availability", value)} options={[
+        ["", "Au plus tot"],
+        ["Dans 1 heure", "Dans 1 heure"],
+        ["Ce soir", "Ce soir"],
+        ["Demain matin", "Demain matin"]
+      ]} />
     </>
   );
 }
@@ -849,14 +889,26 @@ function GuestTextarea({ label, value, onChange, required = false }: { label: st
 function defaultRequestDetails(type: string, today: string): RequestDetails {
   if (type === "taxi") return { requestedDate: today, requestedTime: "12:00", pickup: "hotel", destinationType: "address", passengers: 1, luggage: 0 };
   if (type === "restaurant") return { requestedDate: today, requestedTime: "20:00", people: 2, budget: "medium" };
-  if (type === "room_service") return { asap: true, requestType: "", quantity: 1 };
+  if (type === "room_service") return { asap: true, category: "Autre", quantity: 1 };
   if (type === "towels") return { itemType: "serviettes", quantity: 2, urgent: false };
+  if (type === "maintenance") return { category: "Plomberie", description: "", urgent: false, availability: "" };
   return { subject: "", urgent: false, notes: "" };
 }
 
 function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails) {
   const details = { ...form };
-  const priority = form.urgent ? "urgent" : service.priority;
+  let priority = form.urgent ? "urgent" : service.priority;
+  if (service.type === "restaurant") {
+    if (form.occasion === "Anniversaire" || form.occasion === "Saint-Valentin") {
+      if (priority !== "urgent") priority = "high";
+    }
+    return {
+      title: "Demande reservation restaurant",
+      priority,
+      details,
+      description: `Table pour ${form.people || 2} le ${form.requestedDate || "-"} a ${form.requestedTime || "-"}${form.cuisine ? `, cuisine ${form.cuisine}` : ""}${form.area ? `, quartier ${form.area}` : ""}.${form.notes ? ` ${form.notes}` : ""}`
+    };
+  }
   if (service.type === "taxi") {
     const destination = taxiDestinationLabel(form);
     return {
@@ -866,19 +918,20 @@ function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails)
       description: `Taxi le ${form.requestedDate || "-"} a ${form.requestedTime || "-"} vers ${destination}. ${form.passengers || 1} passager(s), ${form.luggage || 0} bagage(s).${form.notes ? ` ${form.notes}` : ""}`
     };
   }
-  if (service.type === "restaurant") {
-    return {
-      title: "Demande reservation restaurant",
-      priority,
-      details,
-      description: `Table pour ${form.people || 2} le ${form.requestedDate || "-"} a ${form.requestedTime || "-"}${form.cuisine ? `, cuisine ${form.cuisine}` : ""}${form.area ? `, quartier ${form.area}` : ""}.${form.notes ? ` ${form.notes}` : ""}`
-    };
-  }
   if (service.type === "room_service") {
-    return { title: "Demande room service", priority, details, description: `${form.asap ? "Des que possible" : `A ${form.requestedTime || "-"}`} - ${form.requestType || "Demande en chambre"}${form.quantity ? ` x${form.quantity}` : ""}.${form.notes ? ` ${form.notes}` : ""}` };
+    const category = form.category || form.requestType || "Demande en chambre";
+    return { title: "Demande room service", priority, details, description: `${form.asap ? "Des que possible" : `A ${form.requestedTime || "-"}`} - ${category}${form.quantity ? ` x${form.quantity}` : ""}.${form.notes ? ` ${form.notes}` : ""}` };
   }
   if (service.type === "towels") {
     return { title: "Demande linge", priority, details, description: `${form.quantity || 1} ${form.itemType || "article(s)"} demande(s).${form.notes ? ` ${form.notes}` : ""}` };
+  }
+  if (service.type === "maintenance") {
+    return {
+      title: `Maintenance - ${form.category || "Probleme technique"}`,
+      priority,
+      details,
+      description: `${form.category || "Probleme"} : ${form.description || "Pas de description."}`
+    };
   }
   return { title: "Assistance reception", priority, details, description: `${form.subject || "Assistance"} - ${form.notes || ""}` };
 }
