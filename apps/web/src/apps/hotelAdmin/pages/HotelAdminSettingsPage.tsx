@@ -38,7 +38,13 @@ export function HotelAdminSettingsPage({ hotelId, token }: { hotelId: string; to
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!hotelId) {
+      setError("Aucun hotel selectionne.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setError("");
     api.hotelSettings(hotelId, token)
       .then((settings) => {
         setForm({
@@ -81,6 +87,10 @@ export function HotelAdminSettingsPage({ hotelId, token }: { hotelId: string; to
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
+    if (!hotelId) {
+      setError("Aucun hotel selectionne.");
+      return;
+    }
     setSaving(true);
     setError("");
     setSaved(false);

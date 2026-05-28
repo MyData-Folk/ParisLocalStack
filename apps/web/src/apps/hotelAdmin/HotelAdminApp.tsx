@@ -99,7 +99,7 @@ export function HotelAdminApp() {
         >
           <Routes>
             <Route path="/" element={<HotelAdminDashboard hotel={activeHotel} hotelId={activeHotelId} />} />
-            <Route path="/profile" element={<HotelAdminProfilePage hotel={activeHotel} hotelId={activeHotelId} token={token!} />} />
+            <Route path="/profile" element={<HotelAdminProfilePage hotel={activeHotel} hotelId={activeHotelId} token={token!} onHotelUpdated={setActiveHotel} />} />
             <Route path="/recommendations" element={<SectionPlaceholder icon={<Compass className="h-5 w-5" />} title="Recommandations" />} />
             <Route path="/settings" element={<HotelAdminSettingsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/modules" element={<SectionPlaceholder icon={<Sparkles className="h-5 w-5" />} title="Modules & offre" />} />

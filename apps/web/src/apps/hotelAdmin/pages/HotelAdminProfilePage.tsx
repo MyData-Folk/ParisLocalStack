@@ -4,7 +4,7 @@ import { api } from "../../../lib/api";
 import { Field, ColorField } from "../../admin/components/AdminField";
 import { ErrorState, LoadingState } from "../../admin/components/AdminSharedUI";
 
-export function HotelAdminProfilePage({ hotel, hotelId, token }: { hotel: any; hotelId: string; token: string }) {
+export function HotelAdminProfilePage({ hotel, hotelId, token, onHotelUpdated }: { hotel: any; hotelId: string; token: string; onHotelUpdated: (hotel: any) => void }) {
   const [form, setForm] = useState({
     name: hotel?.name ?? "",
     description: hotel?.description ?? "",
@@ -33,6 +33,7 @@ export function HotelAdminProfilePage({ hotel, hotelId, token }: { hotel: any; h
     setSaved(false);
     try {
       const updated = await api.updateHotel(hotelId, form, token);
+      onHotelUpdated(updated);
       setForm({
         name: updated.name ?? "",
         description: updated.description ?? "",
