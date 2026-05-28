@@ -8,6 +8,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
 import { publicGuestSelect } from "../../utils/publicSelects.js";
 import { validateGuestStayScope } from "../../utils/tenantScope.js";
+import { staffRoom, guestRoom } from "../../socket.js";
 
 export const reviewsRouter = Router();
 export const publicReviewsRouter = Router({ mergeParams: true });
@@ -16,8 +17,12 @@ function reviewModerationStatus(rating: number) {
   return rating <= 3 ? "negative_alert" : "pending_review";
 }
 
-function emitReview(req: Request, hotelId: string, event: "review:new" | "review:status", payload: unknown) {
-  req.app.get("io")?.to(`hotel:${hotelId}`).emit(event, payload);
+function emitReview(req: Request, hotelId: string, event: "review:new" | "review:status", payload: any) {
+  const io = req.app.get("io");
+  io?.to(staffRoom(hotelId)).emit(event, payload);
+  if (payload?.guestId) {
+    io?.to(guestRoom(hotelId, payload.guestId)).emit(event, payload);
+  }
 }
 
 publicReviewsRouter.post("/", validateBody(reviewCreateSchema), asyncHandler(async (req, res) => {

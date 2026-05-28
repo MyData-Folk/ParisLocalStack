@@ -7,6 +7,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendCreated, sendOk } from "../../utils/http.js";
 import { publicGuestSelect } from "../../utils/publicSelects.js";
 import { validateGuestStayScope } from "../../utils/tenantScope.js";
+import { staffRoom, guestRoom } from "../../socket.js";
 
 export const requestsRouter = Router();
 export const publicRequestsRouter = Router({ mergeParams: true });
@@ -20,7 +21,7 @@ publicRequestsRouter.post("/", validateBody(serviceRequestCreateSchema), asyncHa
     data: { ...req.body, hotelId: hotel.id, status: "new" },
     include: { guest: { select: publicGuestSelect }, stay: true }
   });
-  req.app.get("io")?.to(`hotel:staff:${hotel.id}`).emit("request:new", request);
+  req.app.get("io")?.to(staffRoom(hotel.id)).emit("request:new", request);
   return sendCreated(res, request);
 }));
 
@@ -63,7 +64,9 @@ requestsRouter.patch("/requests/:id/status", authenticate, asyncHandler(async (r
     include: { guest: true, stay: true }
   });
   const io = req.app.get("io");
-  io?.to(`hotel:staff:${request.hotelId}`).emit("request:status", updated);
-  io?.to(`hotel:guest:${request.hotelId}`).emit("request:status", updated);
+  io?.to(staffRoom(request.hotelId)).emit("request:status", updated);
+  if (updated.guestId) {
+    io?.to(guestRoom(request.hotelId, updated.guestId)).emit("request:status", updated);
+  }
   return sendOk(res, updated);
 }));
