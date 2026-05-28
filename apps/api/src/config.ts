@@ -86,7 +86,7 @@ if (s3Provider) {
 }
 
 export function isAllowedOrigin(origin?: string): boolean {
-  if (!origin) return false;
+  if (!origin) return true;
 
   if (config.nodeEnv === "production") {
     const configuredOrigins = (process.env.CORS_ORIGIN || "")
