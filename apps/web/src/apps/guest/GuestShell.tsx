@@ -807,7 +807,6 @@ function RoomServiceFields({ form, update }: { form: RequestDetails; update: (fi
       <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.asap)} onChange={(event) => update("asap", event.target.checked)} /> Des que possible</label>
       {!form.asap ? <GuestInput label="Heure souhaitee" type="time" value={String(form.requestedTime ?? "")} onChange={(value) => update("requestedTime", value)} /> : null}
       <GuestSelect label="Categorie" value={String(form.category ?? "")} onChange={(value) => update("category", value)} options={[
-        ["", "Selectionner..."],
         ["Petit-dejeuner", "Petit-dejeuner"],
         ["Boissons", "Boissons"],
         ["Collations", "Collations"],
@@ -890,8 +889,9 @@ function GuestTextarea({ label, value, onChange, required = false }: { label: st
 function defaultRequestDetails(type: string, today: string): RequestDetails {
   if (type === "taxi") return { requestedDate: today, requestedTime: "12:00", pickup: "hotel", destinationType: "address", passengers: 1, luggage: 0 };
   if (type === "restaurant") return { requestedDate: today, requestedTime: "20:00", people: 2, budget: "medium" };
-  if (type === "room_service") return { asap: true, category: "", quantity: 1 };
+  if (type === "room_service") return { asap: true, category: "Autre", quantity: 1 };
   if (type === "towels") return { itemType: "serviettes", quantity: 2, urgent: false };
+  if (type === "maintenance") return { category: "Plomberie", description: "", urgent: false, availability: "" };
   return { subject: "", urgent: false, notes: "" };
 }
 
