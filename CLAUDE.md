@@ -839,3 +839,8 @@ Phase 8d — Restart policy Docker Compose ✅
 
 Prochaine phase :
 Phase 8e — Logs structurés (pino)
+- Logger centralisé Pino dans utils/logger.ts
+- Middleware HTTP structuré avec requestId, méthode, URL, statut, temps de réponse
+- LOG_LEVEL configurable (défaut info)
+- console.error/console.log centraux remplacés par logger.error/info
+- Monitoring/alerting externe (Uptime Kuma, etc.) à planifier séparément

@@ -19,6 +19,8 @@ import { generatorRouter } from "./modules/generator/routes.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 import { requestId } from "./middleware/requestId.js";
 import { prisma } from "./database/prisma.js";
+import { logger } from "./utils/logger.js";
+import { httpLogger } from "./middleware/httpLogger.js";
 
 export function createApp() {
   const app = express();
@@ -41,6 +43,7 @@ export function createApp() {
 
   app.set("trust proxy", 1);
   app.use(requestId);
+  app.use(httpLogger);
   app.use(helmet());
   app.use(cors({
     origin: (origin, callback) => {
@@ -62,7 +65,7 @@ export function createApp() {
       res.status(200).json({ status: "ready", database: "ok" });
     } catch {
       const id = _req.requestId ?? "no-id";
-      console.error({ requestId: id, message: "database unreachable", path: "/ready", timestamp: new Date().toISOString() });
+      logger.error({ requestId: id, message: "database unreachable", path: "/ready" });
       res.status(503).json({ status: "not_ready", database: "error", requestId: id });
     }
   });

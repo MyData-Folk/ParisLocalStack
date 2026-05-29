@@ -35,6 +35,7 @@ The project has working foundations for:
 - API readiness + requestId tracing (Phase 8b)
 - PostgreSQL backup/restore scripts with R2 upload (Phase 8c)
 - Docker Compose restart: always policy (Phase 8d)
+- Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)
 
 ## Critical Current Priorities
 
