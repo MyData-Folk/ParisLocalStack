@@ -88,11 +88,9 @@ After security fixes:
 4. Build Hotel Admin ✅ (completed — Phase 6 + Phase 7b, 8 routes live):
    - hotel profile, settings, recommendations, QR, modules, analytics, CRM export
 
-5. Add CRM export and segmentation ✅ (Phase 7a/7b completed, Phase 7c pending).
+5. Add CRM export and segmentation ✅ (Phase 7a/7b/7c completed).
 
-6. Add CRM export filters (segmentation).
-
-7. Add monitoring, backups, storage, and production documentation.
+6. Add monitoring, backups, storage, and production documentation.
 
 ## Current Known Deployment Issue
 
