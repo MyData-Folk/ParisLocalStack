@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Sparkles, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/appStore";
@@ -10,6 +10,7 @@ import { HotelAdminRecommendationsPage } from "./pages/HotelAdminRecommendations
 import { HotelAdminQRPage } from "./pages/HotelAdminQRPage";
 import { HotelAdminProfilePage } from "./pages/HotelAdminProfilePage";
 import { HotelAdminSettingsPage } from "./pages/HotelAdminSettingsPage";
+import { HotelAdminModulesPage } from "./pages/HotelAdminModulesPage";
 
 export function HotelAdminApp() {
   const { token, currentUser } = useAppStore();
@@ -104,7 +105,7 @@ export function HotelAdminApp() {
             <Route path="/profile" element={<HotelAdminProfilePage hotel={activeHotel} hotelId={activeHotelId} token={token!} onHotelUpdated={setActiveHotel} />} />
             <Route path="/recommendations" element={<HotelAdminRecommendationsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/settings" element={<HotelAdminSettingsPage hotelId={activeHotelId} token={token!} />} />
-            <Route path="/modules" element={<SectionPlaceholder icon={<Sparkles className="h-5 w-5" />} title="Modules & offre" />} />
+            <Route path="/modules" element={<HotelAdminModulesPage hotel={activeHotel} hotelId={activeHotelId} />} />
             <Route path="/analytics" element={<SectionPlaceholder icon={<BarChart3 className="h-5 w-5" />} title="Analytics" />} />
             <Route path="/qr" element={<HotelAdminQRPage hotelId={activeHotelId} token={token!} />} />
             <Route path="*" element={<Navigate to="/hotel-admin" replace />} />
