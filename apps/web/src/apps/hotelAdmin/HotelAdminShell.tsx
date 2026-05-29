@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Building2, Compass, LayoutDashboard, LogOut, QrCode, Settings, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart3, Building2, Compass, LayoutDashboard, LogOut, QrCode, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAppStore } from "../../stores/appStore";
 
 type ShellProps = {
@@ -54,6 +54,7 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
             <HotelAdminNavLink to="/hotel-admin/modules" label="Modules & offre" icon={<Sparkles className="h-4 w-4" />} />
             <HotelAdminNavLink to="/hotel-admin/analytics" label="Analytics" icon={<BarChart3 className="h-4 w-4" />} />
             <HotelAdminNavLink to="/hotel-admin/qr" label="QR Code" icon={<QrCode className="h-4 w-4" />} />
+            <HotelAdminNavLink to="/hotel-admin/crm" label="Base clients" icon={<Users className="h-4 w-4" />} />
           </HotelAdminNavGroup>
         </nav>
 
