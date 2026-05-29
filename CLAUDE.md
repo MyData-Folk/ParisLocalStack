@@ -63,7 +63,10 @@ Exemples :
 - rate limiting actif sur routes publiques et auth ;
 - migrations contrôlées via prisma migrate deploy au démarrage Docker ;
 - validation cross-tenant sur routes publiques (validateGuestStayScope) ;
-- audit sécurité multi-tenant complété (SECURITY_TENANT_AUDIT.md).
+- audit sécurité multi-tenant complété (SECURITY_TENANT_AUDIT.md) ;
+- helpers export partagés dans apps/web/src/lib/export.ts (PR #22) ;
+- page CRM Admin Hôtel avec export Excel/JSON (PR #23) ;
+- Espace Admin Hôtel : 8 routes live (7 Phase 6b + 1 Phase 7b), aucun placeholder restant.
 
 ## 2. Architecture cible (Frontend + Backend + Database)
 
@@ -515,7 +518,7 @@ Fonctionnalités déjà présentes ou structurées :
 - thèmes Guest App.
 
 Prochaines priorités produit raisonnables :
-1. CRM exports avancés (CSV, filtres segmentation).
+1. CRM exports avancés (CSV, filtres segmentation) — Phase 7 en cours.
 2. Storage Cloudflare R2 — avant tout upload d'images en prod.
 3. Formulaires services structurés (taxi, restaurant, room service, linge) avec affichage lisible côté réception.
 4. Recommandations personnalisables avec images (après R2).
@@ -524,7 +527,7 @@ Prochaines priorités produit raisonnables :
 
 Prochaines phases en cours ou planifiées :
 Phase 6 — Espace Admin Hôtel ✅ (complétée)
-Phase 7 — CRM exports avancés (CSV, filtres segmentation)
+Phase 7 — CRM exports avancés (CSV, filtres segmentation) — 7a/7b terminées
 Phase 8 — Observabilité + backups PostgreSQL automatiques
 Phase 9 — Démos commerciales (3 hôtels, landing page)
 
@@ -768,8 +771,23 @@ Phase 6 — Espace Admin Hôtel ✅
 - HotelAdminAnalyticsPage — tableau de bord 6 KPI avec wording hôtelier (PR #21)
 - 7/7 routes implémentées, aucun SectionPlaceholder restant
 
+Phase 7a — Audit CRM exports ✅
+- Audit complet des modèles, routes API, et données exportables
+
+Phase 7b — CRM export Admin Hôtel ✅
+- PR #22 — refactor(web): extract export helpers
+  - création de apps/web/src/lib/export.ts
+  - helpers : downloadFile, escapeHtml, exportRowsAsExcel, exportRowsAsJson
+- PR #23 — feat(crm): add hotel admin CRM page with client export
+  - création de HotelAdminCrmPage.tsx
+  - route /hotel-admin/crm
+  - lien nav "Base clients"
+  - tableau clients + export Excel/JSON
+  - internalNotes, crmTags, preferences, relationshipStatus exclus
+
 Prochaine phase :
-Phase 7 — CRM exports avancés
-- Exports CSV guests avec filtres segmentation
-- Branche à créer : feature/crm-exports
-- Fichiers concernés : à auditer (module guests côté API + GuestList côté web)
+Phase 7c — Filtres segmentation CRM
+- Filtres par langue, email, téléphone, consentement, statut séjour, période
+- Export filtré uniquement
+- Branche : feature/crm-filters
+- Fichier principal : HotelAdminCrmPage.tsx (frontend uniquement)

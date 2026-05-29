@@ -108,6 +108,43 @@ Purpose:
 - Creates hotel records, settings, branding, URLs, and QR codes.
 - Must not create new app code per hotel.
 
+### Hotel Admin (Admin Hotel)
+
+Located under:
+
+```txt
+apps/web/src/apps/hotelAdmin
+```
+
+Purpose:
+
+- Self-service space for B2B hotel clients (owners, directors, managers).
+- Manage hotel profile, settings, recommendations, and QR code.
+- View service catalog (modules & offer) and analytics dashboard.
+- Export CRM client data (Excel / JSON) using shared helpers from `apps/web/src/lib/export.ts`.
+
+Current routes (8 live, no placeholders):
+
+```txt
+/hotel-admin                  → Dashboard
+/hotel-admin/profile          → Hotel profile
+/hotel-admin/settings         → Hotel settings
+/hotel-admin/recommendations  → Local recommendations
+/hotel-admin/qr               → QR code + PDF export
+/hotel-admin/modules          → Service catalog (read-only)
+/hotel-admin/analytics        → 6 KPI analytics dashboard
+/hotel-admin/crm              → Client export (Excel/JSON)
+```
+
+Shared export helpers:
+
+```txt
+apps/web/src/lib/export.ts
+- downloadFile, escapeHtml, exportRowsAsExcel, exportRowsAsJson
+- Used by ReceptionApp and HotelAdminCrmPage
+- Do not redefine these helpers elsewhere
+```
+
 ## Backend Architecture
 
 Located under:
