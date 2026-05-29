@@ -58,7 +58,7 @@ export function createApp() {
   app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
   app.get("/ready", async (_req, res) => {
     try {
-      await prisma.$queryRawUnsafe("SELECT 1");
+      await prisma.$queryRaw`SELECT 1`;
       res.status(200).json({ status: "ready", database: "ok" });
     } catch {
       const id = _req.requestId ?? "no-id";
