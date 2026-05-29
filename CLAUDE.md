@@ -518,16 +518,15 @@ Fonctionnalités déjà présentes ou structurées :
 - thèmes Guest App.
 
 Prochaines priorités produit raisonnables :
-1. CRM exports avancés (CSV, filtres segmentation) — Phase 7 en cours.
-2. Storage Cloudflare R2 — avant tout upload d'images en prod.
-3. Formulaires services structurés (taxi, restaurant, room service, linge) avec affichage lisible côté réception.
-4. Recommandations personnalisables avec images (après R2).
-5. Monitoring/backups PostgreSQL automatiques.
-6. Démos commerciales (3 hôtels, landing page).
+1. Storage Cloudflare R2 — avant tout upload d'images en prod.
+2. Formulaires services structurés (taxi, restaurant, room service, linge) avec affichage lisible côté réception.
+3. Recommandations personnalisables avec images (après R2).
+4. Monitoring/backups PostgreSQL automatiques.
+5. Démos commerciales (3 hôtels, landing page).
 
 Prochaines phases en cours ou planifiées :
 Phase 6 — Espace Admin Hôtel ✅ (complétée)
-Phase 7 — CRM exports avancés (CSV, filtres segmentation) — 7a/7b terminées
+Phase 7 — CRM exports avancés (CSV, filtres segmentation) — 7a/7b/7c terminées
 Phase 8 — Observabilité + backups PostgreSQL automatiques
 Phase 9 — Démos commerciales (3 hôtels, landing page)
 
@@ -786,8 +785,14 @@ Phase 7b — CRM export Admin Hôtel ✅
   - internalNotes, crmTags, preferences, relationshipStatus exclus
 
 Prochaine phase :
-Phase 7c — Filtres segmentation CRM
-- Filtres par langue, email, téléphone, consentement, statut séjour, période
-- Export filtré uniquement
-- Branche : feature/crm-filters
-- Fichier principal : HotelAdminCrmPage.tsx (frontend uniquement)
+Phase 7c — Filtres segmentation CRM ✅ (terminée)
+- PR #25 — feat(crm): add client segmentation filters
+  - Filtres côté client : langue, présence email, présence téléphone, consentement marketing, statut séjour, période d'arrivée
+  - Bouton réinitialiser + compteur clients affichés/enregistrés
+  - État "aucun résultat filtré" distinct de l'état vide initial
+  - Exports Excel/JSON basés uniquement sur les clients filtrés
+  - Fichier modifié unique : HotelAdminCrmPage.tsx
+  - Aucun backend, aucun Prisma, aucun api.ts, aucun export.ts
+
+Prochaine phase :
+Phase 8 — Observabilité + backups PostgreSQL automatiques

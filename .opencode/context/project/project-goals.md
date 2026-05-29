@@ -61,7 +61,7 @@ Before real hotel clients are onboarded, the platform must prioritize:
 3. Safe Prisma migration handling.
 4. Production-ready secrets and environment validation.
 5. Role-based permissions.
-6. CRM export and segmentation (Phase 7b completed, Phase 7c pending).
+6. CRM export and segmentation (Phase 7c completed — client-side filters, segmented exports).
 7. Reliable backups and restore procedures.
 8. External object storage for uploaded files.
 9. Monitoring, logs, and operational alerts.
