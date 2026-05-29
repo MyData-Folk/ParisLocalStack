@@ -796,3 +796,35 @@ Phase 7c — Filtres segmentation CRM ✅ (terminée)
 
 Prochaine phase :
 Phase 8 — Observabilité + backups PostgreSQL automatiques
+
+Phase 8a — Audit observabilité + backups ✅
+- Audit complet des logs, healthcheck, readiness, Docker, PostgreSQL, Prisma
+- Aucune observabilité structurée détectée avant Phase 8b
+
+Phase 8b — API readiness + requestId ✅
+- PR #27 — feat(api): add readiness check and request id tracing
+  - middleware requestId (X-Request-Id, réutilisation entrante)
+  - GET /ready avec vérification PostgreSQL (prisma.$queryRaw)
+  - GET /health conservé léger
+  - requestId dans les réponses 500, stack masquée en production
+
+Phase 8c — Backups PostgreSQL R2 ✅
+- PR #28 — ops(backup): add manual PostgreSQL backup and restore scripts
+  - scripts/backup-postgres.sh : pg_dump + gzip + upload R2
+  - scripts/restore-postgres.sh : téléchargement + restore avec confirmation
+- PR #29 — fix(backup): make r2 postgres scripts alpine compatible
+  - mapping automatique S3_* → AWS_*
+  - BACKUP_S3_BUCKET fallback S3_BUCKET
+  - rétention compatible Alpine (Node.js, pas date -v)
+  - BACKUP_RETENTION_DAYS=0 pour désactiver
+- Backup R2 production validé (pg_dump, gzip, upload R2 OK)
+- Rétention BACKUP_RETENTION_DAYS=0 et 7 validées
+- Cron Coolify backup quotidien configuré :
+  schedule 0 0 * * * — BACKUP_PREFIX=backups/postgres/prod BACKUP_RETENTION_DAYS=7
+- ⚠ Restore staging à tester avant de considérer le cycle complet
+
+Phase 8d — Restart policy Docker Compose ✅
+- restart: always ajouté sur postgres, api, web, minio dans docker-compose.yml
+
+Prochaine phase :
+Phase 8e — Logs structurés (pino)
