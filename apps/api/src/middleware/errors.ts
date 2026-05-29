@@ -6,7 +6,7 @@ export function notFound(_req: Request, res: Response) {
   res.status(404).json({ error: "Not found" });
 }
 
-export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
+export function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
   if (error instanceof HttpError) {
     return res.status(error.status).json({ error: error.message });
   }
@@ -17,6 +17,17 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
   if (error instanceof Error && error.message.startsWith("File type ")) {
     return res.status(400).json({ error: error.message });
   }
-  console.error(error);
-  return res.status(500).json({ error: "Internal server error" });
+  const id = req.requestId ?? "no-id";
+  const logEntry: Record<string, unknown> = {
+    requestId: id,
+    message: error instanceof Error ? error.message : "Unknown error",
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  };
+  if (process.env.NODE_ENV !== "production" && error instanceof Error) {
+    logEntry.stack = error.stack;
+  }
+  console.error(logEntry);
+  return res.status(500).json({ error: "Internal server error", requestId: id });
 }

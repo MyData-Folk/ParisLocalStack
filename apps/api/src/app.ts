@@ -17,10 +17,12 @@ import { analyticsRouter, publicAnalyticsRouter } from "./modules/analytics/rout
 import { storageRouter } from "./modules/storage/routes.js";
 import { generatorRouter } from "./modules/generator/routes.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
+import { requestId } from "./middleware/requestId.js";
+import { prisma } from "./database/prisma.js";
 
 export function createApp() {
   const app = express();
-  
+
   const publicLimiter = rateLimit({
     windowMs: 60_000,
     limit: 60,
@@ -38,6 +40,7 @@ export function createApp() {
   });
 
   app.set("trust proxy", 1);
+  app.use(requestId);
   app.use(helmet());
   app.use(cors({
     origin: (origin, callback) => {
@@ -53,6 +56,16 @@ export function createApp() {
   app.use("/uploads", express.static(path.resolve(config.uploadDir)));
 
   app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
+  app.get("/ready", async (_req, res) => {
+    try {
+      await prisma.$queryRawUnsafe("SELECT 1");
+      res.status(200).json({ status: "ready", database: "ok" });
+    } catch {
+      const id = _req.requestId ?? "no-id";
+      console.error({ requestId: id, message: "database unreachable", path: "/ready", timestamp: new Date().toISOString() });
+      res.status(503).json({ status: "not_ready", database: "error", requestId: id });
+    }
+  });
   app.post("/api/auth/login", authLimiter);
   app.use("/api/auth", authRouter);
   app.use("/api/hotels", hotelsRouter);
