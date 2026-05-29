@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { BarChart3 } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/appStore";
@@ -11,6 +10,7 @@ import { HotelAdminQRPage } from "./pages/HotelAdminQRPage";
 import { HotelAdminProfilePage } from "./pages/HotelAdminProfilePage";
 import { HotelAdminSettingsPage } from "./pages/HotelAdminSettingsPage";
 import { HotelAdminModulesPage } from "./pages/HotelAdminModulesPage";
+import { HotelAdminAnalyticsPage } from "./pages/HotelAdminAnalyticsPage";
 
 export function HotelAdminApp() {
   const { token, currentUser } = useAppStore();
@@ -106,24 +106,12 @@ export function HotelAdminApp() {
             <Route path="/recommendations" element={<HotelAdminRecommendationsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/settings" element={<HotelAdminSettingsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/modules" element={<HotelAdminModulesPage hotel={activeHotel} hotelId={activeHotelId} />} />
-            <Route path="/analytics" element={<SectionPlaceholder icon={<BarChart3 className="h-5 w-5" />} title="Analytics" />} />
+            <Route path="/analytics" element={<HotelAdminAnalyticsPage hotel={activeHotel} hotelId={activeHotelId} token={token!} />} />
             <Route path="/qr" element={<HotelAdminQRPage hotelId={activeHotelId} token={token!} />} />
             <Route path="*" element={<Navigate to="/hotel-admin" replace />} />
           </Routes>
         </HotelAdminShell>
       )}
     </AuthGate>
-  );
-}
-
-function SectionPlaceholder({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <div className="grid min-h-[60vh] place-items-center">
-      <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-12 text-center shadow-lg shadow-black/20">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-amber-300/10 text-amber-300">{icon}</span>
-        <h2 className="mt-5 text-2xl font-semibold tracking-tight text-white">{title}</h2>
-        <p className="mt-3 text-sm leading-6 text-slate-400">Section en preparation.</p>
-      </div>
-    </div>
   );
 }
