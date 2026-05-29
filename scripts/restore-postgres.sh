@@ -12,8 +12,14 @@ BACKUP_FILE="$1"
 : "${S3_ENDPOINT:?S3_ENDPOINT is required}"
 : "${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID is required}"
 : "${S3_SECRET_ACCESS_KEY:?S3_SECRET_ACCESS_KEY is required}"
-: "${BACKUP_S3_BUCKET:?BACKUP_S3_BUCKET is required}"
-: "${BACKUP_PREFIX:=backups/postgres}"
+
+export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-$S3_ACCESS_KEY_ID}"
+export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-$S3_SECRET_ACCESS_KEY}"
+export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-${S3_REGION:-auto}}"
+
+BACKUP_S3_BUCKET="${BACKUP_S3_BUCKET:-$S3_BUCKET}"
+: "${BACKUP_S3_BUCKET:?BACKUP_S3_BUCKET or S3_BUCKET is required}"
+BACKUP_PREFIX="${BACKUP_PREFIX:-backups/postgres}"
 
 echo ""
 echo "==============================================="
@@ -37,6 +43,8 @@ if [ "$CONFIRMATION" != "RESTORE" ]; then
   exit 0
 fi
 
+trap 'rm -f "$BACKUP_FILE" 2>/dev/null' EXIT
+
 S3_PATH="s3://${BACKUP_S3_BUCKET}/${BACKUP_PREFIX}/${BACKUP_FILE}"
 echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] Downloading backup from R2..."
 aws s3 cp "$S3_PATH" "$BACKUP_FILE" \
@@ -49,6 +57,6 @@ rm "$BACKUP_FILE"
 echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] Restore complete."
 echo ""
 echo "Verifier avec:"
-echo "  npm run prisma:migrate status"
+echo "  prisma migrate status"
 echo "  curl http://localhost:4000/health"
 echo "  curl http://localhost:4000/ready"

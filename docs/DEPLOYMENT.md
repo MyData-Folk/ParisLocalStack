@@ -64,18 +64,21 @@ Les scripts de backup utilisent :
 - `gzip` — présent dans l'image postgres:16-alpine
 - `aws CLI` (AWS CLI ou compatible S3) — pour l'upload vers R2
 
-Les sauvegardes sont stockées dans un bucket Cloudflare R2 distinct du bucket média.
+Les sauvegardes sont stockées dans un bucket Cloudflare R2. Par défaut, le script utilise `S3_BUCKET` comme bucket. Si `BACKUP_S3_BUCKET` est défini, il prend priorité (recommandé pour séparer backups et médias).
+
+Les identifiants AWS (`S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`) sont mappés automatiquement.
 
 ### Variables d'environnement
 
 | Variable | Description |
 |---|---|
-| `BACKUP_S3_BUCKET` | Nom du bucket R2 pour les backups (distinct de `S3_BUCKET`) |
-| `BACKUP_RETENTION_DAYS` | Nombre de jours de conservation des backups (défaut : 7) |
-| `BACKUP_PREFIX` | Préfixe (dossier) dans le bucket (défaut : `backups/postgres`) |
+| `BACKUP_S3_BUCKET` | Bucket R2 dédié aux backups (optionnel, défaut : `$S3_BUCKET`) |
+| `BACKUP_RETENTION_DAYS` | Jours de rétention (défaut : 7, 0 pour désactiver) |
+| `BACKUP_PREFIX` | Préfixe dans le bucket (défaut : `backups/postgres`) |
 | `S3_ENDPOINT` | Endpoint R2 |
 | `S3_ACCESS_KEY_ID` | Clé d'accès R2 |
 | `S3_SECRET_ACCESS_KEY` | Clé secrète R2 |
+| `S3_REGION` | Région (défaut : auto) |
 
 ### Backup manuel
 
