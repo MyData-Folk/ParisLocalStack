@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Sparkles, BarChart3, QrCode } from "lucide-react";
+import { Sparkles, BarChart3 } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/appStore";
 import { HotelAdminShell } from "./HotelAdminShell";
 import { HotelAdminDashboard } from "./HotelAdminDashboard";
 import { HotelAdminRecommendationsPage } from "./pages/HotelAdminRecommendationsPage";
+import { HotelAdminQRPage } from "./pages/HotelAdminQRPage";
 import { HotelAdminProfilePage } from "./pages/HotelAdminProfilePage";
 import { HotelAdminSettingsPage } from "./pages/HotelAdminSettingsPage";
 
@@ -105,7 +106,7 @@ export function HotelAdminApp() {
             <Route path="/settings" element={<HotelAdminSettingsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/modules" element={<SectionPlaceholder icon={<Sparkles className="h-5 w-5" />} title="Modules & offre" />} />
             <Route path="/analytics" element={<SectionPlaceholder icon={<BarChart3 className="h-5 w-5" />} title="Analytics" />} />
-            <Route path="/qr" element={<SectionPlaceholder icon={<QrCode className="h-5 w-5" />} title="QR Code" />} />
+            <Route path="/qr" element={<HotelAdminQRPage hotelId={activeHotelId} token={token!} />} />
             <Route path="*" element={<Navigate to="/hotel-admin" replace />} />
           </Routes>
         </HotelAdminShell>
