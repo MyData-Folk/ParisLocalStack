@@ -32,6 +32,9 @@ The project has working foundations for:
 - CRM client export (Excel + JSON)
 - Shared export helpers (apps/web/src/lib/export.ts)
 - Docker/Coolify deployment
+- API readiness + requestId tracing (Phase 8b)
+- PostgreSQL backup/restore scripts with R2 upload (Phase 8c)
+- Docker Compose restart: always policy (Phase 8d)
 
 ## Critical Current Priorities
 
