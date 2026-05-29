@@ -1,5 +1,7 @@
 # CLAUDE.md - Mémoire Projet
 
+> Dernière mise à jour : 29 mai 2026
+
 ## 1. Vue d'ensemble
 
 Paris Local / Digital Hotel Concierge est une plateforme SaaS B2B multi-tenant destinée aux hôtels. Le produit permet à chaque établissement de proposer une application client accessible par QR code et un dashboard réception synchronisé avec une API commune et une base PostgreSQL centrale.
@@ -513,16 +515,15 @@ Fonctionnalités déjà présentes ou structurées :
 - thèmes Guest App.
 
 Prochaines priorités produit raisonnables :
-1. Storage Cloudflare R2 — avant tout upload d'images en prod.
-2. Formulaires services structurés (taxi, restaurant, room service, linge) avec affichage lisible côté réception.
-3. Recommandations personnalisables avec images (après R2).
-4. Hotel Admin — espace directeur hôtel autonome.
-5. CRM exports avancés (CSV, filtres segmentation).
-6. Monitoring/backups PostgreSQL automatiques.
-7. Démos commerciales (3 hôtels, landing page).
+1. CRM exports avancés (CSV, filtres segmentation).
+2. Storage Cloudflare R2 — avant tout upload d'images en prod.
+3. Formulaires services structurés (taxi, restaurant, room service, linge) avec affichage lisible côté réception.
+4. Recommandations personnalisables avec images (après R2).
+5. Monitoring/backups PostgreSQL automatiques.
+6. Démos commerciales (3 hôtels, landing page).
 
 Prochaines phases en cours ou planifiées :
-Phase 6 — Espace Admin Hôtel (en cours)
+Phase 6 — Espace Admin Hôtel ✅ (complétée)
 Phase 7 — CRM exports avancés (CSV, filtres segmentation)
 Phase 8 — Observabilité + backups PostgreSQL automatiques
 Phase 9 — Démos commerciales (3 hôtels, landing page)
@@ -757,3 +758,18 @@ Sécurité multi-tenant ✅
 - validateGuestStayScope sur toutes les routes publiques de création
 - SECURITY_TENANT_AUDIT.md — audit complet documenté
 - Commits : commits récents documentés dans git log
+
+Phase 6 — Espace Admin Hôtel ✅
+- Hotel Admin Shell + routing (PR #15)
+- HotelAdminProfilePage + HotelAdminSettingsPage — profil et paramètres (PR #16)
+- HotelAdminRecommendationsPage — recommandations découplées du Super Admin (PR #17, #18)
+- HotelAdminQRPage — QR code avec export PDF (PR #19)
+- HotelAdminModulesPage — catalogue de services en lecture seule (PR #20)
+- HotelAdminAnalyticsPage — tableau de bord 6 KPI avec wording hôtelier (PR #21)
+- 7/7 routes implémentées, aucun SectionPlaceholder restant
+
+Prochaine phase :
+Phase 7 — CRM exports avancés
+- Exports CSV guests avec filtres segmentation
+- Branche à créer : feature/crm-exports
+- Fichiers concernés : à auditer (module guests côté API + GuestList côté web)
