@@ -52,3 +52,64 @@ Avant chaque déploiement :
 - [ ] Backup PostgreSQL effectué
 - [ ] Variables d'environnement Coolify vérifiées
 - [ ] Tester en local avec NODE_ENV=production
+
+## Backups PostgreSQL manuels
+
+### Prérequis
+
+Les scripts de backup utilisent :
+
+- `pg_dump` — présent dans l'image postgres:16-alpine
+- `psql` — présent dans l'image postgres:16-alpine
+- `gzip` — présent dans l'image postgres:16-alpine
+- `aws CLI` (AWS CLI ou compatible S3) — pour l'upload vers R2
+
+Les sauvegardes sont stockées dans un bucket Cloudflare R2 distinct du bucket média.
+
+### Variables d'environnement
+
+| Variable | Description |
+|---|---|
+| `BACKUP_S3_BUCKET` | Nom du bucket R2 pour les backups (distinct de `S3_BUCKET`) |
+| `BACKUP_RETENTION_DAYS` | Nombre de jours de conservation des backups (défaut : 7) |
+| `BACKUP_PREFIX` | Préfixe (dossier) dans le bucket (défaut : `backups/postgres`) |
+| `S3_ENDPOINT` | Endpoint R2 |
+| `S3_ACCESS_KEY_ID` | Clé d'accès R2 |
+| `S3_SECRET_ACCESS_KEY` | Clé secrète R2 |
+
+### Backup manuel
+
+```bash
+./scripts/backup-postgres.sh
+```
+
+Le script :
+1. Lance `pg_dump` + `gzip` dans un fichier temporaire
+2. Upload le fichier vers le bucket R2 (`s3://BACKUP_S3_BUCKET/BACKUP_PREFIX/backup_YYYY-MM-DD_HH-MM-SS.sql.gz`)
+3. Nettoie le fichier local après upload
+4. Supprime les backups plus vieux que `BACKUP_RETENTION_DAYS`
+
+### Restore
+
+```bash
+./scripts/restore-postgres.sh backup_2026-06-01_12-00-00.sql.gz
+```
+
+Le script :
+1. Demande une confirmation explicite (`taper RESTORE`)
+2. Télécharge depuis R2
+3. Décompresse et restaure avec `psql`
+4. Nettoie le fichier après succès
+
+### Procédure avant déploiement
+
+1. Lancer `./scripts/backup-postgres.sh`
+2. Vérifier que le fichier est présent dans le bucket R2
+3. Déployer
+4. Vérifier `/health` et `/ready`
+
+### Avertissement RGPD
+
+Les backups contiennent des données personnelles (emails, téléphones, noms).
+Le bucket backup doit être **privé** et **séparé** du bucket média.
+Ne jamais stocker de backups dans un espace public ou accessible sans authentification.
