@@ -66,7 +66,13 @@ Exemples :
 - audit sécurité multi-tenant complété (SECURITY_TENANT_AUDIT.md) ;
 - helpers export partagés dans apps/web/src/lib/export.ts (PR #22) ;
 - page CRM Admin Hôtel avec export Excel/JSON (PR #23) ;
-- Espace Admin Hôtel : 8 routes live (7 Phase 6b + 1 Phase 7b), aucun placeholder restant.
+- Espace Admin Hôtel : 8 routes live (7 Phase 6b + 1 Phase 7b), aucun placeholder restant ;
+- Cloudflare R2 configuré pour les backups PostgreSQL (Phase 8c) ;
+- backup quotidien vers R2 actif (cron Coolify) ;
+- restart: always configuré sur tous les services Docker Compose (Phase 8d) ;
+- GET /ready endpoint avec vérification PostgreSQL (Phase 8b) ;
+- X-Request-Id tracing sur toutes les requêtes API (Phase 8b) ;
+- restore staging à tester — ne jamais restaurer en production sans validation.
 
 ## 2. Architecture cible (Frontend + Backend + Database)
 
@@ -383,6 +389,13 @@ Storage :
 - migration R2 planifiée avant tout upload d'images en production.
 - futur S3/MinIO prévu.
 
+Backups :
+- scripts/backup-postgres.sh : pg_dump + gzip + upload R2
+- scripts/restore-postgres.sh : téléchargement + restore avec confirmation
+- cron Coolify : backup quotidien vers R2 (BACKUP_PREFIX=backups/postgres/prod, BACKUP_RETENTION_DAYS=7)
+- mapping automatique S3_* → AWS_* compatible Alpine
+- ⚠ Restore staging à tester, ne jamais restaurer en production sans validation
+
 ## 6. Règles de codage & bonnes pratiques
 
 Règles générales :
@@ -521,13 +534,15 @@ Prochaines priorités produit raisonnables :
 1. Storage Cloudflare R2 — avant tout upload d'images en prod.
 2. Formulaires services structurés (taxi, restaurant, room service, linge) avec affichage lisible côté réception.
 3. Recommandations personnalisables avec images (après R2).
-4. Monitoring/backups PostgreSQL automatiques.
-5. Démos commerciales (3 hôtels, landing page).
+4. Hotel Admin — espace directeur hôtel autonome.
+5. CRM exports avancés (CSV, filtres segmentation).
+6. Monitoring/backups PostgreSQL automatiques.
+7. Démos commerciales (3 hôtels, landing page).
 
 Prochaines phases en cours ou planifiées :
 Phase 6 — Espace Admin Hôtel ✅ (complétée)
 Phase 7 — CRM exports avancés (CSV, filtres segmentation) — 7a/7b/7c terminées
-Phase 8 — Observabilité + backups PostgreSQL automatiques
+Phase 8 — Observabilité + backups PostgreSQL automatiques — 8a/8b/8c/8d terminées, 8e en cours
 Phase 9 — Démos commerciales (3 hôtels, landing page)
 
 ## 9. Authentification & Rôles
@@ -784,8 +799,7 @@ Phase 7b — CRM export Admin Hôtel ✅
   - tableau clients + export Excel/JSON
   - internalNotes, crmTags, preferences, relationshipStatus exclus
 
-Prochaine phase :
-Phase 7c — Filtres segmentation CRM ✅ (terminée)
+Phase 7c — Filtres segmentation CRM ✅
 - PR #25 — feat(crm): add client segmentation filters
   - Filtres côté client : langue, présence email, présence téléphone, consentement marketing, statut séjour, période d'arrivée
   - Bouton réinitialiser + compteur clients affichés/enregistrés
@@ -793,9 +807,6 @@ Phase 7c — Filtres segmentation CRM ✅ (terminée)
   - Exports Excel/JSON basés uniquement sur les clients filtrés
   - Fichier modifié unique : HotelAdminCrmPage.tsx
   - Aucun backend, aucun Prisma, aucun api.ts, aucun export.ts
-
-Prochaine phase :
-Phase 8 — Observabilité + backups PostgreSQL automatiques
 
 Phase 8a — Audit observabilité + backups ✅
 - Audit complet des logs, healthcheck, readiness, Docker, PostgreSQL, Prisma
