@@ -16,17 +16,30 @@ RUN npm run build --workspace @paris-local/api
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Runtime tools required by backup/restore scripts:
+# - bash: scripts use #!/bin/bash
+# - postgresql-client: provides pg_dump and psql
+# - aws-cli: uploads/downloads backups to/from S3/R2
+RUN apk add --no-cache bash postgresql-client aws-cli
+
 COPY package*.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY prisma prisma
 RUN npm install --omit=dev
+
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/packages/shared/dist packages/shared/dist
+
 RUN npm run prisma:generate
+
 COPY scripts ./scripts
 RUN chmod +x ./scripts/*.sh
+
 EXPOSE 4000
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget -qO- http://localhost:${API_PORT:-4000}/health || exit 1
+
 ENTRYPOINT ["sh", "/app/scripts/entrypoint.sh"]
