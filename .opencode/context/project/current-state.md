@@ -6,9 +6,9 @@ ParisLocalStack is no longer a prototype. It is a functional multi-tenant hotel 
 
 Current maturity estimate:
 
-- MVP functional: 80–85%
-- Production-ready: ~55%
-- Commercial-ready: ~50%
+- MVP functional: 93–96%
+- Production-ready: ~70%
+- Commercial-ready: ~65%
 
 The project has working foundations for:
 
@@ -28,6 +28,9 @@ The project has working foundations for:
 - Reviews
 - Recommendations
 - Guest themes
+- Hotel Admin space (8 routes live: 7 Phase 6b + 1 Phase 7b CRM)
+- CRM client export (Excel + JSON)
+- Shared export helpers (apps/web/src/lib/export.ts)
 - Docker/Coolify deployment
 
 ## Critical Current Priorities
@@ -82,18 +85,14 @@ After security fixes:
    - tags
    - future Google Maps/RATP integrations
 
-4. Build Hotel Admin:
-   - hotel profile
-   - settings
-   - recommendations
-   - reception users
-   - CRM export
-   - theme choice
-   - satisfaction overview
+4. Build Hotel Admin ✅ (completed — Phase 6 + Phase 7b, 8 routes live):
+   - hotel profile, settings, recommendations, QR, modules, analytics, CRM export
 
-5. Add CRM export and segmentation.
+5. Add CRM export and segmentation ✅ (Phase 7a/7b completed, Phase 7c pending).
 
-6. Add monitoring, backups, storage, and production documentation.
+6. Add CRM export filters (segmentation).
+
+7. Add monitoring, backups, storage, and production documentation.
 
 ## Current Known Deployment Issue
 

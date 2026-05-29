@@ -15,7 +15,7 @@ Guests access the hotel app by scanning a QR code or opening the hotel subdomain
 Receptionists use the dashboard to manage live messages, service requests, present guests, stay history, guest reviews, and CRM information.
 
 ### Hotel Managers / Hotel Admins
-Hotel managers should eventually manage their hotel profile, practical information, guest app theme, local recommendations, reception users, CRM exports, and satisfaction insights.
+Hotel managers manage their hotel profile, practical information, guest app theme, local recommendations, reception users, CRM exports, and satisfaction insights via the Hotel Admin space (8 routes live).
 
 ### Super Admin / Platform Operator
 The platform operator manages all hotels, creates new tenants, generates hotel URLs and QR codes, monitors deployments, configures settings, and prepares each hotel client for use.
@@ -40,6 +40,7 @@ The platform operator manages all hotels, creates new tenants, generates hotel U
 - Reception Dashboard: operational dashboard for staff.
 - Super Admin: platform administration for the operator.
 - Generator: hotel onboarding wizard for creating/configuring tenants.
+- Hotel Admin: self-service B2B client space (8 routes live).
 - API: Express backend with multi-tenant business logic.
 - PostgreSQL Database: central multi-tenant data storage.
 
@@ -60,6 +61,7 @@ Before real hotel clients are onboarded, the platform must prioritize:
 3. Safe Prisma migration handling.
 4. Production-ready secrets and environment validation.
 5. Role-based permissions.
-6. Reliable backups and restore procedures.
-7. External object storage for uploaded files.
-8. Monitoring, logs, and operational alerts.
+6. CRM export and segmentation (Phase 7b completed, Phase 7c pending).
+7. Reliable backups and restore procedures.
+8. External object storage for uploaded files.
+9. Monitoring, logs, and operational alerts.
