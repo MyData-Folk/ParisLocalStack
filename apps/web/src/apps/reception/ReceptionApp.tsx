@@ -67,14 +67,12 @@ function ReceptionDashboard({ basePath }: { basePath: string }) {
   );
 }
 
-function TenantContextError({ message, tenantSlug }: { message: string; tenantSlug: string | null }) {
+function TenantContextError({ message: _message, tenantSlug: _tenantSlug }: { message: string; tenantSlug: string | null }) {
   return (
     <section className="rounded-2xl border border-red-400/30 bg-red-500/10 p-6 shadow-lg shadow-black/20">
       <AlertTriangle className="h-7 w-7 text-red-200" />
       <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white">Contexte hotel indisponible</h1>
-      <p className="mt-2 text-sm leading-6 text-red-100/80">{message}</p>
-      {tenantSlug ? <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-mono text-xs text-red-50">Slug detecte : {tenantSlug}</p> : null}
-      <p className="mt-3 text-sm text-red-100/70">Verifiez le slug exact genere dans Super Admin. Exemple : `admin-folkestone-opera.welcomeparis.hotelmanager.fr` si le slug hotel est `folkestone-opera`.</p>
+      <p className="mt-2 text-sm leading-6 text-red-100/80">Nous n'avons pas pu ouvrir l'espace réception de cet hôtel. Vérifiez votre lien d'accès ou contactez le support Paris Local.</p>
     </section>
   );
 }
