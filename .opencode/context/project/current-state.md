@@ -36,6 +36,7 @@ The project has working foundations for:
 - PostgreSQL backup/restore scripts with R2 upload and staging/test restore validated (Phase 8c complete)
 - Docker Compose restart: always policy (Phase 8d)
 - Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)
+- Monitoring and alerting strategy documented (Phase 8f-1)
 
 ## Critical Current Priorities
 
@@ -119,12 +120,26 @@ Phase 8c backup/restore validation is complete:
 - `npx prisma migrate status` after restore: `Database schema is up to date!`
 - Production was not touched.
 
+Phase 8f-1 monitoring documentation is now defined:
+
+- HTTP monitoring targets: main site, `/health`, `/ready`, a guest app example,
+  and the recommended reception subdomain.
+- `/health` means the API process is alive.
+- `/ready` means the API and PostgreSQL are available; HTTP 503 must alert.
+- Recommended tools: Better Stack Free or Uptime Kuma for HTTP checks, and
+  Healthchecks.io, Better Stack Heartbeat, or an Uptime Kuma push monitor for the
+  backup cron.
+- Backup cron alerting is still to be implemented outside Git without committing
+  secret ping URLs.
+- Incident runbooks are documented in `docs/DEPLOYMENT.md`.
+
 Safe approach going forward:
 
 - Do not use `prisma db push --accept-data-loss`.
 - Do not reset or delete production data.
 - Do not propose `migrate resolve` unless a new real Prisma failure is confirmed.
 - Never restore on production.
+- Never commit webhook, heartbeat, or ping URLs containing secrets.
 
 ## Hard Rules
 
