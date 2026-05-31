@@ -67,12 +67,12 @@ Exemples :
 - helpers export partagés dans apps/web/src/lib/export.ts (PR #22) ;
 - page CRM Admin Hôtel avec export Excel/JSON (PR #23) ;
 - Espace Admin Hôtel : 8 routes live (7 Phase 6b + 1 Phase 7b), aucun placeholder restant ;
-- Cloudflare R2 configuré pour les backups PostgreSQL (Phase 8c) ;
+- Cloudflare R2 configuré pour les backups PostgreSQL (Phase 8c validée complètement) ;
 - backup quotidien vers R2 actif (cron Coolify) ;
 - restart: always configuré sur tous les services Docker Compose (Phase 8d) ;
 - GET /ready endpoint avec vérification PostgreSQL (Phase 8b) ;
 - X-Request-Id tracing sur toutes les requêtes API (Phase 8b) ;
-- restore staging à tester — ne jamais restaurer en production sans validation.
+- restore staging/test depuis R2 validé — ne jamais restaurer en production.
 
 ## 2. Architecture cible (Frontend + Backend + Database)
 
@@ -394,7 +394,7 @@ Backups :
 - scripts/restore-postgres.sh : téléchargement + restore avec confirmation
 - cron Coolify : backup quotidien vers R2 (BACKUP_PREFIX=backups/postgres/prod, BACKUP_RETENTION_DAYS=7)
 - mapping automatique S3_* → AWS_* compatible Alpine
-- ⚠ Restore staging à tester, ne jamais restaurer en production sans validation
+- Restore staging/test depuis R2 validé avec succès, ne jamais restaurer en production
 
 ## 6. Règles de codage & bonnes pratiques
 
@@ -542,7 +542,7 @@ Prochaines priorités produit raisonnables :
 Prochaines phases en cours ou planifiées :
 Phase 6 — Espace Admin Hôtel ✅ (complétée)
 Phase 7 — CRM exports avancés (CSV, filtres segmentation) — 7a/7b/7c terminées
-Phase 8 — Observabilité + backups PostgreSQL automatiques — 8a/8b/8c/8d terminées, 8e en cours
+Phase 8 — Observabilité + backups PostgreSQL automatiques — 8a/8b/8c/8d terminées, 8e en cours ; 8c validée complètement avec restore staging/test
 Phase 9 — Démos commerciales (3 hôtels, landing page)
 
 ## 9. Authentification & Rôles
@@ -832,7 +832,9 @@ Phase 8c — Backups PostgreSQL R2 ✅
 - Rétention BACKUP_RETENTION_DAYS=0 et 7 validées
 - Cron Coolify backup quotidien configuré :
   schedule 0 0 * * * — BACKUP_PREFIX=backups/postgres/prod BACKUP_RETENTION_DAYS=7
-- ⚠ Restore staging à tester avant de considérer le cycle complet
+- Restore staging/test validé depuis R2 avec `backup_2026-05-31_07-43-00.sql.gz`
+- Vérifications restore OK : 14 tables restaurées, données métier présentes, `npx prisma migrate status` indique `Database schema is up to date!`
+- Cycle backup/restore PostgreSQL R2 validé complètement ; production non touchée
 
 Phase 8d — Restart policy Docker Compose ✅
 - restart: always ajouté sur postgres, api, web, minio dans docker-compose.yml
