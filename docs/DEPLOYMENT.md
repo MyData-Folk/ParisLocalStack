@@ -119,7 +119,7 @@ Ne jamais stocker de backups dans un espace public ou accessible sans authentifi
 
 ## Monitoring externe et alerting
 
-Phase 8f-1 recommande un monitoring externe léger. Il doit rester indépendant de
+Phase 8f recommande un monitoring externe léger. Il reste indépendant de
 Coolify afin de détecter les indisponibilités vues depuis Internet.
 
 ### Endpoints à surveiller
@@ -150,6 +150,22 @@ données n'est pas disponible.
   Git. Les URLs de ping doivent rester dans Coolify ou dans le gestionnaire de
   secrets de l'outil choisi.
 
+### État validé
+
+Monitoring HTTP Better Stack actif :
+
+- ParisLocalStack — Guest Vendôme
+- ParisLocalStack — API Ready DB
+- ParisLocalStack — API Health
+- Paris Local Stack Super Admin
+
+Monitoring cron Healthchecks.io actif :
+
+- ParisLocalStack — PostgreSQL Backup R2
+
+`BACKUP_HEALTHCHECK_URL` est configurée uniquement dans Coolify API. La vraie URL
+de ping ne doit jamais être ajoutée au dépôt.
+
 ### Backup cron
 
 Le backup PostgreSQL R2 est validé, y compris le restore staging/test.
@@ -162,10 +178,20 @@ BACKUP_PREFIX=backups/postgres/prod
 BACKUP_RETENTION_DAYS=7
 ```
 
-Le besoin restant est l'alerte si le cron échoue ou ne s'exécute pas. La
-stratégie recommandée est d'ajouter ultérieurement un ping de succès vers un
-service de heartbeat, puis un ping d'échec dans le chemin d'erreur. Cette étape
-doit se faire sans exposer l'URL de ping dans le dépôt.
+La Scheduled Task Coolify production validée :
+
+```txt
+BACKUP_PREFIX=backups/postgres/prod BACKUP_RETENTION_DAYS=7 bash /app/scripts/backup-postgres.sh
+```
+
+Dernière validation connue :
+
+- backup production créé dans R2 :
+  `paris-local-backups/backups/postgres/prod/backup_2026-05-31_13-47-22.sql.gz`
+- Healthchecks.io a reçu les signaux Started et OK.
+- Le cycle automatique `backup -> R2 -> heartbeat -> alerte potentielle` est
+  validé.
+- Production n'a pas été restaurée.
 
 ### Runbook incident
 

@@ -36,7 +36,7 @@ The project has working foundations for:
 - PostgreSQL backup/restore scripts with R2 upload and staging/test restore validated (Phase 8c complete)
 - Docker Compose restart: always policy (Phase 8d)
 - Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)
-- Monitoring and alerting strategy documented (Phase 8f-1)
+- Monitoring and alerting validated with Better Stack, Healthchecks.io, and Coolify Scheduled Task (Phase 8f)
 
 ## Critical Current Priorities
 
@@ -132,6 +132,30 @@ Phase 8f-1 monitoring documentation is now defined:
 - Backup cron alerting is still to be implemented outside Git without committing
   secret ping URLs.
 - Incident runbooks are documented in `docs/DEPLOYMENT.md`.
+
+Phase 8f-5 monitoring validation is complete:
+
+- Better Stack HTTP monitors are active:
+  - ParisLocalStack — Guest Vendôme
+  - ParisLocalStack — API Ready DB
+  - ParisLocalStack — API Health
+  - Paris Local Stack Super Admin
+- Healthchecks.io is configured for `ParisLocalStack — PostgreSQL Backup R2`.
+- `BACKUP_HEALTHCHECK_URL` is present in Coolify API only; no ping URL is stored in Git.
+- `scripts/backup-postgres.sh` sends `/start`, `/fail`, and success pings.
+- Coolify Scheduled Task `postgres-backup-daily` executed successfully with:
+  `BACKUP_PREFIX=backups/postgres/prod BACKUP_RETENTION_DAYS=7 bash /app/scripts/backup-postgres.sh`
+- Production backup confirmed in R2:
+  `paris-local-backups/backups/postgres/prod/backup_2026-05-31_13-47-22.sql.gz`
+- Healthchecks.io received Started and OK.
+- The automatic cycle `backup -> R2 -> heartbeat -> potential alert` is validated.
+- Production was not restored.
+- Restore staging/test was already validated previously.
+
+Next possible phase after decision:
+
+- Phase 9 — commercial demos / launch preparation.
+- Phase 10 — Design System / Templates.
 
 Safe approach going forward:
 
