@@ -73,7 +73,7 @@ Exemples :
 - GET /ready endpoint avec vérification PostgreSQL (Phase 8b) ;
 - X-Request-Id tracing sur toutes les requêtes API (Phase 8b) ;
 - restore staging/test depuis R2 validé — ne jamais restaurer en production ;
-- stratégie monitoring/alerting externe documentée (Phase 8f-1).
+- monitoring/alerting externe validé avec Better Stack, Healthchecks.io et Scheduled Task Coolify (Phase 8f).
 
 ## 2. Architecture cible (Frontend + Backend + Database)
 
@@ -861,3 +861,25 @@ Phase 8f-1 — Documentation monitoring / alerting ✅
 - Healthchecks.io, Better Stack Heartbeat ou push monitor Uptime Kuma recommandés pour le cron backup
 - Ne jamais commiter d'URL secrète de ping, webhook, token ou clé
 - Runbook incident documenté dans docs/DEPLOYMENT.md : `/health` down, `/ready` down, site web down, cron backup échoué, disque saturé, R2 inaccessible
+
+Phase 8f-5 — Validation monitoring backup ✅
+- Better Stack monitors actifs :
+  - ParisLocalStack — Guest Vendôme
+  - ParisLocalStack — API Ready DB
+  - ParisLocalStack — API Health
+  - Paris Local Stack Super Admin
+- Healthchecks.io configuré :
+  - ParisLocalStack — PostgreSQL Backup R2
+- `BACKUP_HEALTHCHECK_URL` présent dans Coolify API uniquement ; ne jamais commiter la vraie URL
+- `scripts/backup-postgres.sh` contient les pings `/start`, `/fail` et success
+- Scheduled Task Coolify `postgres-backup-daily` exécutée avec succès :
+  `BACKUP_PREFIX=backups/postgres/prod BACKUP_RETENTION_DAYS=7 bash /app/scripts/backup-postgres.sh`
+- Backup production confirmé dans R2 :
+  `paris-local-backups/backups/postgres/prod/backup_2026-05-31_13-47-22.sql.gz`
+- Healthchecks.io a reçu Started + OK
+- Cycle automatique validé : backup automatique → R2 → heartbeat → alerte potentielle
+- Production non restaurée ; restore staging/test déjà validé précédemment
+
+Prochaine étape possible après décision :
+- Phase 9 — Démos commerciales / préparation lancement
+- Phase 10 — Design System / Templates
