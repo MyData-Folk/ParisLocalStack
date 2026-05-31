@@ -37,6 +37,7 @@ The project has working foundations for:
 - Docker Compose restart: always policy (Phase 8d)
 - Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)
 - Monitoring and alerting validated with Better Stack, Healthchecks.io, and Coolify Scheduled Task (Phase 8f)
+- Commercial demo audit and runbook documented (Phase 9a/9b)
 
 ## Critical Current Priorities
 
@@ -152,9 +153,18 @@ Phase 8f-5 monitoring validation is complete:
 - Production was not restored.
 - Restore staging/test was already validated previously.
 
+Phase 9a/9b commercial demo preparation is documented:
+
+- Phase 9a audit identified a controlled demo path: Guest App -> Reception live -> Hotel Admin -> CRM/RGPD.
+- Phase 9b created `docs/DEMO_COMMERCIALE.md`.
+- Demo client surfaces to show: Guest App, Reception, Hotel Admin.
+- Demo client surfaces to avoid: Super Admin, Generator, infrastructure, logs, backups, GitHub, Coolify, Prisma, R2, code, and credentials.
+- Demo data must be fictive or explicitly validated; no real personal data should be shown without approval.
+- Demo credentials, monitoring URLs, webhooks, tokens, and environment values must stay out of Git.
+
 Next possible phase after decision:
 
-- Phase 9 — commercial demos / launch preparation.
+- Create a neutral demo tenant with clean fictive data.
 - Phase 10 — Design System / Templates.
 
 Safe approach going forward:

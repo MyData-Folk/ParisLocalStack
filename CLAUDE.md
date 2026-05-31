@@ -544,7 +544,7 @@ Prochaines phases en cours ou planifiées :
 Phase 6 — Espace Admin Hôtel ✅ (complétée)
 Phase 7 — CRM exports avancés (CSV, filtres segmentation) — 7a/7b/7c terminées
 Phase 8 — Observabilité + backups PostgreSQL automatiques — 8a/8b/8c/8d terminées, 8e en cours ; 8c validée complètement avec restore staging/test
-Phase 9 — Démos commerciales (3 hôtels, landing page)
+Phase 9 — Démos commerciales / préparation lancement — 9a audit terminé, 9b runbook documenté
 
 ## 9. Authentification & Rôles
 
@@ -880,6 +880,19 @@ Phase 8f-5 — Validation monitoring backup ✅
 - Cycle automatique validé : backup automatique → R2 → heartbeat → alerte potentielle
 - Production non restaurée ; restore staging/test déjà validé précédemment
 
+Phase 9a — Audit démo commerciale ✅
+- Audit lecture seule terminé après Phase 8f.
+- Parcours de démo recommandé : Guest App → Réception live → Admin Hôtel → CRM / RGPD.
+- Surfaces à montrer à un hôtelier : Guest App, Réception, Admin Hôtel.
+- Surfaces à éviter en démo client : Super Admin, Generator, Coolify, Prisma, R2, GitHub, logs, terminal, variables d'environnement et code source.
+- Données de démo : utiliser uniquement des données fictives ou explicitement validées ; ne jamais afficher de données personnelles réelles non validées.
+
+Phase 9b — Runbook démo commerciale ✅
+- `docs/DEMO_COMMERCIALE.md` créé.
+- Script démo 10-15 minutes documenté.
+- Script oral court, objections/réponses, checklist avant démo, incidents fréquents et surfaces interdites documentés.
+- Aucun identifiant, mot de passe, token, URL privée de monitoring ou variable d'environnement ne doit être committé.
+
 Prochaine étape possible après décision :
-- Phase 9 — Démos commerciales / préparation lancement
+- Créer un tenant démo neutre avec données fictives propres
 - Phase 10 — Design System / Templates
