@@ -33,7 +33,7 @@ The project has working foundations for:
 - Shared export helpers (apps/web/src/lib/export.ts)
 - Docker/Coolify deployment
 - API readiness + requestId tracing (Phase 8b)
-- PostgreSQL backup/restore scripts with R2 upload (Phase 8c)
+- PostgreSQL backup/restore scripts with R2 upload and staging/test restore validated (Phase 8c complete)
 - Docker Compose restart: always policy (Phase 8d)
 - Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)
 
@@ -96,18 +96,35 @@ After security fixes:
 
 6. Add monitoring, backups, storage, and production documentation.
 
-## Current Known Deployment Issue
+## Current Operational State
 
-A Coolify deployment failed because Prisma reported error P3009: a failed migration named `20260524230000_init` exists in the production database. The API container reaches PostgreSQL and starts `prisma migrate deploy`, but Prisma blocks new migrations until the failed migration is resolved in `_prisma_migrations`.
+The previously documented Prisma P3009 signal is obsolete for the current API container database state.
 
-Safe approach:
+Manual verification in the Coolify `/app` container confirmed:
+
+- `DATABASE_URL` is present.
+- `npx prisma migrate status` sees database `paris_local`, schema `public`.
+- 7 migrations are detected.
+- Result: `Database schema is up to date!`
+- No Prisma correction is needed now.
+
+Phase 8c backup/restore validation is complete:
+
+- R2 backup bucket `paris-local-backups` is accessible.
+- Test backup uploaded successfully with `BACKUP_PREFIX=backups/postgres/test`.
+- Backup used for restore: `backup_2026-05-31_07-43-00.sql.gz`.
+- Restore completed successfully in a separate Coolify PostgreSQL staging/test database.
+- Restore verification found 14 restored tables, including `_prisma_migrations`, `hotels`, `guests`, `stays`, `messages`, `service_requests`, and `reviews`.
+- Counts verified after restore: hotels 5, guests 27, stays 25, messages 36, service_requests 53, reviews 17.
+- `npx prisma migrate status` after restore: `Database schema is up to date!`
+- Production was not touched.
+
+Safe approach going forward:
 
 - Do not use `prisma db push --accept-data-loss`.
 - Do not reset or delete production data.
-- Run `npx prisma migrate status` against the production database.
-- If the schema already matches the failed init migration, use `npx prisma migrate resolve --applied 20260524230000_init`.
-- If the migration truly did not apply, use `--rolled-back`, then re-run `npx prisma migrate deploy`.
-- Prefer checking migration status/output before choosing applied vs rolled-back.
+- Do not propose `migrate resolve` unless a new real Prisma failure is confirmed.
+- Never restore on production.
 
 ## Hard Rules
 
