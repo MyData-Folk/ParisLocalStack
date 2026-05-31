@@ -90,4 +90,4 @@ else
 fi
 
 echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] Backup complete."
-_hc_ping
+_hc_ping ""
