@@ -116,3 +116,110 @@ Le script :
 Les backups contiennent des données personnelles (emails, téléphones, noms).
 Le bucket backup doit être **privé** et **séparé** du bucket média.
 Ne jamais stocker de backups dans un espace public ou accessible sans authentification.
+
+## Monitoring externe et alerting
+
+Phase 8f-1 recommande un monitoring externe léger. Il doit rester indépendant de
+Coolify afin de détecter les indisponibilités vues depuis Internet.
+
+### Endpoints à surveiller
+
+| Surface | URL | Sens attendu |
+|---|---|---|
+| Site principal | `https://welcomeparis.hotelmanager.fr` | Le frontend public répond. |
+| API liveness | `https://api.welcomeparis.hotelmanager.fr/health` | L'API Express est vivante. |
+| API readiness | `https://api.welcomeparis.hotelmanager.fr/ready` | L'API répond et PostgreSQL est joignable. |
+| Guest App Vendôme | `https://vendome.welcomeparis.hotelmanager.fr` | Exemple d'app client hôtel accessible. |
+| Réception Vendôme | `https://admin-vendome.welcomeparis.hotelmanager.fr` | Format réception recommandé. |
+| Réception Vendôme legacy | `https://admin.vendome.welcomeparis.hotelmanager.fr` | Ancien format supporté pour compatibilité. |
+
+`/health` est un signal de vie léger : il doit répondre `200` avec
+`{ "status": "ok" }`.
+
+`/ready` est le signal applicatif critique : il vérifie PostgreSQL. Il doit
+répondre `200` avec `status=ready` et `database=ok`. Une réponse `503` doit
+déclencher une alerte, car elle indique que l'API tourne mais que la base de
+données n'est pas disponible.
+
+### Outils recommandés
+
+- Better Stack Free ou Uptime Kuma pour les checks HTTP externes.
+- Healthchecks.io, Better Stack Heartbeat ou un push monitor Uptime Kuma pour le
+  cron backup.
+- Ne jamais commiter d'URL secrète de ping, de webhook, de token ou de clé dans
+  Git. Les URLs de ping doivent rester dans Coolify ou dans le gestionnaire de
+  secrets de l'outil choisi.
+
+### Backup cron
+
+Le backup PostgreSQL R2 est validé, y compris le restore staging/test.
+
+Configuration production attendue côté cron Coolify :
+
+```txt
+schedule: 0 0 * * *
+BACKUP_PREFIX=backups/postgres/prod
+BACKUP_RETENTION_DAYS=7
+```
+
+Le besoin restant est l'alerte si le cron échoue ou ne s'exécute pas. La
+stratégie recommandée est d'ajouter ultérieurement un ping de succès vers un
+service de heartbeat, puis un ping d'échec dans le chemin d'erreur. Cette étape
+doit se faire sans exposer l'URL de ping dans le dépôt.
+
+### Runbook incident
+
+#### `/health` down
+
+1. Vérifier l'état du service API dans Coolify.
+2. Consulter les logs API structurés Pino avec le dernier `requestId` connu si
+   disponible.
+3. Vérifier que le container API démarre et que le healthcheck Docker n'est pas
+   en échec.
+4. Redémarrer le service API uniquement si la cause est comprise ou si la
+   récupération automatique échoue.
+
+#### `/ready` down
+
+1. Considérer l'incident comme lié à PostgreSQL ou à la connexion API -> DB.
+2. Vérifier le service PostgreSQL Coolify et son espace disque.
+3. Vérifier les logs API pour les entrées `database unreachable`.
+4. Ne pas lancer de migration, `db push`, reset ou restore pour résoudre un
+   simple incident readiness.
+
+#### Site web down
+
+1. Vérifier le service web Coolify et le routage domaine/SSL.
+2. Vérifier que l'API répond encore via `/health` et `/ready`.
+3. Si seule une app hôtel est touchée, vérifier la résolution DNS du sous-domaine.
+
+#### Backup cron échoue
+
+1. Ne pas relancer immédiatement un restore.
+2. Vérifier le log du cron Coolify.
+3. Vérifier l'accès au bucket R2 dédié backup, sans utiliser le bucket média.
+4. Vérifier `BACKUP_PREFIX=backups/postgres/prod` et `BACKUP_RETENTION_DAYS=7`.
+5. Relancer un backup manuel seulement après validation explicite.
+
+#### Disque saturé
+
+1. Vérifier les volumes Coolify/PostgreSQL et le volume uploads.
+2. Ne pas supprimer de données métier sans plan de sauvegarde.
+3. Vérifier que les fichiers temporaires de backup sont bien nettoyés.
+4. Augmenter le stockage ou purger uniquement des artefacts non critiques
+   identifiés.
+
+#### R2 inaccessible
+
+1. Vérifier Cloudflare R2, le bucket `paris-local-backups` et les droits du
+   token backup.
+2. Ne pas basculer vers le bucket média `S3_BUCKET=parislocalstack-prod`.
+3. Conserver les backups dans un bucket privé et séparé.
+4. Reprendre les backups uniquement quand le bucket dédié est accessible.
+
+### Règles de sécurité
+
+- Aucune clé, aucun token, aucune URL de webhook secrète dans la documentation.
+- Ne jamais restaurer sur production.
+- Les backups contiennent des données personnelles et doivent rester privés.
+- Les alertes doivent éviter de contenir des données client ou des secrets.

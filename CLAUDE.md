@@ -72,7 +72,8 @@ Exemples :
 - restart: always configuré sur tous les services Docker Compose (Phase 8d) ;
 - GET /ready endpoint avec vérification PostgreSQL (Phase 8b) ;
 - X-Request-Id tracing sur toutes les requêtes API (Phase 8b) ;
-- restore staging/test depuis R2 validé — ne jamais restaurer en production.
+- restore staging/test depuis R2 validé — ne jamais restaurer en production ;
+- stratégie monitoring/alerting externe documentée (Phase 8f-1).
 
 ## 2. Architecture cible (Frontend + Backend + Database)
 
@@ -845,4 +846,18 @@ Phase 8e — Logs structurés (pino)
 - Middleware HTTP structuré avec requestId, méthode, URL, statut, temps de réponse
 - LOG_LEVEL configurable (défaut info)
 - console.error/console.log centraux remplacés par logger.error/info
-- Monitoring/alerting externe (Uptime Kuma, etc.) à planifier séparément
+
+Phase 8f-1 — Documentation monitoring / alerting ✅
+- Monitoring HTTP recommandé :
+  - `https://welcomeparis.hotelmanager.fr`
+  - `https://api.welcomeparis.hotelmanager.fr/health`
+  - `https://api.welcomeparis.hotelmanager.fr/ready`
+  - `https://vendome.welcomeparis.hotelmanager.fr`
+  - `https://admin-vendome.welcomeparis.hotelmanager.fr` (format réception recommandé)
+  - `https://admin.vendome.welcomeparis.hotelmanager.fr` reste supporté pour compatibilité
+- `/health` = API vivante
+- `/ready` = API + PostgreSQL disponibles ; HTTP 503 doit alerter
+- Better Stack Free ou Uptime Kuma recommandés pour HTTP
+- Healthchecks.io, Better Stack Heartbeat ou push monitor Uptime Kuma recommandés pour le cron backup
+- Ne jamais commiter d'URL secrète de ping, webhook, token ou clé
+- Runbook incident documenté dans docs/DEPLOYMENT.md : `/health` down, `/ready` down, site web down, cron backup échoué, disque saturé, R2 inaccessible
