@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request } from "express";
 import type { Server } from "socket.io";
+import { z } from "zod";
 import { messageCreateSchema, publicMessagesQuerySchema, replyCreateSchema } from "@paris-local/shared";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess } from "../../middleware/auth.js";
@@ -13,6 +14,13 @@ import { staffRoom, guestRoom } from "../../socket.js";
 
 export const messagesRouter = Router();
 export const publicMessagesRouter = Router({ mergeParams: true });
+
+const staffMessageCreateSchema = z.object({
+  guestId: z.string().uuid(),
+  stayId: z.string().uuid().optional(),
+  content: z.string().min(1).max(4000),
+  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium")
+});
 
 function emitMessage(req: Request, hotelId: string, payload: any) {
   const io = req.app.get("io") as Server | undefined;
@@ -70,6 +78,27 @@ messagesRouter.get("/hotels/:hotelId/messages", authenticate, requireHotelAccess
     orderBy: { createdAt: "desc" }
   });
   return sendOk(res, messages);
+}));
+
+messagesRouter.post("/hotels/:hotelId/messages", authenticate, requireHotelAccess("hotelId"), validateBody(staffMessageCreateSchema), asyncHandler(async (req, res) => {
+  const scoped = await validateGuestStayScope(req.params.hotelId, req.body.guestId, req.body.stayId);
+  if (!scoped) return res.status(404).json({ error: "Conversation not found" });
+
+  const message = await prisma.message.create({
+    data: {
+      hotelId: req.params.hotelId,
+      guestId: req.body.guestId,
+      stayId: req.body.stayId,
+      senderType: "reception",
+      senderId: req.user?.id,
+      content: req.body.content,
+      status: "answered",
+      priority: req.body.priority
+    },
+    include: { guest: true, stay: true }
+  });
+  emitMessage(req, req.params.hotelId, message);
+  return sendCreated(res, message);
 }));
 
 messagesRouter.post("/messages/:id/reply", authenticate, validateBody(replyCreateSchema), asyncHandler(async (req, res) => {
