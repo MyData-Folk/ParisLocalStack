@@ -167,6 +167,7 @@ Next possible phase after decision:
 - The neutral demo tenant has been validated locally for Phase 9E: `demo-paris-local` / Hôtel Lumière Demo Paris, fictive data only, Guest App OK, Reception post-auth OK, Hotel Admin post-auth OK.
 - Public demo URLs are not validated as staging: the Guest App URL returns HTTP 200 with `Hotel not found`, and the admin/reception URL returns HTTP 200 with a generic login. Dedicated staging DB/API/Web, access protection, and absence of real data remain unverified.
 - Next step is Coolify/environment clarification before any non-local seed, deploy, migration, reset, or db push.
+- `DEPLOIEMENT.md` now defines the mandatory staging validation checklist before any non-local demo seed, migration, or deploy.
 - Phase 10 — Design System / Templates.
 
 Safe approach going forward:
@@ -177,6 +178,7 @@ Safe approach going forward:
 - Never restore on production.
 - Never commit webhook, heartbeat, or ping URLs containing secrets.
 - Never use production as staging. Never run the demo seed outside local until a dedicated staging database, rollback, and access protection are confirmed.
+- Complete the staging validation checklist before touching any non-local environment for `demo-paris-local`.
 
 ## Hard Rules
 

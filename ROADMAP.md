@@ -35,6 +35,7 @@
 ## En cours
 - Stabilisation de la documentation officielle de passation.
 - Clarification de l'environnement public/staging pour `demo-paris-local` avant toute action hors local.
+- Formalisation des preuves staging obligatoires avant seed, migration ou deploy hors local.
 - Consolidation UX produit avant commercialisation.
 - Refactorisation progressive des gros fichiers frontend, uniquement par phases validees.
 - Distinction audit UI local / staging / production apres les observations du 2026-06-02.
@@ -42,6 +43,7 @@
 ## A faire
 - Confirmer quel web/API/DB servent les domaines publics `demo-paris-local` et `admin-demo-paris-local`.
 - Prouver une DB staging dediee, une protection d'acces et un rollback staging avant tout seed hors local.
+- Appliquer la checklist `Validation staging controle avant seed hors local` de `DEPLOIEMENT.md`.
 - Relancer l'audit Playwright sur un environnement representatif uniquement apres clarification staging.
 - Enrichir les formulaires de demandes service.
 - Finaliser la gestion recommandations avancee si besoin.

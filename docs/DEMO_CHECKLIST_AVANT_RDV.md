@@ -89,6 +89,8 @@ Note : les captures reelles observees sur captures partagees le 2026-06-02 montr
 
 Garde-fous staging : ne jamais lancer seed hors local sans confirmation d'une DB staging dediee ; ne jamais lancer migration ou deploy sur un environnement non identifie ; proteger les comptes demo si un domaine public est utilise ; confirmer un rollback staging avant seed ; ne jamais utiliser production comme staging.
 
+Avant d'utiliser une URL publique en rendez-vous, appliquer la checklist `Validation staging controle avant seed hors local` dans `DEPLOIEMENT.md`. Si la checklist n'est pas complete, utiliser la demo locale validee ou un support prepare.
+
 ## 9. Apres rendez-vous
 - Noter objections.
 - Noter modules demandes.

@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-02
+Decision : rendre obligatoire une checklist de validation staging controle avant tout seed, migration ou deploiement hors local.
+
+Motif : la demo locale est validee, mais les URLs publiques demo ne prouvent pas un staging isole et la Guest App publique a ete observee en `Hotel not found`.
+
+Impact : toute action hors local doit d'abord prouver l'environnement staging, l'app web, l'API, la DB PostgreSQL, la non-production de `DATABASE_URL`, la protection d'acces, l'absence de donnees reelles et un rollback.
+
+Statut : adopte.
+
+---
+
+## 2026-06-02
 Decision : limiter la demonstration Phase 9E a l'environnement local tant que le staging public n'est pas clarifie.
 
 Motif : la demo locale `demo-paris-local` / Hôtel Lumière Demo Paris est validee, mais les URLs publiques repondent sans prouver le tenant neutre : Guest App publique en `Hotel not found`, reception publique en login generique, Coolify lecture seule non disponible.
