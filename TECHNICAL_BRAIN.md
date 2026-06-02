@@ -63,7 +63,16 @@ Fuite inter-hotels si oubli de filtre hotel_id, gros composants frontend, sessio
 ## 11. Dette technique
 Refactorisation progressive des gros fichiers frontend, nettoyage des pages orphelines apps/web/src/pages, typage API frontend, documentation de runbooks.
 
-## 12. Etat des deploiements connus
+## 12. Outillage UI/UX
+Playwright et `@axe-core/playwright` sont installes comme dependances de developpement.
+
+Commande disponible : `npm run audit:ui`.
+
+Les captures et rapports axe locaux sont ecrits dans `node_modules/.cache/parislocalstack-ui-audit`.
+
+Regle : lancer les audits avec un environnement local representatif ou une cible configuree. Si l'API, la DB ou le tenant demo ne sont pas disponibles, les captures locales peuvent montrer des etats de fallback, login ou erreur qui ne representent pas l'etat staging/production.
+
+## 13. Etat des deploiements connus
 Production connue comme stable dans l'historique projet.
 
 Etat live exact au 2026-06-02 : Information non verifiee dans cette passe docs-only.

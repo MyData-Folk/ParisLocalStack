@@ -37,6 +37,15 @@ Verifier avant chaque rendez-vous :
 - CRM demo sans donnees reelles.
 - recommandations demo coherentes.
 
+## Observations UI recentes
+Les captures Playwright locales initiales ont montre des etats degrades lorsque localhost n'etait pas representatif. Elles ne doivent pas etre confondues avec l'etat reel staging ou production.
+
+Observations du 2026-06-02 sur captures partagees : Reception avec dashboard operationnel complet visible, Guest App Vendome client QR fonctionnelle et premium, Super Admin fonctionnel avec hotels, QR et generator. Ces observations ne valident pas automatiquement toutes les interfaces comme production-ready.
+
+PR #47 : l'audit UI Playwright/axe est operationnel avec 6 tests. PR #48 : l'etat d'erreur Guest App affiche un message hotelier rassurant au lieu du texte brut `Internal server error`.
+
+Priorite Phase 9E maintenue : creer et stabiliser le tenant demo neutre `demo-paris-local` / Hôtel Lumière Demo Paris avec donnees 100 % fictives.
+
 ## Donnees interdites
 Interdit dans le tenant demo : noms de vrais clients, emails personnels reels, numeros de telephone reels, reservations reelles, commentaires issus d'avis reels sans autorisation, captures contenant des informations internes.
 
@@ -67,7 +76,7 @@ Interdit dans le tenant demo : noms de vrais clients, emails personnels reels, n
 - Envoyer un avis faible pour montrer l'alerte si pertinent.
 
 ## Risques
-Confusion entre tenant demo et tenant reel, donnees fictives trop pauvres pour convaincre, QR code pointant vers le mauvais hotel, session navigateur conservant un contexte obsolete.
+Confusion entre tenant demo et tenant reel, donnees fictives trop pauvres pour convaincre, QR code pointant vers le mauvais hotel, session navigateur conservant un contexte obsolete, conclusions UI tirees d'un environnement local non representatif.
 
 ## Statut
 Tenant neutre valide dans la documentation. Creation effective et donnees fictives a realiser dans une phase separee, apres validation explicite.

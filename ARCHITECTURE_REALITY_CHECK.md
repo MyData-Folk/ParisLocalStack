@@ -112,8 +112,17 @@ Information non verifiee : etat DNS/SSL live exact au moment de ce document.
 - Migrations Prisma non preparees.
 - Utilisation de donnees reelles dans la demo.
 - Documentation obsolete si non maintenue apres chaque phase importante.
+- Audit UI local non representatif si localhost n'a pas API, DB et tenant demo disponibles.
+- Confusion possible entre captures Playwright locales, staging et production.
 
 ## 10. Etat reel des modules
 Modules consideres operationnels selon historique projet : Guest App, Reception App, Super Admin, Generator, Hotel Admin, Auth JWT, Multi-tenant, QR code, CRM, Exports, Reviews, Service requests, Recommendations, Media hotel, Monitoring/backups documentes.
 
 Modules a verifier avant commercialisation : demo tenant neutre, navigation complete mobile, separation donnees demo/reelles, coverage manuelle du flux complet, etat exact des grands fichiers frontend apres refactorisations partielles.
+
+## 11. Observations UI recentes
+Observations du 2026-06-02 sur captures partagees : Reception avec dashboard operationnel complet visible, Guest App Vendome client QR fonctionnelle et premium, Super Admin fonctionnel avec hotels, QR et generator.
+
+Ces observations ne remplacent pas une validation production-ready exhaustive. Les captures Playwright locales initiales ont montre des etats degrades car l'environnement localhost n'etait pas representatif. L'audit local reste utile, mais il doit etre distingue de staging et production.
+
+Outillage observe dans le depot : `npm run audit:ui` avec Playwright et axe, sorties temporaires dans `node_modules/.cache/parislocalstack-ui-audit`.

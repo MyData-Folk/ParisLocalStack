@@ -10,6 +10,8 @@ Checklist commerciale avant demonstration ParisLocalStack.
 - Preparer un navigateur propre.
 - Fermer les onglets techniques non necessaires.
 - Utiliser uniquement le tenant demo neutre.
+- Confirmer l'environnement utilise : local, staging ou production.
+- Ne pas interpreter une capture Playwright locale degradee comme etat production sans comparaison.
 
 ## 2. URLs a preparer
 - URL Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
@@ -80,6 +82,8 @@ Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure,
 
 ## 8. Plan B demo
 Si la production est indisponible : utiliser captures preparees, video courte du flux ou documentation produit. Eviter d'improviser sur l'infrastructure.
+
+Note : les captures reelles observees sur captures partagees le 2026-06-02 montrent des interfaces Reception, Guest App Vendome et Super Admin plus avancees que les premieres captures Playwright locales. Elles restent un support de contexte, pas une validation exhaustive du tenant neutre.
 
 ## 9. Apres rendez-vous
 - Noter objections.

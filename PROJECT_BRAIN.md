@@ -51,6 +51,9 @@ Etat connu au 2026-06-02 :
 - CRM reception prive avec clients presents, historique, fiche client/sejour et timeline.
 - QR code hotel disponible dans les interfaces pertinentes.
 - Documentation commerciale et technique deja commencee.
+- PR #47 terminee : Playwright et axe UI audit tooling sont disponibles pour audits locaux.
+- PR #48 terminee : l'etat d'erreur Guest App affiche un message hotelier au lieu de `Internal server error`.
+- Observations du 2026-06-02 sur captures partagees : Reception operationnelle complete visible, Guest App Vendome client QR fonctionnelle et premium, Super Admin fonctionnel avec hotels, QR et generator. Information non verifiee comme validation production-ready complete.
 
 Niveau de maturite estime dans les documents existants : MVP fonctionnel environ 93 a 96%, production-ready environ 70%, commercial-ready environ 65%.
 
@@ -59,7 +62,7 @@ Termine : architecture multi-tenant, API commune, auth reelle, onboarding client
 
 En cours : construire un tenant demo neutre sans donnees reelles, verifier le parcours demo complet avant rendez-vous commercial, consolider les workflows client reception backend, ameliorer progressivement la maintenabilite frontend.
 
-Priorite suivante : demandes structurees plus riches, gestion avancee des recommandations par hotel, design system/templates Guest App, nettoyage des pages orphelines et types legacy.
+Priorite suivante : stabiliser le tenant neutre Hôtel Lumière Demo Paris, auditer un seed demo isole, puis poursuivre demandes structurees plus riches, gestion avancee des recommandations par hotel, design system/templates Guest App, nettoyage des pages orphelines et types legacy.
 
 ## 8. Decisions majeures
 - Une seule application web multi-tenant, jamais une app par hotel.
@@ -86,6 +89,7 @@ Priorite suivante : demandes structurees plus riches, gestion avancee des recomm
 ## 10. Priorites en cours
 - Stabiliser la documentation de contexte pour passation a d'autres agents.
 - Preparer la phase demo neutre.
+- Distinguer audit UI local, staging et production ; ne pas traiter les captures localhost comme etat reel unique.
 - Continuer a enrichir la Guest App et les workflows reception sans casser le MVP.
 - Maintenir la securite multi-tenant comme priorite critique.
 
