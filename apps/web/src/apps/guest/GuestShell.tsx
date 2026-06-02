@@ -79,6 +79,7 @@ export function GuestShell() {
   const [session, setSession] = useState<Session | null>(() => readGuestSession(hotelSlug));
   const [loadState, setLoadState] = useState<GuestLoadState>({ kind: "loading", message: "Chargement de votre concierge..." });
   const [toast, setToast] = useState("");
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [activeService, setActiveService] = useState<ServiceTemplate | null>(null);
 
   useEffect(() => {
@@ -122,7 +123,10 @@ export function GuestShell() {
     const onMessage = (message: MessageItem) => {
       if (message.guestId !== session.guestId || message.stayId !== session.stayId) return;
       setMessages((current) => upsertById(current, message).sort(sortByCreatedAtAsc));
-      if (message.senderType === "reception") showToast(setToast, "La reception vient de vous repondre.");
+      if (message.senderType === "reception") {
+        if (section !== "messages") setUnreadMessagesCount((current) => current + 1);
+        showToast(setToast, "Nouveau message de la reception.");
+      }
     };
     const onMessageStatus = (message: MessageItem) => {
       setMessages((current) => current.map((item) => item.id === message.id ? { ...item, ...message } : item));
@@ -148,12 +152,18 @@ export function GuestShell() {
       socket.off("request:new", onRequest);
       socket.off("request:status", onRequestStatus);
     };
-  }, [hotel?.id, hotelSlug, session?.guestId, session?.stayId]);
+  }, [hotel?.id, hotelSlug, section, session?.guestId, session?.stayId]);
+
+  const activeSection = !session && section !== "guide" ? "welcome" : session && section === "welcome" ? "home" : section;
+
+  useEffect(() => {
+    if (activeSection === "messages") setUnreadMessagesCount(0);
+  }, [activeSection]);
 
   if (loadState) return loadState.kind === "loading" ? <GuestLoading status={loadState.message} /> : <GuestErrorState />;
 
-  const activeSection = !session && section !== "guide" ? "welcome" : session && section === "welcome" ? "home" : section;
   const theme = resolveGuestTheme(settings?.guestTheme);
+
   return (
     <GuestThemeContext.Provider value={theme}>
       <div className={`min-h-screen ${theme.classes.app}`}>
@@ -201,7 +211,7 @@ export function GuestShell() {
             )}
           </main>
 
-          <GuestNav basePath={basePath} active={activeSection} hasSession={Boolean(session)} />
+          <GuestNav basePath={basePath} active={activeSection} hasSession={Boolean(session)} unreadMessagesCount={unreadMessagesCount} />
           {activeService && session ? (
             <ServiceRequestSheet
               service={activeService}
@@ -959,7 +969,7 @@ async function loadGuestTimeline(hotelSlug: string, session: Session, setMessage
   setRequests(loadedRequests.sort(sortByCreatedAtDesc));
 }
 
-function GuestNav({ basePath, active, hasSession }: { basePath: string; active: GuestSection; hasSession: boolean }) {
+function GuestNav({ basePath, active, hasSession, unreadMessagesCount }: { basePath: string; active: GuestSection; hasSession: boolean; unreadMessagesCount: number }) {
   const theme = useGuestTheme();
   const items = [
     { id: "home", label: "Sejour", icon: <Home className="h-4 w-4" /> },
@@ -973,8 +983,15 @@ function GuestNav({ basePath, active, hasSession }: { basePath: string; active: 
     <nav className={`fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 border-t px-3 pb-3 pt-2 shadow-2xl backdrop-blur md:bottom-6 md:rounded-b-[2rem] ${theme.classes.nav}`}>
       <div className="grid grid-cols-5 gap-1">
         {items.map((item) => (
-          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-xs font-semibold transition focus:outline-none focus:ring-4 ${active === item.id ? theme.classes.navActive : theme.classes.navIdle}`}>
-            {item.icon}
+          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`relative flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-xs font-semibold transition focus:outline-none focus:ring-4 ${active === item.id ? theme.classes.navActive : theme.classes.navIdle}`}>
+            <span className="relative">
+              {item.icon}
+              {item.id === "messages" && unreadMessagesCount > 0 ? (
+                <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white">
+                  {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                </span>
+              ) : null}
+            </span>
             <span>{item.label}</span>
           </Link>
         ))}
