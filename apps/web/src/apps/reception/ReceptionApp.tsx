@@ -578,6 +578,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [requestFilter, setRequestFilter] = useState<"all" | "in_progress" | "urgent">("all");
   const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -644,6 +645,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
     if (item.source === "request") await api.updateRequestStatus(item.id, status, token);
     if (item.source === "message") await api.updateMessageStatus(item.id, status, token);
     setItems((current) => current.map((entry) => entry.id === item.id && entry.source === item.source ? { ...entry, status } : entry));
+    setSelectedRequest((current: any | null) => current?.id === item.id && current?.source === item.source ? { ...current, status } : current);
   }
 
   const visibleItems = useMemo(() => {
@@ -678,7 +680,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
               </thead>
               <tbody className="divide-y divide-white/[0.07]">
                 {visibleItems.map((item) => (
-                  <tr key={`${item.source}:${item.id}`} className="transition hover:bg-white/[0.04]">
+                  <tr key={`${item.source}:${item.id}`} onClick={() => setSelectedRequest(item)} className="cursor-pointer transition hover:bg-white/[0.04]">
                     <td className="px-4 py-4">
                       <div className="max-w-md">
                         <span className="rounded-full border border-sky-300/20 bg-sky-300/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-200">
@@ -695,7 +697,8 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
                     <td className="px-4 py-4"><StatusBadge status={normalizeStatus(item.status, item.priority, item.senderType)} /></td>
                     <td className="px-4 py-4 text-zinc-300">{item.priority ?? "-"}</td>
                     <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
+                        <button onClick={() => setSelectedRequest(item)} className="rounded-lg border border-sky-300/25 px-2.5 py-1.5 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10">Detail</button>
                         <button onClick={() => setProfileTarget({ guestId: item.guestId, stayId: item.stayId })} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">Fiche</button>
                         <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
                         <button onClick={() => void updateStatus(item, "completed")} className="rounded-lg border border-emerald-300/25 px-2.5 py-1.5 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/10 focus:outline-none focus:ring-4 focus:ring-emerald-400/10">Traite</button>
@@ -709,7 +712,75 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
           </div>
         ) : null}
       </div>
+      {selectedRequest ? (
+        <RequestDetailPanel
+          request={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+          onUpdate={(status) => void updateStatus(selectedRequest, status)}
+          onOpenProfile={() => setProfileTarget({ guestId: selectedRequest.guestId, stayId: selectedRequest.stayId })}
+        />
+      ) : null}
       {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
+    </div>
+  );
+}
+
+function RequestDetailPanel({ request, onClose, onUpdate, onOpenProfile }: { request: any; onClose: () => void; onUpdate: (status: string) => void; onOpenProfile: () => void }) {
+  const details = requestDetailsEntries(request);
+  const status = normalizeStatus(request.status, request.priority, request.senderType);
+  const clientName = [request.guest?.firstName, request.guest?.lastName].filter(Boolean).join(" ") || "Client";
+  const roomNumber = request.stay?.roomNumber ?? "-";
+
+  return (
+    <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="request-detail-title">
+      <section className="flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Detail de la demande</p>
+            <h2 id="request-detail-title" className="mt-1 text-2xl font-semibold tracking-tight text-white">{request.title || "Demande client"}</h2>
+            <p className="mt-2 text-sm text-slate-500">{request.source === "message" ? "Message client" : request.type || "Demande"} - {formatTime(request.createdAt)}</p>
+          </div>
+          <button onClick={onClose} aria-label="Fermer" className="rounded-xl border border-white/10 p-2 text-slate-300 transition hover:bg-white/5"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="overflow-y-auto p-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoPill icon={<Users className="h-4 w-4" />} label="Client" value={clientName} />
+            <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Chambre" value={roomNumber} />
+            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Statut</p>
+              <div className="mt-2"><StatusBadge status={status} /></div>
+            </div>
+            <InfoPill icon={<AlertTriangle className="h-4 w-4" />} label="Priorite" value={request.priority ?? "-"} />
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Message du client</p>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-100">{request.description || "Aucun message detaille."}</p>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Details</p>
+            <p className="mt-2 text-sm text-slate-300">{requestPrimaryDetail(request)}</p>
+            {details.length > 0 ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {details.map(([label, value]) => (
+                  <div key={label} className="rounded-xl border border-white/10 bg-slate-950/55 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{value}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-end gap-2 border-t border-white/10 p-5">
+          <button onClick={onOpenProfile} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">Fiche client</button>
+          <button onClick={() => onUpdate("in_progress")} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">En cours</button>
+          <button onClick={() => onUpdate("completed")} className="rounded-xl border border-emerald-300/25 px-4 py-2.5 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/10">Traite</button>
+          <button onClick={() => onUpdate("urgent")} className="rounded-xl border border-red-400/30 px-4 py-2.5 text-sm font-medium text-red-200 transition hover:bg-red-500/10">Urgent</button>
+          <button onClick={onClose} className="rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200">Fermer</button>
+        </div>
+      </section>
     </div>
   );
 }
