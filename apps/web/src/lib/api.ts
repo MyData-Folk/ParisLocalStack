@@ -90,6 +90,11 @@ export const api = {
   ),
   publishedReviews: (slug: string) => request<any[]>(`/api/public/${slug}/reviews/published`),
   hotelMessages: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/messages`, { token }),
+  sendHotelMessage: (hotelId: string, body: { guestId: string; stayId?: string; content: string; priority?: "low" | "medium" | "high" | "urgent" }, token: string) => request<any>(`/api/hotels/${hotelId}/messages`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body)
+  }),
   hotelRequests: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/requests`, { token }),
   hotelRecommendations: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/recommendations`, { token }),
   createRecommendation: (hotelId: string, body: RecommendationPayload, token: string) => request<any>(`/api/hotels/${hotelId}/recommendations`, {

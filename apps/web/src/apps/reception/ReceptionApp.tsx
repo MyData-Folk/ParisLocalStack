@@ -1076,12 +1076,18 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
     setCrmError("");
   }, [row?.guestId, row?.relationshipStatus, row?.internalNotes, row?.crmTags.join(","), JSON.stringify(row?.preferences ?? {})]);
 
-  async function sendProfileReply() {
+  async function sendProfileMessage() {
     const source = [...messages].filter((item) => item.senderType === "guest").sort(sortOperationalDesc)[0] ?? messages[0];
-    if (!source || !reply.trim()) return;
-    await api.replyMessage(source.id, reply, token);
+    const content = reply.trim();
+    if (!row?.guestId || !content) return;
+    let created;
+    if (source) {
+      created = await api.replyMessage(source.id, content, token);
+    } else {
+      created = await api.sendHotelMessage(hotelId, { guestId: row.guestId, stayId: primaryStay?.id, content, priority: "medium" }, token);
+    }
+    setMessages((current) => upsertById(current, created).sort(sortOperationalDesc));
     setReply("");
-    await loadProfile();
   }
 
   async function updateRequest(item: any, status: string) {
@@ -1239,7 +1245,7 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
                 </section>
               </div>
               <div className="space-y-5">
-                <ConversationPanel messages={messages} reply={reply} onReplyChange={setReply} onSendReply={sendProfileReply} />
+                <ConversationPanel messages={messages} reply={reply} onReplyChange={setReply} onSendReply={sendProfileMessage} />
                 <RequestPanel requests={requests} onUpdate={updateRequest} />
                 <ReviewPanel reviews={reviews} onResolve={resolveReview} />
               </div>
@@ -1323,11 +1329,11 @@ function ConversationPanel({ messages, reply, onReplyChange, onSendReply }: { me
             <p className="mt-1">{message.content}</p>
           </div>
         ))}
-        {messages.length === 0 && <p className="text-sm text-slate-500">Aucun message.</p>}
+        {messages.length === 0 && <p className="text-sm text-slate-500">Aucun message. Vous pouvez envoyer un premier message au client.</p>}
       </div>
-      <textarea value={reply} onChange={(event) => onReplyChange(event.target.value)} placeholder="Repondre au client" className="mt-3 min-h-24 w-full rounded-xl border border-white/10 bg-slate-950/80 p-3 text-sm outline-none transition focus:border-amber-300/50 focus:ring-4 focus:ring-amber-300/10" />
-      <button onClick={() => void onSendReply()} disabled={!reply.trim() || messages.length === 0} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-3 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50">
-        <MessageSquare className="h-4 w-4" /> Repondre
+      <textarea value={reply} onChange={(event) => onReplyChange(event.target.value)} placeholder="Message au client" className="mt-3 min-h-24 w-full rounded-xl border border-white/10 bg-slate-950/80 p-3 text-sm outline-none transition focus:border-amber-300/50 focus:ring-4 focus:ring-amber-300/10" />
+      <button onClick={() => void onSendReply()} disabled={!reply.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-3 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50">
+        <MessageSquare className="h-4 w-4" /> {messages.length === 0 ? "Envoyer un message" : "Repondre"}
       </button>
     </section>
   );
