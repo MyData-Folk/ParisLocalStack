@@ -23,6 +23,18 @@ Phase 9E locale validee au 2026-06-02 : le seed demo neutre a ete execute sur la
 
 Ce statut local ne valide pas staging ni production.
 
+## Statut post-login local
+Validation locale post-login OK au 2026-06-02 :
+- Super Admin local : login OK, `/admin/users` accessible.
+- Reception demo : login OK, dashboard visible.
+- Admin Hotel demo : login OK, espace hotel visible.
+- `demo-paris-local` et Hôtel Lumière Demo Paris visibles ou utilises.
+- Vendome absent des ecrans demo Reception et Admin Hotel.
+
+Le seed principal local peut creer Vendome et un super admin local. Vendome peut donc etre visible dans Super Admin local ; c'est attendu et cette surface reste interne uniquement.
+
+Aucun mot de passe, hash ou secret ne doit etre documente dans Git.
+
 ## Prerequis
 - Utiliser uniquement une base locale ou staging explicitement autorisee.
 - Ne jamais lancer sur production sans validation explicite.

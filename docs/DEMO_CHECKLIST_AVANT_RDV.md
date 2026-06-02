@@ -52,6 +52,19 @@ Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure,
 - Avis visibles et exploitables.
 - QR code disponible.
 
+## 4 bis. Validation locale post-login
+Statut local valide au 2026-06-02 :
+- Guest App locale `demo-paris-local` OK.
+- Reception demo : login OK, dashboard visible.
+- Admin Hotel demo : login OK, espace hotel visible.
+- Super Admin local `/admin/users` : login OK, page utilisateurs accessible.
+- Hôtel Lumière Demo Paris visible dans les surfaces demo.
+- Vendome absent des ecrans demo Reception et Admin Hotel.
+
+Super Admin est interne uniquement et ne doit pas etre montre en demo client. Vendome peut y etre present localement car le seed principal a ete execute, mais cette surface sert seulement a l'administration et au reset local.
+
+Ne jamais ecrire de mot de passe, hash ou secret dans Git.
+
 ## 5. Scenario a jouer
 - Scanner ou ouvrir QR demo.
 - Creer un client demo.

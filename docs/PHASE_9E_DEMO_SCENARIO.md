@@ -98,5 +98,14 @@ Statut Phase 9E au 2026-06-02 :
 - separation staging/production, DB dediee, API dediee, web dedie et protection d'acces non verifies.
 - seed staging interdit tant que l'isolation n'est pas prouvee.
 
+## Validation locale post-login
+Statut local valide au 2026-06-02 :
+- Guest App `demo-paris-local` accessible et affiche Hôtel Lumière Demo Paris.
+- Reception demo : login OK, dashboard visible, Vendome absent du parcours demo.
+- Admin Hotel demo : login OK, espace hotel visible, Vendome absent du parcours demo.
+- Super Admin local `/admin/users` : login OK, page utilisateurs accessible.
+
+Super Admin est une surface interne uniquement. Il peut contenir Vendome localement car le seed principal a ete execute pour creer le compte super admin ; cette presence est attendue et ne doit pas apparaitre dans le parcours de demonstration client.
+
 ## Regle importante
 Aucune donnee reelle. Aucune capture infrastructure. Aucune exposition de configuration sensible.

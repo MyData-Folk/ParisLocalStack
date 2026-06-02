@@ -31,6 +31,7 @@
 - PR #48 : etat d'erreur Guest App poli pour eviter l'affichage brut `Internal server error`.
 - Phase 9E-6 : seed demo neutre isole prepare en fichier manuel non automatique.
 - Phase 9E locale : tenant `demo-paris-local` / Hôtel Lumière Demo Paris valide localement, donnees fictives, Guest App OK, Reception OK, Admin Hotel OK.
+- Phase 9E post-login locale : Super Admin, Reception demo et Admin Hotel demo valides localement ; Vendome absent du parcours demo Reception/Admin Hotel.
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.
@@ -70,6 +71,8 @@ Hotel valide : Hôtel Lumière Demo Paris.
 Point de vigilance : l'audit Playwright/axe local est operationnel et utile, mais il ne doit pas etre confondu avec l'etat staging ou production si l'API, la DB ou le tenant demo ne sont pas disponibles localement.
 
 Statut public actuel : la Guest App publique `https://demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 mais affiche `Hotel not found`; l'URL `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 avec un login generique. Staging non valide, separation staging/production non verifiee.
+
+Statut local post-login : pret RDV local. Super Admin reste une surface interne uniquement et ne doit pas etre montre au prospect.
 
 ## Priorite suivante
 Apres clarification staging : proteger les URLs demo si elles restent publiques, valider un environnement staging dedie, puis corriger les irritants UX identifies, prioriser les modules P2 selon retours prospects, continuer la refactorisation frontend sans modifier la logique metier.
