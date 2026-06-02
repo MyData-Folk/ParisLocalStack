@@ -12,16 +12,22 @@ Checklist commerciale avant demonstration ParisLocalStack.
 - Utiliser uniquement le tenant demo neutre.
 
 ## 2. URLs a preparer
-- URL Guest App demo.
-- URL Reception demo.
+- URL Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
+- URL Reception demo : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr
 - URL Super Admin uniquement si necessaire.
 - QR code demo.
+
+Tenant attendu : demo-paris-local.
+
+Hotel attendu : Hôtel Lumière Demo Paris.
 
 Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure, fichiers d'environnement, logs techniques.
 
 ## 3. Verification Guest App
 - Page d'accueil charge correctement.
 - Branding hotel demo visible.
+- Le nom Hôtel Lumière Demo Paris est visible dans les surfaces demo.
+- Aucun contenu Vendome n'apparait dans le parcours client.
 - Onboarding client fonctionne.
 - WiFi et horaires visibles.
 - Services visibles.
@@ -32,6 +38,7 @@ Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure,
 
 ## 4. Verification Reception
 - Connexion reception demo OK.
+- Le contexte reception correspond a `demo-paris-local`.
 - Dashboard lisible.
 - Inbox affiche les conversations demo.
 - Requests affiche demandes demo.
@@ -68,6 +75,7 @@ Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure,
 - Ne pas promettre AI avancee immediate.
 - Ne pas promettre application native.
 - Ne pas montrer donnees reelles.
+- Ne pas utiliser Vendome comme support principal de demo client.
 - Ne pas montrer details de securite sensibles.
 
 ## 8. Plan B demo

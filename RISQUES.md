@@ -73,6 +73,13 @@ Gravite : haute.
 
 Mitigation : demo tenant neutre, runbook, checklist avant rendez-vous, ne pas montrer infrastructure.
 
+### Confusion Vendome / tenant demo neutre
+Risque : la demonstration commerciale affiche Vendome au lieu de `demo-paris-local`, ce qui affaiblit le discours commercial et peut exposer une reference hotel existante.
+
+Gravite : haute.
+
+Mitigation : utiliser Hôtel Lumière Demo Paris comme support demo, garder Vendome uniquement comme reference historique, production ou monitoring si necessaire, verifier la checklist avant rendez-vous.
+
 ## 4. Risques business
 ### Surpromesse integrations
 Risque : promettre PMS, paiement, AI ou APIs externes avant disponibilite.
@@ -105,4 +112,4 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 ## 6. Risques actuels a surveiller
 - Etat live production non verifie dans cette passe docs-only.
 - Configuration DNS/SSL non auditee dans cette passe.
-- Tenant demo non encore cree dans cette passe.
+- Tenant demo `demo-paris-local` valide dans la documentation mais non encore cree dans cette passe.

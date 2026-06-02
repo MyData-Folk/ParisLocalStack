@@ -10,10 +10,21 @@ La demo doit raconter une histoire hotel credible avec des donnees entierement f
 
 Elle doit couvrir Guest App, Dashboard Reception, CRM, avis, demandes, recommandations et QR code.
 
+## Tenant valide
+Tenant : demo-paris-local.
+
+Hotel : Hôtel Lumière Demo Paris.
+
+URL client cible : https://demo-paris-local.welcomeparis.hotelmanager.fr
+
+URL reception cible recommandee : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr
+
+Regle : ce tenant sert a la demo commerciale et ne doit contenir aucune donnee personnelle reelle. Vendome ne doit rester qu'une reference historique, production ou monitoring si necessaire, jamais le support principal de demo client.
+
 ## Perimetre d'audit
 Verifier avant chaque rendez-vous :
-- hotel demo actif.
-- slug demo coherent.
+- Hôtel Lumière Demo Paris actif.
+- slug demo `demo-paris-local` coherent.
 - URL client accessible.
 - URL reception accessible.
 - QR code pointe vers l'URL client demo.
@@ -59,4 +70,4 @@ Interdit dans le tenant demo : noms de vrais clients, emails personnels reels, n
 Confusion entre tenant demo et tenant reel, donnees fictives trop pauvres pour convaincre, QR code pointant vers le mauvais hotel, session navigateur conservant un contexte obsolete.
 
 ## Statut
-A preparer avant demonstration commerciale.
+Tenant neutre valide dans la documentation. Creation effective et donnees fictives a realiser dans une phase separee, apres validation explicite.

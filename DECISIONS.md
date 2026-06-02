@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-02
+Decision : valider le tenant demo neutre `demo-paris-local` et l'hotel Hôtel Lumière Demo Paris.
+
+Motif : aligner la demonstration commerciale Phase 9E sur un support neutre, sans dependance a Vendome et sans donnees personnelles reelles.
+
+Impact : les documents de demo doivent utiliser `demo-paris-local`; Vendome ne doit rester qu'une reference historique, production ou monitoring si necessaire.
+
+Statut : adopte.
+
+---
+
+## 2026-06-02
 Decision : creer des fichiers de contexte officiels du projet.
 
 Motif : permettre a tout nouvel agent de reprendre ParisLocalStack sans relire l'historique complet des conversations.

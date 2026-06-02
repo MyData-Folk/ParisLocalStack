@@ -26,13 +26,20 @@ Public cible :
 
 Surfaces recommandees :
 
-- Guest App Vendome : https://vendome.welcomeparis.hotelmanager.fr
-- Reception / Admin Hotel : https://admin-vendome.welcomeparis.hotelmanager.fr ou route equivalente documentee
+- Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
+- Reception / Admin Hotel demo : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr ou route equivalente documentee
+
+Tenant demo valide :
+
+- Tenant : demo-paris-local ;
+- Hotel : Hôtel Lumière Demo Paris ;
+- donnees : 100 % fictives.
 
 Donnees :
 
-- utiliser uniquement des donnees fictives ou validees pour la demo ;
-- ne jamais afficher de donnees personnelles reelles non validees ;
+- utiliser uniquement des donnees fictives pour la demo commerciale ;
+- ne jamais afficher de donnees personnelles reelles ;
+- ne pas utiliser Vendome comme support de demo client, sauf mention historique ou monitoring hors ecran client ;
 - les acces de demonstration doivent etre prepares hors Git, dans un canal securise.
 
 Ne pas committer :
@@ -160,10 +167,11 @@ Une premiere demo peut etre preparee rapidement. Le demarrage commercial doit en
 
 ## 8. Checklist avant demo
 
-- [ ] Guest App Vendome accessible et responsive.
-- [ ] Reception accessible.
-- [ ] Admin Hotel accessible.
-- [ ] Donnees fictives ou validees presentes.
+- [ ] Guest App demo `demo-paris-local` accessible et responsive.
+- [ ] Reception demo accessible.
+- [ ] Admin Hotel demo accessible.
+- [ ] Donnees 100 % fictives presentes.
+- [ ] Aucun contenu Vendome affiche dans le parcours client.
 - [ ] Messages / demandes / sejours actifs prets pour la demo.
 - [ ] Better Stack monitors UP.
 - [ ] Healthchecks backup OK.

@@ -4,26 +4,26 @@
 Definir un scenario demo neutre pour presenter ParisLocalStack sans aucune donnee reelle.
 
 ## Tenant demo
-Nom propose : Hotel Demo Paris Concierge.
+Nom valide : Hôtel Lumière Demo Paris.
 
-Slug propose : demo-paris-concierge.
+Slug valide : demo-paris-local.
 
-URL client cible : https://demo-paris-concierge.welcomeparis.hotelmanager.fr
+URL client cible : https://demo-paris-local.welcomeparis.hotelmanager.fr
 
-URL reception cible recommandee : https://admin-demo-paris-concierge.welcomeparis.hotelmanager.fr
+URL reception cible recommandee : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr
 
-Tout nom peut etre ajuste avant creation effective. Les donnees doivent rester fictives.
+Les donnees doivent rester 100 % fictives. Vendome ne doit pas etre utilise comme support de demo commerciale client.
 
 ## Hotel demo
 Identite fictive :
-- Nom : Hotel Demo Paris Concierge.
+- Nom : Hôtel Lumière Demo Paris.
 - Ville : Paris.
 - Pays : France.
 - Positionnement : boutique hotel 4 etoiles fictif.
 - Ambiance : premium, elegante, parisienne.
 
 Informations pratiques fictives :
-- WiFi : Demo Concierge WiFi.
+- WiFi : Lumiere Demo WiFi.
 - Petit-dejeuner : 07:00 - 10:30.
 - Check-in : 15:00.
 - Check-out : 11:00.
