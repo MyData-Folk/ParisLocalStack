@@ -88,3 +88,18 @@ A verifier apres deploiement : reponse API OK, readiness OK, logs sans erreur cr
 - Ne jamais lancer de migration non preparee.
 - Ne jamais restaurer la production sans procedure.
 - Ne jamais modifier DNS/Coolify pendant une session docs-only.
+
+## 12. Garde-fous staging demo
+Statut Phase 9E au 2026-06-02 : la demo locale `demo-paris-local` / Hôtel Lumière Demo Paris est validee, mais le staging public n'est pas valide.
+
+Constats publics sans login :
+- `https://demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 mais affiche `Hotel not found`.
+- `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 avec un login generique.
+
+Avant toute action staging :
+- confirmer quelle app web, quelle API et quelle base servent ces domaines ;
+- confirmer une DB staging dediee, distincte de production ;
+- confirmer une protection d'acces si les comptes demo sont exposes sur domaine public ;
+- confirmer un rollback staging avant seed ;
+- ne jamais utiliser production comme staging ;
+- ne jamais lancer seed, migration, deploy, reset ou db push sur un environnement non identifie.

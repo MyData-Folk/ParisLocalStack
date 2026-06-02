@@ -53,6 +53,8 @@ Etat connu au 2026-06-02 :
 - Documentation commerciale et technique deja commencee.
 - PR #47 terminee : Playwright et axe UI audit tooling sont disponibles pour audits locaux.
 - PR #48 terminee : l'etat d'erreur Guest App affiche un message hotelier au lieu de `Internal server error`.
+- Phase 9E locale validee : le tenant `demo-paris-local` / Hôtel Lumière Demo Paris existe en local, avec donnees 100 % fictives, Guest App OK, Reception post-auth OK et Admin Hotel post-auth OK.
+- Phase 9E staging/public non validee : `https://demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 mais affiche `Hotel not found`; `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 avec login generique. DB/API/Web dedies, protection d'acces et separation staging/production non verifies.
 - Observations du 2026-06-02 sur captures partagees : Reception operationnelle complete visible, Guest App Vendome client QR fonctionnelle et premium, Super Admin fonctionnel avec hotels, QR et generator. Information non verifiee comme validation production-ready complete.
 
 Niveau de maturite estime dans les documents existants : MVP fonctionnel environ 93 a 96%, production-ready environ 70%, commercial-ready environ 65%.
@@ -60,9 +62,9 @@ Niveau de maturite estime dans les documents existants : MVP fonctionnel environ
 ## 7. Roadmap synthetique
 Termine : architecture multi-tenant, API commune, auth reelle, onboarding client, onboarding hotel, dashboard reception, Super Admin, Generator, CRM et exports, monitoring et sauvegardes documentes, strategie produit et demo commerciale documentees.
 
-En cours : construire un tenant demo neutre sans donnees reelles, verifier le parcours demo complet avant rendez-vous commercial, consolider les workflows client reception backend, ameliorer progressivement la maintenabilite frontend.
+En cours : garder la demo locale neutre prete RDV, clarifier l'environnement public/staging avant toute action, consolider les workflows client reception backend, ameliorer progressivement la maintenabilite frontend.
 
-Priorite suivante : stabiliser le tenant neutre Hôtel Lumière Demo Paris, auditer un seed demo isole, puis poursuivre demandes structurees plus riches, gestion avancee des recommandations par hotel, design system/templates Guest App, nettoyage des pages orphelines et types legacy.
+Priorite suivante : obtenir la preuve d'un staging dedie et protege pour `demo-paris-local`, puis poursuivre demandes structurees plus riches, gestion avancee des recommandations par hotel, design system/templates Guest App, nettoyage des pages orphelines et types legacy.
 
 ## 8. Decisions majeures
 - Une seule application web multi-tenant, jamais une app par hotel.
@@ -85,6 +87,7 @@ Priorite suivante : stabiliser le tenant neutre Hôtel Lumière Demo Paris, audi
 - Preserver le flux critique : client envoie, API sauvegarde, reception voit, reception repond, client voit.
 - Les changements d'interface doivent rester modernes, premium, responsives et production-ready.
 - Les secrets ne doivent jamais etre affiches dans la documentation.
+- Garde-fous staging : ne jamais lancer seed, migration ou deploy sur un environnement non identifie ; ne jamais utiliser production comme staging ; confirmer DB staging dediee, rollback staging et protection des comptes demo avant toute execution hors local.
 
 ## 10. Priorites en cours
 - Stabiliser la documentation de contexte pour passation a d'autres agents.
@@ -94,4 +97,4 @@ Priorite suivante : stabiliser le tenant neutre Hôtel Lumière Demo Paris, audi
 - Maintenir la securite multi-tenant comme priorite critique.
 
 ## 11. Prochaine etape recommandee
-Construire et valider un tenant demo neutre, avec hotel fictif, clients fictifs, demandes fictives, recommandations fictives et scenario commercial complet. Cette etape doit permettre de faire une demonstration client sans exposer Vendome, Folkestone ou des donnees operationnelles reelles.
+La demo locale est prete RDV avec `demo-paris-local` et Hôtel Lumière Demo Paris. La prochaine etape recommandee est la clarification Coolify/environnement des URLs publiques demo avant toute action staging : identifier web, API, DB, protection d'acces et rollback, sans seed ni migration tant que l'isolation n'est pas prouvee.

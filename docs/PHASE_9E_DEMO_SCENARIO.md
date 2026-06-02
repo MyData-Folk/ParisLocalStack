@@ -92,5 +92,11 @@ Avant de jouer ce scenario, distinguer clairement l'environnement utilise : loca
 
 Les captures reelles observees sur captures partagees le 2026-06-02 montrent des surfaces plus avancees que les premieres captures Playwright locales, mais ne remplacent pas la verification complete du tenant neutre `demo-paris-local`.
 
+Statut Phase 9E au 2026-06-02 :
+- local valide : Guest App OK, Reception post-auth OK, Admin Hotel post-auth OK, donnees 100 % fictives.
+- public/staging non valide : Guest App publique HTTP 200 mais `Hotel not found`; Reception/Admin publique HTTP 200 avec login generique.
+- separation staging/production, DB dediee, API dediee, web dedie et protection d'acces non verifies.
+- seed staging interdit tant que l'isolation n'est pas prouvee.
+
 ## Regle importante
 Aucune donnee reelle. Aucune capture infrastructure. Aucune exposition de configuration sensible.

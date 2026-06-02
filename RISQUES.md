@@ -36,6 +36,13 @@ Gravite : haute.
 
 Mitigation : garder le seed demo manuel, ne pas ajouter de script automatique, documenter la commande future sans l'executer, verifier l'environnement cible avant toute execution.
 
+### Staging public non identifie
+Risque : les URLs publiques demo repondent mais pointent vers un environnement non identifie, potentiellement production ou une base partagee.
+
+Gravite : haute.
+
+Mitigation : ne lancer aucun seed, migration, deploy ou db push tant que web/API/DB dedies ne sont pas verifies ; confirmer une protection d'acces et un rollback staging ; ne pas utiliser production comme staging.
+
 ## 2. Risques securite
 ### Exposition de donnees CRM publiques
 Risque : notes internes, tags, preferences ou coordonnees clients exposees dans la Guest App.
@@ -133,7 +140,9 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 ## 6. Risques actuels a surveiller
 - Etat live production non verifie dans cette passe docs-only.
 - Configuration DNS/SSL non auditee dans cette passe.
-- Tenant demo `demo-paris-local` valide dans la documentation mais non encore cree dans cette passe.
-- Les captures Playwright locales peuvent etre non representatives si l'environnement local n'est pas completement prepare.
+- Tenant demo `demo-paris-local` valide localement avec donnees fictives, mais non valide sur les URLs publiques.
+- URLs publiques demo : Guest App en HTTP 200 avec `Hotel not found`, Reception/Admin en HTTP 200 avec login generique.
+- Separation staging/production, DB dediee, API dediee, web dedie, protection d'acces et absence de donnees reelles non verifiees.
+- Les captures Playwright locales peuvent etre non representatives d'un environnement public/staging non prepare.
 - Vendome reste une reference historique/production/monitoring possible, mais ne doit pas remplacer le tenant neutre commercial.
 - Le seed demo neutre doit rester separe du seed Vendome et ne doit jamais supprimer de donnees hors `hotel_id` demo.

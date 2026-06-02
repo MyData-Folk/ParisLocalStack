@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-02
+Decision : limiter la demonstration Phase 9E a l'environnement local tant que le staging public n'est pas clarifie.
+
+Motif : la demo locale `demo-paris-local` / Hôtel Lumière Demo Paris est validee, mais les URLs publiques repondent sans prouver le tenant neutre : Guest App publique en `Hotel not found`, reception publique en login generique, Coolify lecture seule non disponible.
+
+Impact : aucun seed, migration, deploy ou db push ne doit etre lance hors local tant qu'une DB staging dediee, une API/Web dedies, une protection d'acces et un rollback staging ne sont pas confirmes.
+
+Statut : adopte.
+
+---
+
+## 2026-06-02
 Decision : preparer un seed demo neutre separe et manuel pour `demo-paris-local`.
 
 Motif : creer Hôtel Lumière Demo Paris sans modifier le seed historique Vendome et sans execution automatique.
