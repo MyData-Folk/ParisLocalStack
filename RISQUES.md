@@ -43,6 +43,13 @@ Gravite : haute.
 
 Mitigation : ne lancer aucun seed, migration, deploy ou db push tant que web/API/DB dedies ne sont pas verifies ; confirmer une protection d'acces et un rollback staging ; ne pas utiliser production comme staging.
 
+### Checklist staging ignoree
+Risque : lancer une operation hors local sans avoir reuni les preuves minimales de staging controle.
+
+Gravite : haute.
+
+Mitigation : appliquer la checklist `Validation staging controle avant seed hors local` dans `DEPLOIEMENT.md` avant toute action ; stopper si une preuve manque.
+
 ## 2. Risques securite
 ### Exposition de donnees CRM publiques
 Risque : notes internes, tags, preferences ou coordonnees clients exposees dans la Guest App.
@@ -143,6 +150,7 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 - Tenant demo `demo-paris-local` valide localement avec donnees fictives, mais non valide sur les URLs publiques.
 - URLs publiques demo : Guest App en HTTP 200 avec `Hotel not found`, Reception/Admin en HTTP 200 avec login generique.
 - Separation staging/production, DB dediee, API dediee, web dedie, protection d'acces et absence de donnees reelles non verifiees.
+- Checklist staging controle a appliquer avant tout seed, migration ou deploy hors local.
 - Les captures Playwright locales peuvent etre non representatives d'un environnement public/staging non prepare.
 - Vendome reste une reference historique/production/monitoring possible, mais ne doit pas remplacer le tenant neutre commercial.
 - Le seed demo neutre doit rester separe du seed Vendome et ne doit jamais supprimer de donnees hors `hotel_id` demo.

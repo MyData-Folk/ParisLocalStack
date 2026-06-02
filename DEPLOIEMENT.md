@@ -103,3 +103,44 @@ Avant toute action staging :
 - confirmer un rollback staging avant seed ;
 - ne jamais utiliser production comme staging ;
 - ne jamais lancer seed, migration, deploy, reset ou db push sur un environnement non identifie.
+
+## 13. Validation staging controle avant seed hors local
+Cette checklist est obligatoire avant tout seed, migration ou deploiement hors local pour une demo `demo-paris-local`.
+
+### Preuves d'environnement attendues
+- [ ] Environnement staging identifie par nom.
+- [ ] Application web staging dediee identifiee.
+- [ ] Application API staging dediee identifiee.
+- [ ] Base PostgreSQL staging dediee identifiee.
+- [ ] Confirmation explicite que `DATABASE_URL` ne pointe pas vers production, sans afficher sa valeur.
+- [ ] Domaines staging/demo associes listes.
+- [ ] Protection d'acces confirmee, ou decision explicite d'exposition publique documentee.
+- [ ] Absence de donnees reelles verifiee avant seed.
+- [ ] Rollback staging defini avant seed.
+- [ ] Methode d'execution du seed compatible staging confirmee.
+- [ ] Methode de suppression ciblee du tenant demo definie par `slug` ou `hotel_id`.
+
+### Validations applicatives attendues
+- [ ] `/health` repond correctement sur l'API staging.
+- [ ] `/ready` confirme la disponibilite DB sur l'API staging.
+- [ ] Guest App publique charge le tenant `demo-paris-local`.
+- [ ] Hôtel Lumière Demo Paris est visible sur la Guest App staging.
+- [ ] Reception/Admin staging sont accessibles sans exposer de credentials.
+- [ ] Aucun login public non autorise n'est tente.
+- [ ] Aucun contenu Vendome ou donnees reelles ne sont visibles dans le parcours demo.
+
+### Garde-fous obligatoires
+- Aucun seed hors local sans DB staging dediee prouvee.
+- Aucune migration hors local sans environnement identifie.
+- Aucun deploiement vers production pour tester une demo.
+- Ne jamais utiliser production comme staging.
+- Ne jamais afficher de secret, valeur d'environnement, token ou mot de passe.
+- Proteger les comptes demo si un domaine public est utilise.
+- Ne pas lancer de backup, restore, reset ou db push pour preparer une demo.
+
+### Etat actuel connu
+- Local Phase 9E : pret RDV.
+- Staging : non valide.
+- URLs publiques demo : repondent, mais Guest App publique observee en `Hotel not found`.
+- Admin/Reception publique : observee en login generique.
+- Coolify lecture seule : precedemment non disponible (`Unauthenticated`).

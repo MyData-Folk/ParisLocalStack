@@ -30,6 +30,7 @@ Ce statut local ne valide pas staging ni production.
 - Ne pas modifier `DATABASE_URL` dans Git.
 - Ne pas lancer de migration, backup ou restore dans le cadre de ce seed.
 - Pour staging : confirmer une DB dediee, une API/Web dedies, une protection d'acces et un rollback avant execution.
+- Pour staging : completer la checklist `Validation staging controle avant seed hors local` dans `DEPLOIEMENT.md` avant toute execution.
 
 ## Donnees creees
 - Hotel fictif `Hôtel Lumière Demo Paris` avec slug `demo-paris-local`.
@@ -71,3 +72,13 @@ Les URLs publiques demo ne sont pas validees comme staging au 2026-06-02 :
 - DB dediee, API dediee, web dedie, protection d'acces et absence de donnees reelles : non verifies.
 
 Decision : seed staging interdit tant que l'isolation n'est pas prouvee.
+
+Checklist obligatoire avant seed hors local :
+- environnement staging identifie par nom ;
+- web/API/PostgreSQL staging dedies ;
+- confirmation que `DATABASE_URL` ne pointe pas vers production, sans afficher sa valeur ;
+- domaines staging/demo associes ;
+- protection d'acces ou decision explicite d'exposition publique ;
+- absence de donnees reelles ;
+- rollback staging et suppression ciblee du tenant demo definis ;
+- validations `/health`, `/ready`, Guest App, Reception/Admin sans exposition de credentials.
