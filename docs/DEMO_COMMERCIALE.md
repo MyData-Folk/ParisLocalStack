@@ -29,6 +29,8 @@ Surfaces recommandees :
 - Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
 - Reception / Admin Hotel demo : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr ou route equivalente documentee
 
+Statut public au 2026-06-02 : ces URLs ne sont pas encore validees pour une demonstration client. La Guest App publique repond HTTP 200 mais affiche `Hotel not found`; la Reception/Admin publique repond HTTP 200 avec login generique. La demonstration prete RDV est locale uniquement tant que l'environnement public/staging n'est pas clarifie.
+
 Tenant demo valide :
 
 - Tenant : demo-paris-local ;
@@ -41,6 +43,14 @@ Donnees :
 - ne jamais afficher de donnees personnelles reelles ;
 - ne pas utiliser Vendome comme support de demo client, sauf mention historique ou monitoring hors ecran client ;
 - les acces de demonstration doivent etre prepares hors Git, dans un canal securise.
+
+Garde-fous staging :
+
+- ne jamais lancer le seed demo hors local sans confirmation d'une DB staging dediee ;
+- ne jamais lancer migration, deploy, reset ou db push sur un environnement non identifie ;
+- proteger les comptes demo si un domaine public est utilise ;
+- confirmer un rollback staging avant seed ;
+- ne jamais utiliser production comme staging.
 
 Ne pas committer :
 
@@ -170,6 +180,8 @@ Une premiere demo peut etre preparee rapidement. Le demarrage commercial doit en
 - [ ] Guest App demo `demo-paris-local` accessible et responsive.
 - [ ] Reception demo accessible.
 - [ ] Admin Hotel demo accessible.
+- [ ] Environnement confirme : local ou staging dedie et protege.
+- [ ] Si URLs publiques : aucun `Hotel not found`, tenant `demo-paris-local` visible, Hôtel Lumière Demo Paris visible.
 - [ ] Donnees 100 % fictives presentes.
 - [ ] Aucun contenu Vendome affiche dans le parcours client.
 - [ ] Messages / demandes / sejours actifs prets pour la demo.

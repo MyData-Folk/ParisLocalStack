@@ -164,7 +164,9 @@ Phase 9a/9b commercial demo preparation is documented:
 
 Next possible phase after decision:
 
-- Create a neutral demo tenant with clean fictive data.
+- The neutral demo tenant has been validated locally for Phase 9E: `demo-paris-local` / Hôtel Lumière Demo Paris, fictive data only, Guest App OK, Reception post-auth OK, Hotel Admin post-auth OK.
+- Public demo URLs are not validated as staging: the Guest App URL returns HTTP 200 with `Hotel not found`, and the admin/reception URL returns HTTP 200 with a generic login. Dedicated staging DB/API/Web, access protection, and absence of real data remain unverified.
+- Next step is Coolify/environment clarification before any non-local seed, deploy, migration, reset, or db push.
 - Phase 10 — Design System / Templates.
 
 Safe approach going forward:
@@ -174,6 +176,7 @@ Safe approach going forward:
 - Do not propose `migrate resolve` unless a new real Prisma failure is confirmed.
 - Never restore on production.
 - Never commit webhook, heartbeat, or ping URLs containing secrets.
+- Never use production as staging. Never run the demo seed outside local until a dedicated staging database, rollback, and access protection are confirmed.
 
 ## Hard Rules
 
@@ -202,4 +205,4 @@ The product strategy now frames:
 - local recommendations strategy;
 - what not to build now.
 
-Current priority is to keep the commercial demo focused, create a neutral demo tenant with clean fictive data, and prepare the priority service forms. Do not start PMS integrations, advanced AI, native apps, or Palace modules now.
+Current priority is to keep the commercial demo focused on the validated local neutral tenant, clarify the public/staging environment, and prepare the priority service forms. Do not start PMS integrations, advanced AI, native apps, or Palace modules now.

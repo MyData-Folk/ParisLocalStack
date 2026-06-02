@@ -30,19 +30,19 @@
 - PR #47 : Playwright et axe UI audit tooling ajoutes.
 - PR #48 : etat d'erreur Guest App poli pour eviter l'affichage brut `Internal server error`.
 - Phase 9E-6 : seed demo neutre isole prepare en fichier manuel non automatique.
+- Phase 9E locale : tenant `demo-paris-local` / Hôtel Lumière Demo Paris valide localement, donnees fictives, Guest App OK, Reception OK, Admin Hotel OK.
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.
-- Preparation du tenant demo neutre `demo-paris-local` pour Hôtel Lumière Demo Paris.
+- Clarification de l'environnement public/staging pour `demo-paris-local` avant toute action hors local.
 - Consolidation UX produit avant commercialisation.
 - Refactorisation progressive des gros fichiers frontend, uniquement par phases validees.
 - Distinction audit UI local / staging / production apres les observations du 2026-06-02.
 
 ## A faire
-- Creer le tenant demo neutre `demo-paris-local` avec donnees 100 % fictives.
-- Tester le scenario demo complet.
-- Valider explicitement puis executer le seed demo neutre isole sur environnement local/staging autorise.
-- Stabiliser les acces demo et relancer l'audit Playwright sur un environnement representatif.
+- Confirmer quel web/API/DB servent les domaines publics `demo-paris-local` et `admin-demo-paris-local`.
+- Prouver une DB staging dediee, une protection d'acces et un rollback staging avant tout seed hors local.
+- Relancer l'audit Playwright sur un environnement representatif uniquement apres clarification staging.
 - Enrichir les formulaires de demandes service.
 - Finaliser la gestion recommandations avancee si besoin.
 - Nettoyer les pages orphelines apps/web/src/pages.
@@ -67,5 +67,7 @@ Hotel valide : Hôtel Lumière Demo Paris.
 
 Point de vigilance : l'audit Playwright/axe local est operationnel et utile, mais il ne doit pas etre confondu avec l'etat staging ou production si l'API, la DB ou le tenant demo ne sont pas disponibles localement.
 
+Statut public actuel : la Guest App publique `https://demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 mais affiche `Hotel not found`; l'URL `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 avec un login generique. Staging non valide, separation staging/production non verifiee.
+
 ## Priorite suivante
-Apres tenant demo : auditer le seed demo neutre, stabiliser les acces demo, tester un rendez-vous commercial pilote, corriger les irritants UX identifies, prioriser les modules P2 selon retours prospects, continuer la refactorisation frontend sans modifier la logique metier.
+Apres clarification staging : proteger les URLs demo si elles restent publiques, valider un environnement staging dedie, puis corriger les irritants UX identifies, prioriser les modules P2 selon retours prospects, continuer la refactorisation frontend sans modifier la logique metier.

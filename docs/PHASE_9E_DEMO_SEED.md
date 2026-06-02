@@ -18,12 +18,18 @@ npx tsx prisma/seed.demo.ts
 
 Cette commande n'a pas ete executee pendant la preparation de cette PR.
 
+## Statut d'execution local
+Phase 9E locale validee au 2026-06-02 : le seed demo neutre a ete execute sur la base locale autorisee, apres migrations locales appliquees. Le tenant `demo-paris-local`, l'hotel Hôtel Lumière Demo Paris, les comptes demo et les donnees fictives ont ete verifies localement.
+
+Ce statut local ne valide pas staging ni production.
+
 ## Prerequis
 - Utiliser uniquement une base locale ou staging explicitement autorisee.
 - Ne jamais lancer sur production sans validation explicite.
 - Verifier que l'environnement cible ne contient aucun secret visible dans le terminal ou les captures.
 - Ne pas modifier `DATABASE_URL` dans Git.
 - Ne pas lancer de migration, backup ou restore dans le cadre de ce seed.
+- Pour staging : confirmer une DB dediee, une API/Web dedies, une protection d'acces et un rollback avant execution.
 
 ## Donnees creees
 - Hotel fictif `Hôtel Lumière Demo Paris` avec slug `demo-paris-local`.
@@ -57,3 +63,11 @@ Cette commande n'a pas ete executee pendant la preparation de cette PR.
 Le rollback doit etre defini dans une phase separee. La strategie recommandee est une suppression ciblee du tenant demo uniquement, par `slug = demo-paris-local` ou par son `hotel_id`, apres validation explicite.
 
 Ne jamais appliquer une suppression globale et ne jamais toucher au tenant Vendome.
+
+## Statut public / staging
+Les URLs publiques demo ne sont pas validees comme staging au 2026-06-02 :
+- Guest App publique : HTTP 200 mais `Hotel not found`.
+- Admin/Reception publique : HTTP 200 avec login generique.
+- DB dediee, API dediee, web dedie, protection d'acces et absence de donnees reelles : non verifies.
+
+Decision : seed staging interdit tant que l'isolation n'est pas prouvee.

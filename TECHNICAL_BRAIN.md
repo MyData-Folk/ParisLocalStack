@@ -76,3 +76,10 @@ Regle : lancer les audits avec un environnement local representatif ou une cible
 Production connue comme stable dans l'historique projet.
 
 Etat live exact au 2026-06-02 : Information non verifiee dans cette passe docs-only.
+
+## 14. Statut Phase 9E local / staging
+Etat local valide au 2026-06-02 : migrations appliquees, seed demo neutre execute localement, tenant `demo-paris-local` et hotel Hôtel Lumière Demo Paris verifies, Guest App locale OK, Reception locale post-auth OK, Admin Hotel local post-auth OK, donnees 100 % fictives.
+
+Etat public/staging non valide : `https://demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 mais affiche `Hotel not found`; `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 avec un login generique. Coolify lecture seule n'etait pas disponible (`Unauthenticated`), donc aucune DB/API/Web dedies ni protection d'acces n'ont ete verifies.
+
+Garde-fous staging : ne jamais lancer `prisma/seed.demo.ts`, une migration, un deploy ou un reset sur un environnement non identifie ; confirmer que `DATABASE_URL` pointe vers une DB staging dediee sans afficher sa valeur ; confirmer rollback staging avant seed ; proteger les comptes demo si un domaine public est utilise ; ne jamais utiliser production comme staging.

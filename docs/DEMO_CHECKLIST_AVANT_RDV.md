@@ -19,6 +19,8 @@ Checklist commerciale avant demonstration ParisLocalStack.
 - URL Super Admin uniquement si necessaire.
 - QR code demo.
 
+Statut au 2026-06-02 : ces URLs publiques repondent, mais ne sont pas validees pour RDV. La Guest App publique affiche `Hotel not found`; l'URL Reception/Admin publique affiche un login generique. La demo prete RDV est locale uniquement tant que l'environnement public/staging n'est pas clarifie.
+
 Tenant attendu : demo-paris-local.
 
 Hotel attendu : Hôtel Lumière Demo Paris.
@@ -84,6 +86,8 @@ Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure,
 Si la production est indisponible : utiliser captures preparees, video courte du flux ou documentation produit. Eviter d'improviser sur l'infrastructure.
 
 Note : les captures reelles observees sur captures partagees le 2026-06-02 montrent des interfaces Reception, Guest App Vendome et Super Admin plus avancees que les premieres captures Playwright locales. Elles restent un support de contexte, pas une validation exhaustive du tenant neutre.
+
+Garde-fous staging : ne jamais lancer seed hors local sans confirmation d'une DB staging dediee ; ne jamais lancer migration ou deploy sur un environnement non identifie ; proteger les comptes demo si un domaine public est utilise ; confirmer un rollback staging avant seed ; ne jamais utiliser production comme staging.
 
 ## 9. Apres rendez-vous
 - Noter objections.
