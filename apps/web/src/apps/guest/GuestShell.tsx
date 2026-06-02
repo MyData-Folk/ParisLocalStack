@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { io } from "socket.io-client";
 import {
   Bell,
   CalendarDays,
@@ -26,8 +27,7 @@ import {
   Wrench,
   X
 } from "lucide-react";
-import { api } from "../../lib/api";
-import { getSocket, joinHotelRoom } from "../../lib/socket";
+import { API_URL, api } from "../../lib/api";
 import { resolveTenantFromHostname, routeHotelSlug } from "../../lib/tenant";
 import { resolveGuestTheme, type GuestTheme } from "../../themes";
 
@@ -99,15 +99,6 @@ export function GuestShell() {
   }, [hotelSlug]);
 
   useEffect(() => {
-    if (!hotel?.id || !session) return undefined;
-    return joinHotelRoom(hotel.id, {
-      guestId: session.guestId,
-      stayId: session.stayId,
-      hotelId: hotel.id
-    });
-  }, [hotel?.id, session]);
-
-  useEffect(() => {
     if (!session) return;
     void loadGuestTimeline(hotelSlug, session, setMessages, setRequests);
   }, [hotelSlug, session?.guestId, session?.stayId]);
@@ -115,11 +106,17 @@ export function GuestShell() {
   useEffect(() => {
     if (!session || !hotel?.id) return undefined;
 
-    const socket = getSocket({
-      guestId: session.guestId,
-      stayId: session.stayId,
-      hotelId: hotel.id
+    const socket = io(API_URL, {
+      transports: ["websocket", "polling"],
+      autoConnect: true,
+      withCredentials: true,
+      auth: {
+        guestId: session.guestId,
+        stayId: session.stayId,
+        hotelId: hotel.id
+      }
     });
+    const joinGuestRoom = () => socket.emit("hotel:join", hotel.id);
     const onMessage = (message: MessageItem) => {
       if (message.guestId !== session.guestId || message.stayId !== session.stayId) return;
       setMessages((current) => upsertById(current, message).sort(sortByCreatedAtAsc));
@@ -141,16 +138,21 @@ export function GuestShell() {
       showToast(setToast, `Statut mis a jour : ${requestStatusLabel(request.status)}`);
     };
 
+    socket.on("connect", joinGuestRoom);
+    if (socket.connected) joinGuestRoom();
     socket.on("reply:new", onMessage);
     socket.on("message:status", onMessageStatus);
     socket.on("request:new", onRequest);
     socket.on("request:status", onRequestStatus);
 
     return () => {
+      socket.emit("hotel:leave", hotel.id);
+      socket.off("connect", joinGuestRoom);
       socket.off("reply:new", onMessage);
       socket.off("message:status", onMessageStatus);
       socket.off("request:new", onRequest);
       socket.off("request:status", onRequestStatus);
+      socket.disconnect();
     };
   }, [hotel?.id, hotelSlug, section, session?.guestId, session?.stayId]);
 
@@ -174,7 +176,7 @@ export function GuestShell() {
         )}
 
         <div className={`mx-auto min-h-screen max-w-md md:my-6 md:min-h-[calc(100vh-3rem)] md:overflow-hidden md:rounded-[2rem] ${theme.classes.shell}`}>
-          <GuestHeader hotel={hotel} settings={settings} session={session} />
+          <GuestHeader hotel={hotel} settings={settings} session={session} unreadMessagesCount={unreadMessagesCount} />
 
           <main className="pb-24">
             {activeSection === "welcome" && (
@@ -231,7 +233,7 @@ export function GuestShell() {
   );
 }
 
-function GuestHeader({ hotel, settings, session }: { hotel: any; settings: any; session: Session | null }) {
+function GuestHeader({ hotel, settings, session, unreadMessagesCount }: { hotel: any; settings: any; session: Session | null; unreadMessagesCount: number }) {
   const theme = useGuestTheme();
   return (
     <header className={`relative isolate overflow-hidden rounded-b-[2rem] ${theme.classes.header}`}>
@@ -247,8 +249,24 @@ function GuestHeader({ hotel, settings, session }: { hotel: any; settings: any; 
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">{hotel?.name}</h1>
             <p className="mt-2 line-clamp-2 text-sm leading-6 opacity-85">{hotel?.description || "Votre assistant de sejour, disponible a tout moment."}</p>
           </div>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/15 text-lg font-semibold shadow-lg backdrop-blur">
-            {hotel?.logoUrl ? <img src={hotel.logoUrl} alt={hotel?.name ?? "Hotel"} className="h-full w-full object-cover" /> : hotel?.name?.charAt(0) ?? <Hotel className="h-5 w-5" />}
+          <div className="flex shrink-0 items-center gap-2">
+            {session ? (
+              <div
+                className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/15 shadow-lg backdrop-blur"
+                aria-label={unreadMessagesCount > 0 ? `${unreadMessagesCount} nouveau message reception` : "Aucun nouveau message reception"}
+                aria-live="polite"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadMessagesCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white">
+                    {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/15 text-lg font-semibold shadow-lg backdrop-blur">
+              {hotel?.logoUrl ? <img src={hotel.logoUrl} alt={hotel?.name ?? "Hotel"} className="h-full w-full object-cover" /> : hotel?.name?.charAt(0) ?? <Hotel className="h-5 w-5" />}
+            </div>
           </div>
         </div>
 
