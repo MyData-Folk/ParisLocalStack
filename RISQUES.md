@@ -94,6 +94,13 @@ Gravite : haute.
 
 Mitigation : demo tenant neutre, runbook, checklist avant rendez-vous, ne pas montrer infrastructure.
 
+### Super Admin montre en demo client
+Risque : Super Admin affiche des elements internes ou Vendome localement, ce qui brouille le discours demo neutre.
+
+Gravite : moyenne.
+
+Mitigation : garder Super Admin comme surface interne uniquement ; montrer au prospect Guest App, Reception et Admin Hotel demo ; ne jamais ouvrir `/admin/users` pendant une demo client.
+
 ### Confusion Vendome / tenant demo neutre
 Risque : la demonstration commerciale affiche Vendome au lieu de `demo-paris-local`, ce qui affaiblit le discours commercial et peut exposer une reference hotel existante.
 
@@ -151,6 +158,7 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 - URLs publiques demo : Guest App en HTTP 200 avec `Hotel not found`, Reception/Admin en HTTP 200 avec login generique.
 - Separation staging/production, DB dediee, API dediee, web dedie, protection d'acces et absence de donnees reelles non verifiees.
 - Checklist staging controle a appliquer avant tout seed, migration ou deploy hors local.
+- Validation locale post-login OK : Reception demo et Admin Hotel demo ne montrent pas Vendome, Super Admin local reste interne uniquement.
 - Les captures Playwright locales peuvent etre non representatives d'un environnement public/staging non prepare.
 - Vendome reste une reference historique/production/monitoring possible, mais ne doit pas remplacer le tenant neutre commercial.
 - Le seed demo neutre doit rester separe du seed Vendome et ne doit jamais supprimer de donnees hors `hotel_id` demo.
