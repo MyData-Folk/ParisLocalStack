@@ -382,6 +382,7 @@ function ActionRow({ to, icon, title, meta }: { to: string; icon: React.ReactNod
 
 function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [activeStays, setActiveStays] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
   const [reply, setReply] = useState("");
@@ -417,6 +418,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
     try {
       const [allMessages, activeStays] = await Promise.all([api.hotelMessages(hotelId, token), api.hotelStays(hotelId, token, "active")]);
       const stayIds = new Set(activeStays.map((stay) => stay.id));
+      setActiveStays(activeStays);
       setActiveStayIds(stayIds);
       setMessages(allMessages.filter((message) => message.stayId && stayIds.has(message.stayId)));
     } catch (err) {
@@ -424,7 +426,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
     }
   }
 
-  const conversations = useMemo(() => buildConversations(messages), [messages]);
+  const conversations = useMemo(() => buildConversations(messages, activeStays), [messages, activeStays]);
   const filtered = useMemo(() => {
     const byFilter = filter === "new"
       ? conversations.filter((item) => item.status === "new")
@@ -448,7 +450,20 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
 
   async function sendReply() {
     if (!active || !reply.trim()) return;
-    const created = await api.replyMessage(active.lastMessage.id, reply, token);
+    const content = reply.trim();
+    const source = active.lastGuestMessage.senderType === "guest" ? active.lastGuestMessage : null;
+    const created = source
+      ? await api.replyMessage(source.id, content, token)
+      : await api.sendHotelMessage(
+          hotelId,
+          {
+            guestId: active.lastMessage.guestId!,
+            stayId: active.lastMessage.stayId,
+            content,
+            priority: active.lastMessage.priority === "urgent" ? "urgent" : "medium",
+          },
+          token
+        );
     setMessages((current) => upsertById(current, created).sort(sortMessagesDesc));
     setReply("");
   }
@@ -493,7 +508,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
               ))}
             </div>
           </div>
-          {filtered.length === 0 && <EmptyState icon={<Inbox className="h-6 w-6" />} title="Aucun message" description="Les conversations clients apparaitront ici en direct." />}
+          {filtered.length === 0 && <EmptyState icon={<Inbox className="h-6 w-6" />} title="Aucun client contactable" description="Les clients actifs apparaitront ici, meme sans conversation prealable." />}
           {filtered.map((conversation) => (
             <button key={conversation.id} onClick={() => setActiveId(conversation.id)} className={`block w-full border-b border-white/10 p-4 text-left transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-inset focus:ring-amber-300/10 ${active?.id === conversation.id ? "bg-amber-300/10 ring-1 ring-inset ring-amber-300/20" : ""}`}>
               <div className="flex items-start justify-between gap-3">
@@ -536,6 +551,11 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                 </div>
               </div>
               <div className="max-h-[56vh] space-y-3 overflow-y-auto bg-slate-950/25 p-5">
+                {active.messages.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-white/10 bg-slate-900/60 p-4 text-sm leading-6 text-slate-400">
+                    Aucune conversation pour ce sejour. Vous pouvez envoyer un premier message au client.
+                  </p>
+                ) : null}
                 {active.messages.map((item) => (
                   <div key={item.id} className={`flex ${item.senderType === "reception" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm ${item.senderType === "reception" ? "rounded-br-md bg-amber-300 text-slate-950" : "rounded-bl-md border border-white/10 bg-slate-800 text-slate-100"}`}>
@@ -559,7 +579,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                 placeholder="Reponse reception"
               />
               <div className="mt-3 flex flex-wrap gap-2">
-                  <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-sky-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-300/20"><MessageSquare className="h-4 w-4" /> Repondre</button>
+                  <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-sky-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-300/20"><MessageSquare className="h-4 w-4" /> {active.messages.length === 0 ? "Envoyer un message" : "Repondre"}</button>
                   <button onClick={() => setProfileTarget({ guestId: active.lastMessage.guestId, stayId: active.lastMessage.stayId })} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10"><Eye className="h-4 w-4" /> Voir fiche</button>
                   <button onClick={() => void markConversationDone()} className="rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Marquer comme traite</button>
                 </div>
@@ -1526,23 +1546,43 @@ function ReviewSection({ title, reviews, onResolve, onModerate, onViewProfile, m
   );
 }
 
-function buildConversations(messages: MessageItem[]): Conversation[] {
+function buildConversations(messages: MessageItem[], activeStays: any[] = []): Conversation[] {
   const groups = new Map<string, MessageItem[]>();
   for (const message of messages) {
     const key = `${message.guestId ?? "guest"}:${message.stayId ?? "stay"}`;
     groups.set(key, [...(groups.get(key) ?? []), message]);
   }
 
+  for (const stay of activeStays) {
+    if (!stay?.id || !stay?.guestId) continue;
+    const key = `${stay.guestId}:${stay.id}`;
+    if (!groups.has(key)) groups.set(key, []);
+  }
+
   return Array.from(groups.entries()).map(([id, items]) => {
     const ordered = [...items].sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
-    const lastMessage = ordered[ordered.length - 1];
+    const [, stayId] = id.split(":");
+    const stay = activeStays.find((item) => item.id === stayId);
+    const guest = stay?.guest ?? {};
+    const lastMessage = ordered[ordered.length - 1] ?? {
+      id: `contactable:${stay?.id ?? id}`,
+      guestId: stay?.guestId,
+      stayId: stay?.id,
+      senderType: "reception",
+      content: "Aucun message pour ce sejour. Envoyez un premier message au client.",
+      status: "in_progress",
+      priority: "medium",
+      createdAt: stay?.createdAt ?? new Date().toISOString(),
+      guest,
+      stay,
+    } as MessageItem;
     const guestMessages = ordered.filter((item) => item.senderType === "guest");
     const lastGuestMessage = guestMessages[guestMessages.length - 1] ?? lastMessage;
-    const guestName = `${lastMessage.guest?.firstName ?? ""} ${lastMessage.guest?.lastName ?? ""}`.trim() || lastMessage.guest?.email || "Client";
+    const guestName = `${lastMessage.guest?.firstName ?? guest.firstName ?? ""} ${lastMessage.guest?.lastName ?? guest.lastName ?? ""}`.trim() || lastMessage.guest?.email || guest.email || "Client";
     return {
       id,
       guestName,
-      roomNumber: lastMessage.stay?.roomNumber ?? "-",
+      roomNumber: lastMessage.stay?.roomNumber ?? stay?.roomNumber ?? "-",
       messages: ordered,
       lastMessage,
       lastGuestMessage,
