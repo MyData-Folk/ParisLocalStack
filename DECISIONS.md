@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-02
+Decision : preparer un seed demo neutre separe et manuel pour `demo-paris-local`.
+
+Motif : creer Hôtel Lumière Demo Paris sans modifier le seed historique Vendome et sans execution automatique.
+
+Impact : le seed demo doit rester isole, idempotent, cible uniquement sur le `hotel_id` demo et ne jamais etre lance sans validation explicite.
+
+Statut : adopte.
+
+---
+
+## 2026-06-02
 Decision : distinguer les audits UI locaux, staging et production.
 
 Motif : les captures Playwright locales initiales peuvent montrer des etats de fallback, login ou erreur lorsque localhost n'est pas representatif. Les captures reelles observees sur captures partagees le 2026-06-02 montrent des surfaces Reception, Guest App Vendome et Super Admin fonctionnelles, sans constituer a elles seules une validation production-ready complete.

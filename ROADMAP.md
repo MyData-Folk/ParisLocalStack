@@ -29,6 +29,7 @@
 - Creation des fichiers de contexte projet.
 - PR #47 : Playwright et axe UI audit tooling ajoutes.
 - PR #48 : etat d'erreur Guest App poli pour eviter l'affichage brut `Internal server error`.
+- Phase 9E-6 : seed demo neutre isole prepare en fichier manuel non automatique.
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.
@@ -40,7 +41,7 @@
 ## A faire
 - Creer le tenant demo neutre `demo-paris-local` avec donnees 100 % fictives.
 - Tester le scenario demo complet.
-- Preparer un seed demo neutre isole, sans execution automatique ni donnees reelles.
+- Valider explicitement puis executer le seed demo neutre isole sur environnement local/staging autorise.
 - Stabiliser les acces demo et relancer l'audit Playwright sur un environnement representatif.
 - Enrichir les formulaires de demandes service.
 - Finaliser la gestion recommandations avancee si besoin.

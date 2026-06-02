@@ -29,6 +29,13 @@ Gravite : haute.
 
 Mitigation : migrations versionnees, verification des donnees avant conversion, pas de commande destructive en production.
 
+### Seed demo lance sur le mauvais environnement
+Risque : executer le seed demo neutre sur production ou sur une base non autorisee.
+
+Gravite : haute.
+
+Mitigation : garder le seed demo manuel, ne pas ajouter de script automatique, documenter la commande future sans l'executer, verifier l'environnement cible avant toute execution.
+
 ## 2. Risques securite
 ### Exposition de donnees CRM publiques
 Risque : notes internes, tags, preferences ou coordonnees clients exposees dans la Guest App.
@@ -129,3 +136,4 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 - Tenant demo `demo-paris-local` valide dans la documentation mais non encore cree dans cette passe.
 - Les captures Playwright locales peuvent etre non representatives si l'environnement local n'est pas completement prepare.
 - Vendome reste une reference historique/production/monitoring possible, mais ne doit pas remplacer le tenant neutre commercial.
+- Le seed demo neutre doit rester separe du seed Vendome et ne doit jamais supprimer de donnees hors `hotel_id` demo.
