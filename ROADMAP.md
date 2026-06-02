@@ -30,12 +30,12 @@
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.
-- Preparation d'un tenant demo neutre.
+- Preparation du tenant demo neutre `demo-paris-local` pour Hôtel Lumière Demo Paris.
 - Consolidation UX produit avant commercialisation.
 - Refactorisation progressive des gros fichiers frontend, uniquement par phases validees.
 
 ## A faire
-- Creer le tenant demo neutre avec donnees fictives.
+- Creer le tenant demo neutre `demo-paris-local` avec donnees 100 % fictives.
 - Tester le scenario demo complet.
 - Enrichir les formulaires de demandes service.
 - Finaliser la gestion recommandations avancee si besoin.
@@ -54,6 +54,10 @@ Information non verifiee : etat live exact production au moment de ce document.
 Phase 9E : tenant demo neutre.
 
 Objectif : disposer d'une demonstration commerciale sans donnees reelles, couvrant Guest App, Reception, CRM, demandes, avis et QR code.
+
+Tenant valide : `demo-paris-local`.
+
+Hotel valide : Hôtel Lumière Demo Paris.
 
 ## Priorite suivante
 Apres tenant demo : tester un rendez-vous commercial pilote, corriger les irritants UX identifies, prioriser les modules P2 selon retours prospects, continuer la refactorisation frontend sans modifier la logique metier.
