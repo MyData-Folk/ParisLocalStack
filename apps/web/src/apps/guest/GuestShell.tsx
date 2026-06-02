@@ -54,6 +54,7 @@ type RequestItem = {
   createdAt: string;
 };
 type RequestDetails = Record<string, string | number | boolean | undefined>;
+type GuestLoadState = { kind: "loading"; message: string } | { kind: "error" } | null;
 
 const heroImage = "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=80";
 const GuestThemeContext = React.createContext<GuestTheme>(resolveGuestTheme(undefined));
@@ -76,7 +77,7 @@ export function GuestShell() {
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [session, setSession] = useState<Session | null>(() => readGuestSession(hotelSlug));
-  const [status, setStatus] = useState("Chargement de votre concierge...");
+  const [loadState, setLoadState] = useState<GuestLoadState>({ kind: "loading", message: "Chargement de votre concierge..." });
   const [toast, setToast] = useState("");
   const [activeService, setActiveService] = useState<ServiceTemplate | null>(null);
 
@@ -89,9 +90,9 @@ export function GuestShell() {
         setHotel(hotelData);
         setSettings(settingsData);
         setRecommendations(recs);
-        setStatus("");
+        setLoadState(null);
       })
-      .catch((error) => mounted && setStatus(error.message));
+      .catch(() => mounted && setLoadState({ kind: "error" }));
 
     return () => { mounted = false; };
   }, [hotelSlug]);
@@ -149,7 +150,7 @@ export function GuestShell() {
     };
   }, [hotel?.id, hotelSlug, session?.guestId, session?.stayId]);
 
-  if (status) return <GuestLoading status={status} />;
+  if (loadState) return loadState.kind === "loading" ? <GuestLoading status={loadState.message} /> : <GuestErrorState />;
 
   const activeSection = !session && section !== "guide" ? "welcome" : session && section === "welcome" ? "home" : section;
   const theme = resolveGuestTheme(settings?.guestTheme);
@@ -1032,12 +1033,38 @@ function RequestRow({ request }: { request: RequestItem }) {
 function GuestLoading({ status }: { status: string }) {
   const theme = resolveGuestTheme(undefined);
   return (
-    <div className={`grid min-h-screen place-items-center p-6 ${theme.classes.app}`}>
-      <div className={`w-full max-w-sm rounded-3xl p-6 text-center ${theme.classes.elevatedCard}`}>
+    <main className={`grid min-h-screen place-items-center p-6 ${theme.classes.app}`} aria-labelledby="guest-loading-title">
+      <section className={`w-full max-w-sm rounded-3xl p-6 text-center ${theme.classes.elevatedCard}`} aria-live="polite">
         <Loader2 className="mx-auto h-8 w-8 animate-spin" />
-        <p className="mt-4 font-medium">{status}</p>
-      </div>
-    </div>
+        <h1 id="guest-loading-title" className="mt-4 font-medium">{status}</h1>
+      </section>
+    </main>
+  );
+}
+
+function GuestErrorState() {
+  const theme = resolveGuestTheme(undefined);
+  return (
+    <main className={`grid min-h-screen place-items-center p-6 ${theme.classes.app}`} aria-labelledby="guest-error-title">
+      <section className={`w-full max-w-sm rounded-3xl p-6 text-center ${theme.classes.elevatedCard}`} role="region" aria-labelledby="guest-error-title">
+        <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl ${theme.classes.iconTile}`}>
+          <ConciergeBell className="h-6 w-6" />
+        </div>
+        <h1 id="guest-error-title" className={`mt-5 text-2xl font-semibold ${theme.classes.title}`}>
+          Le concierge digital est momentanément indisponible
+        </h1>
+        <p className={`mt-3 text-sm leading-6 ${theme.classes.muted}`}>
+          Veuillez réessayer dans quelques instants ou contacter la réception de l'hôtel.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-semibold transition focus:outline-none focus:ring-4 ${theme.classes.primaryButton}`}
+        >
+          Réessayer
+        </button>
+      </section>
+    </main>
   );
 }
 
