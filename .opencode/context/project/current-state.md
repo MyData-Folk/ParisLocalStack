@@ -185,3 +185,21 @@ Safe approach going forward:
 - Do not make broad refactors without explicit approval.
 - Do not change Coolify/domain logic unless the task specifically requires it.
 - Always preserve Guest App, Reception Dashboard, Super Admin, and Generator flows.
+
+## Phase 9d - Product Strategy / Roadmap
+
+Phase 9d is documented in `docs/PRODUCT_STRATEGY.md`.
+
+The product strategy now frames:
+
+- priority target: independent 3-star hotels, boutique hotels, small independent 4-star hotels, and aparthotels;
+- recommended launch package: Boutique;
+- commercial packages: Starter, Boutique, Premium, Palace;
+- P1/P2/P3 module priorities;
+- priority structured service forms;
+- target Reception Dashboard vision;
+- CRM/RGPD rules;
+- local recommendations strategy;
+- what not to build now.
+
+Current priority is to keep the commercial demo focused, create a neutral demo tenant with clean fictive data, and prepare the priority service forms. Do not start PMS integrations, advanced AI, native apps, or Palace modules now.

@@ -228,3 +228,5 @@ Prochaines ameliorations possibles :
 - preparer une page vitrine claire ;
 - preparer une offre commerciale ;
 - preparer la Phase 10 Design System / Templates.
+
+Voir aussi : `docs/PRODUCT_STRATEGY.md` pour le cadrage produit, les packages et la roadmap.
