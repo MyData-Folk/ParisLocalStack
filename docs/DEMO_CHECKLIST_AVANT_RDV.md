@@ -1,0 +1,81 @@
+﻿# DEMO_CHECKLIST_AVANT_RDV.md
+
+## Objectif
+Checklist commerciale avant demonstration ParisLocalStack.
+
+## 1. Preparation generale
+- Confirmer l'heure du rendez-vous.
+- Confirmer le profil du prospect.
+- Adapter le discours au type d'hotel.
+- Preparer un navigateur propre.
+- Fermer les onglets techniques non necessaires.
+- Utiliser uniquement le tenant demo neutre.
+
+## 2. URLs a preparer
+- URL Guest App demo.
+- URL Reception demo.
+- URL Super Admin uniquement si necessaire.
+- QR code demo.
+
+Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure, fichiers d'environnement, logs techniques.
+
+## 3. Verification Guest App
+- Page d'accueil charge correctement.
+- Branding hotel demo visible.
+- Onboarding client fonctionne.
+- WiFi et horaires visibles.
+- Services visibles.
+- Messages fonctionnels.
+- Avis fonctionnels.
+- Recommandations visibles.
+- Mobile responsive correct.
+
+## 4. Verification Reception
+- Connexion reception demo OK.
+- Dashboard lisible.
+- Inbox affiche les conversations demo.
+- Requests affiche demandes demo.
+- Clients presents affiche les sejours actifs.
+- Historique CRM affiche anciens sejours demo.
+- Fiche client/sejour ouverte depuis plusieurs entrees.
+- Avis visibles et exploitables.
+- QR code disponible.
+
+## 5. Scenario a jouer
+- Scanner ou ouvrir QR demo.
+- Creer un client demo.
+- Montrer la creation du sejour.
+- Envoyer une demande.
+- Montrer apparition reception.
+- Changer statut demande.
+- Repondre au client.
+- Montrer reponse cote client.
+- Montrer fiche client et CRM.
+- Conclure par valeur business.
+
+## 6. Points de discours
+- Pas d'installation native pour le client.
+- QR code simple.
+- Reception centralisee.
+- Donnees clients mieux structurees.
+- Multi-tenant stable.
+- Personnalisation hotel.
+- Deploiement rapide.
+
+## 7. A ne pas dire / montrer
+- Ne pas promettre PMS Opera/Mews si non integre.
+- Ne pas promettre paiement integre si non disponible.
+- Ne pas promettre AI avancee immediate.
+- Ne pas promettre application native.
+- Ne pas montrer donnees reelles.
+- Ne pas montrer details de securite sensibles.
+
+## 8. Plan B demo
+Si la production est indisponible : utiliser captures preparees, video courte du flux ou documentation produit. Eviter d'improviser sur l'infrastructure.
+
+## 9. Apres rendez-vous
+- Noter objections.
+- Noter modules demandes.
+- Classer prospect par package probable.
+- Mettre a jour roadmap si nouvelle demande recurrente.
+- Ne pas ajouter de fonctionnalite sans validation produit.
