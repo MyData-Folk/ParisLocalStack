@@ -10,7 +10,7 @@ type AuthGateProps = {
   children: React.ReactNode;
 };
 
-export function AuthGate({ title, subtitle, defaultEmail = "reception@vendome.test", allowedRoles, children }: AuthGateProps) {
+export function AuthGate({ title, subtitle, defaultEmail = "reception@demo-paris-local.test", allowedRoles, children }: AuthGateProps) {
   const { currentUser, token, isAuthenticated, isAuthLoading, authError, login, logout, restoreSession } = useAppStore();
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");

@@ -27,8 +27,8 @@ export function HotelForm({
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Nom hotel" value={form.name} onChange={(value) => onChange("name", value)} placeholder="Hotel Vendome" required />
-        <Field label="Slug" value={form.slug} onChange={(value) => onChange("slug", value)} placeholder="vendome" helper="Utilise pour les URLs client et reception." required />
+        <Field label="Nom hotel" value={form.name} onChange={(value) => onChange("name", value)} placeholder="Hôtel Lumière Demo Paris" required />
+        <Field label="Slug" value={form.slug} onChange={(value) => onChange("slug", value)} placeholder="demo-paris-local" helper="Utilise pour les URLs client et reception." required />
         <Field label="Adresse" value={form.address ?? ""} onChange={(value) => onChange("address", value)} placeholder="12 rue de la Paix" />
         <Field label="Ville" value={form.city ?? ""} onChange={(value) => onChange("city", value)} placeholder="Paris" />
         <Field label="Pays" value={form.country ?? ""} onChange={(value) => onChange("country", value)} placeholder="France" />

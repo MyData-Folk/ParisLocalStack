@@ -18,11 +18,9 @@ import { MessageItem, Conversation, FilterKey } from "./reception.types";
 export function ReceptionApp({ basePath = "" }: { basePath?: string }) {
   const tenant = resolveTenantFromHostname();
   const tenantSlug = tenant.kind === "reception" ? tenant.hotelSlug : null;
-  const defaultEmail = tenantSlug === "vendome"
-    ? "reception@vendome.test"
-    : tenantSlug
-      ? `reception+${tenantSlug}@welcomeparis.hotelmanager.fr`
-      : "reception@vendome.test";
+  const defaultEmail = tenantSlug
+    ? `reception@${tenantSlug}.test`
+    : "reception@demo-paris-local.test";
 
   return (
     <AuthGate title="Connexion reception" subtitle="Acces securise au dashboard hotel" defaultEmail={defaultEmail} allowedRoles={["super_admin", "hotel_admin", "receptionist"]}>
