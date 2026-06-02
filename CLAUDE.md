@@ -896,3 +896,10 @@ Phase 9b — Runbook démo commerciale ✅
 Prochaine étape possible après décision :
 - Créer un tenant démo neutre avec données fictives propres
 - Phase 10 — Design System / Templates
+
+Phase 9d - Synthese strategie produit / roadmap - completee
+- `docs/PRODUCT_STRATEGY.md` cree.
+- Cible prioritaire cadree : hotels 3 etoiles independants, boutique hotels, petits 4 etoiles independants et appart-hotels.
+- Package de lancement recommande : Boutique.
+- P1/P2/P3, packages, formulaires prioritaires, dashboard reception cible, CRM/RGPD, recommandations locales, risques et roadmap documentes.
+- Prochaine etape recommandee : creer un hotel demo neutre avec donnees fictives, puis preparer les formulaires services prioritaires.
