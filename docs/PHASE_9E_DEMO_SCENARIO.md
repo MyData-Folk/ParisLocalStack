@@ -14,6 +14,24 @@ URL reception cible recommandee : https://admin-demo-paris-local.welcomeparis.ho
 
 Les donnees doivent rester 100 % fictives. Vendome ne doit pas etre utilise comme support de demo commerciale client.
 
+## Raccourcis demo locaux
+Raccourcis complets a conserver pour la demonstration locale :
+- Guest App : `http://localhost:5173/h/demo-paris-local/welcome`
+- Messages client : `http://localhost:5173/h/demo-paris-local/messages`
+- Reception demo : `http://localhost:5173/reception`
+- Admin Hotel demo : `http://localhost:5173/hotel-admin`
+- Super Admin : `http://localhost:5173/admin`, surface interne uniquement.
+- API health : `http://localhost:4000/health`
+- API ready : `http://localhost:4000/ready`
+- Audit UI local : `npm run audit:ui`
+
+Emails demo attendus, sans mot de passe dans Git :
+- Reception : `reception@demo-paris-local.test`
+- Admin Hotel / Manager : `manager@demo-paris-local.test`
+- Super Admin : `admin@paris-local.test`
+
+Les raccourcis Reception et Admin Hotel doivent ouvrir le contexte `demo-paris-local` / Hôtel Lumière Demo Paris. Ils ne doivent pas ouvrir Vendome dans le parcours demo client.
+
 ## Hotel demo
 Identite fictive :
 - Nom : Hôtel Lumière Demo Paris.

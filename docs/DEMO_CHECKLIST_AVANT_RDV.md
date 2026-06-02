@@ -14,6 +14,15 @@ Checklist commerciale avant demonstration ParisLocalStack.
 - Ne pas interpreter une capture Playwright locale degradee comme etat production sans comparaison.
 
 ## 2. URLs a preparer
+- Raccourcis locaux prets RDV :
+  - Guest App locale : `http://localhost:5173/h/demo-paris-local/welcome`
+  - Messages client locale : `http://localhost:5173/h/demo-paris-local/messages`
+  - Reception demo locale : `http://localhost:5173/reception`
+  - Admin Hotel demo locale : `http://localhost:5173/hotel-admin`
+  - Super Admin local interne uniquement : `http://localhost:5173/admin`
+  - API health locale : `http://localhost:4000/health`
+  - API ready locale : `http://localhost:4000/ready`
+  - Audit UI local : `npm run audit:ui`
 - URL Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
 - URL Reception demo : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr
 - URL Super Admin uniquement si necessaire.
@@ -24,6 +33,11 @@ Statut au 2026-06-02 : ces URLs publiques repondent, mais ne sont pas validees p
 Tenant attendu : demo-paris-local.
 
 Hotel attendu : Hôtel Lumière Demo Paris.
+
+Comptes demo a utiliser sans jamais afficher le mot de passe :
+- Reception : `reception@demo-paris-local.test`
+- Admin Hotel / Manager : `manager@demo-paris-local.test`
+- Super Admin interne : `admin@paris-local.test`
 
 Ne pas afficher : depot GitHub, terminal, Coolify, configuration infrastructure, fichiers d'environnement, logs techniques.
 

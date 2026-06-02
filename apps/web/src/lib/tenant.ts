@@ -1,4 +1,5 @@
 const tenantRoot = "welcomeparis.hotelmanager.fr";
+export const neutralDemoHotelSlug = "demo-paris-local";
 
 export type TenantResolution =
   | { kind: "platform"; hostname: string; isLocal: false }
@@ -46,7 +47,7 @@ export function extractHotelSlug(hostname = window.location.hostname) {
 }
 
 export function routeHotelSlug(pathSlug?: string) {
-  return pathSlug || extractHotelSlug() || "vendome";
+  return pathSlug || extractHotelSlug() || neutralDemoHotelSlug;
 }
 
 export function canonicalGuestUrl(pathname = window.location.pathname, hostname = window.location.hostname) {

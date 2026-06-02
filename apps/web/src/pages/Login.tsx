@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 export const LoginPage: React.FC = () => {
   const { login } = useAppStore();
   const [email, setEmail] = useState('admin@paris-local.test');
-  const [password, setPassword] = useState('ChangeMe123!');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,6 +14,7 @@ export const LoginPage: React.FC = () => {
   const demoAccounts = [
     { label: 'Super Admin', email: 'admin@paris-local.test', role: 'SaaS Admin' },
     { label: 'Receptionniste demo', email: 'reception@demo-paris-local.test', role: 'Démo Hôtel Lumière' },
+    { label: 'Manager hotel demo', email: 'manager@demo-paris-local.test', role: 'Admin Hôtel Lumière' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,7 +128,7 @@ export const LoginPage: React.FC = () => {
               {demoAccounts.map((account, i) => (
                 <button
                   key={i}
-                  onClick={() => { setEmail(account.email); setPassword('ChangeMe123!'); }}
+                  onClick={() => { setEmail(account.email); setPassword(''); }}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/30 transition-all text-left group"
                 >
                   <div>
@@ -203,7 +204,7 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <p className="mt-6 text-center text-slate-600 text-xs">
-            Mot de passe démo : <span className="text-amber-400">demo123</span> (accepté pour tous les comptes)
+            Mot de passe demo connu localement, a ne jamais afficher.
           </p>
         </div>
       </div>

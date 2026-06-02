@@ -48,8 +48,9 @@ API commune à tous les hôtels, connectée à PostgreSQL et au storage.
 ## Domaine / multi-tenant
 Le système doit supporter des sous-domaines par hôtel :
 
-- App client : `vendome.welcomeparis.hotelmanager.fr`
-- Dashboard réception : `admin.vendome.welcomeparis.hotelmanager.fr`
+- App client : `{hotelSlug}.welcomeparis.hotelmanager.fr`
+- Dashboard réception : `admin-{hotelSlug}.welcomeparis.hotelmanager.fr`
+- Exemple demo neutre : `demo-paris-local.welcomeparis.hotelmanager.fr` et `admin-demo-paris-local.welcomeparis.hotelmanager.fr`, a valider separement avant usage public.
 
 Le frontend doit détecter le `hotelSlug` depuis le hostname. Ne pas créer une application par hôtel. Utiliser une seule application multi-tenant.
 

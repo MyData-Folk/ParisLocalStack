@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { api } from "../../lib/api";
+import { neutralDemoHotelSlug } from "../../lib/tenant";
 import { useAppStore } from "../../stores/appStore";
 import { HotelAdminShell } from "./HotelAdminShell";
 import { HotelAdminDashboard } from "./HotelAdminDashboard";
@@ -37,9 +38,11 @@ export function HotelAdminApp() {
             setErrorHotel("Aucun hotel n'est disponible.");
             return;
           }
-          const defaultId = currentUser.hotelIds[0] && allHotels.some((h) => h.id === currentUser.hotelIds[0])
-            ? currentUser.hotelIds[0]
-            : allHotels[0].id;
+          const neutralDemoHotel = allHotels.find((hotel) => hotel.slug === neutralDemoHotelSlug);
+          const defaultId = neutralDemoHotel?.id
+            ?? (currentUser.hotelIds[0] && allHotels.some((h) => h.id === currentUser.hotelIds[0])
+              ? currentUser.hotelIds[0]
+              : allHotels[0].id);
           setActiveHotelId(defaultId);
           return loadHotel(defaultId, token);
         })
@@ -80,7 +83,7 @@ export function HotelAdminApp() {
   }, [activeHotelId, token]);
 
   return (
-    <AuthGate title="Admin Hotel" subtitle="Espace de gestion de votre etablissement" allowedRoles={["super_admin", "hotel_admin"]}>
+    <AuthGate title="Admin Hotel" subtitle="Espace de gestion de votre etablissement" defaultEmail="manager@demo-paris-local.test" allowedRoles={["super_admin", "hotel_admin"]}>
       {loadingHotel ? (
         <div className="grid min-h-screen place-items-center bg-[#09090b]">
           <div className="rounded-2xl border border-white/10 bg-[#111115] p-8 text-center">

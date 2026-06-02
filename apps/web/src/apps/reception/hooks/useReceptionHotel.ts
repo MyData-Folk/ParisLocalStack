@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/api";
-import { resolveTenantFromHostname } from "../../../lib/tenant";
+import { neutralDemoHotelSlug, resolveTenantFromHostname } from "../../../lib/tenant";
 
 export function useReceptionHotel(currentUser: any, token: string | null, logout: () => void | Promise<void>) {
   const tenant = resolveTenantFromHostname();
@@ -15,6 +15,8 @@ export function useReceptionHotel(currentUser: any, token: string | null, logout
     setError("");
     const loader = hotelSlug
       ? api.hotelBySlug(hotelSlug)
+      : currentUser.role === "super_admin"
+        ? api.hotelBySlug(neutralDemoHotelSlug)
       : currentUser.hotelIds[0]
         ? api.hotel(currentUser.hotelIds[0], token)
         : Promise.resolve(null);

@@ -23,15 +23,20 @@ npm run dev:api
 npm run dev:web
 ```
 
-Comptes seed:
+Comptes demo:
 
-- `admin@paris-local.test` / `ChangeMe123!`
-- `reception@vendome.test` / `ChangeMe123!`
+- Super Admin interne : `admin@paris-local.test`
+- Reception demo : `reception@demo-paris-local.test`
+- Manager hotel demo : `manager@demo-paris-local.test`
+
+Les mots de passe demo sont connus localement et ne doivent jamais etre ecrits dans Git.
 
 Routes utiles:
 
-- Client QR: `http://localhost:5173/h/vendome/welcome`
+- Client QR demo: `http://localhost:5173/h/demo-paris-local/welcome`
+- Messages client demo: `http://localhost:5173/h/demo-paris-local/messages`
 - Reception: `http://localhost:5173/reception`
+- Admin hotel demo: `http://localhost:5173/hotel-admin`
 - Admin principal: `http://localhost:5173/admin`
 - Generateur: `http://localhost:5173/generator`
 
@@ -42,7 +47,7 @@ Configurer le meme frontend pour:
 - `hotel-slug.welcomeparis.hotelmanager.fr`
 - `admin.hotel-slug.welcomeparis.hotelmanager.fr`
 
-Le frontend extrait automatiquement le slug depuis le hostname. Exemple: `vendome.welcomeparis.hotelmanager.fr` donne `vendome`.
+Le frontend extrait automatiquement le slug depuis le hostname. Exemple: `demo-paris-local.welcomeparis.hotelmanager.fr` donne `demo-paris-local`.
 
 ## Docker
 
