@@ -26,6 +26,14 @@ Public cible :
 
 Surfaces recommandees :
 
+- Local pret RDV :
+  - Guest App : `http://localhost:5173/h/demo-paris-local/welcome`
+  - Messages client : `http://localhost:5173/h/demo-paris-local/messages`
+  - Reception : `http://localhost:5173/reception`
+  - Admin Hotel : `http://localhost:5173/hotel-admin`
+  - Super Admin : `http://localhost:5173/admin`, interne uniquement.
+  - API health : `http://localhost:4000/health`
+  - API ready : `http://localhost:4000/ready`
 - Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
 - Reception / Admin Hotel demo : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr ou route equivalente documentee
 
@@ -43,6 +51,7 @@ Donnees :
 - ne jamais afficher de donnees personnelles reelles ;
 - ne pas utiliser Vendome comme support de demo client, sauf mention historique ou monitoring hors ecran client ;
 - les acces de demonstration doivent etre prepares hors Git, dans un canal securise.
+- comptes demo attendus : `reception@demo-paris-local.test`, `manager@demo-paris-local.test`, `admin@paris-local.test` pour Super Admin interne uniquement ; ne jamais ecrire le mot de passe dans Git.
 
 Garde-fous staging :
 
