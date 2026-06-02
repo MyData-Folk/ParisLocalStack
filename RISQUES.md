@@ -80,6 +80,20 @@ Gravite : haute.
 
 Mitigation : utiliser Hôtel Lumière Demo Paris comme support demo, garder Vendome uniquement comme reference historique, production ou monitoring si necessaire, verifier la checklist avant rendez-vous.
 
+### Audit UI local non representatif
+Risque : tirer des conclusions UI a partir d'un environnement localhost degrade, avec API, DB ou tenant demo indisponibles.
+
+Gravite : moyenne.
+
+Mitigation : distinguer audit local, staging et production ; comparer les captures Playwright a un environnement representatif ; documenter explicitement les etats observes sur captures partagees.
+
+### Confusion captures reelles / validation complete
+Risque : considerer des captures partagees comme preuve que toutes les interfaces sont production-ready.
+
+Gravite : moyenne.
+
+Mitigation : utiliser la formulation "observe sur captures partagees", conserver les verifications manuelles avant demo, et ne pas annoncer production-ready sans audit complet.
+
 ## 4. Risques business
 ### Surpromesse integrations
 Risque : promettre PMS, paiement, AI ou APIs externes avant disponibilite.
@@ -113,3 +127,5 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 - Etat live production non verifie dans cette passe docs-only.
 - Configuration DNS/SSL non auditee dans cette passe.
 - Tenant demo `demo-paris-local` valide dans la documentation mais non encore cree dans cette passe.
+- Les captures Playwright locales peuvent etre non representatives si l'environnement local n'est pas completement prepare.
+- Vendome reste une reference historique/production/monitoring possible, mais ne doit pas remplacer le tenant neutre commercial.

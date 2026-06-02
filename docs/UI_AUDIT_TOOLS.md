@@ -53,6 +53,14 @@ Ce dossier est ignore par Git via `node_modules/`. Ne pas committer de captures 
 
 Les audits sont non bloquants : les violations axe sont enregistrees en JSON, mais elles ne font pas echouer la commande. Cette PR ne cree pas de baseline visuelle stricte.
 
+## Interpretation des resultats
+
+Les audits locaux peuvent afficher des etats de fallback, login ou erreur si l'API, la DB ou le tenant demo ne sont pas disponibles. Ne pas interpreter ces captures comme l'etat production sans comparaison.
+
+Les captures Playwright locales initiales du 2026-06-02 ont montre des etats degrades car l'environnement localhost n'etait pas representatif. Les captures reelles observees sur captures partagees le meme jour montrent des surfaces Reception, Guest App Vendome et Super Admin fonctionnelles, mais ne constituent pas une validation production-ready complete.
+
+Pour un audit exploitable avant demo commerciale, preciser la cible auditee : local, staging ou production. La priorite Phase 9E reste la stabilisation du tenant neutre `demo-paris-local` / Hôtel Lumière Demo Paris.
+
 ## Securite
 
 - Ne pas lancer l'audit avec des secrets visibles.

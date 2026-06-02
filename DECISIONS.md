@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-02
+Decision : distinguer les audits UI locaux, staging et production.
+
+Motif : les captures Playwright locales initiales peuvent montrer des etats de fallback, login ou erreur lorsque localhost n'est pas representatif. Les captures reelles observees sur captures partagees le 2026-06-02 montrent des surfaces Reception, Guest App Vendome et Super Admin fonctionnelles, sans constituer a elles seules une validation production-ready complete.
+
+Impact : ne pas traiter les captures localhost comme verite unique. Les audits UI doivent etre compares a un environnement representatif, et la priorite Phase 9E reste la stabilisation du tenant demo neutre `demo-paris-local` / Hôtel Lumière Demo Paris.
+
+Statut : adopte.
+
+---
+
+## 2026-06-02
 Decision : valider le tenant demo neutre `demo-paris-local` et l'hotel Hôtel Lumière Demo Paris.
 
 Motif : aligner la demonstration commerciale Phase 9E sur un support neutre, sans dependance a Vendome et sans donnees personnelles reelles.

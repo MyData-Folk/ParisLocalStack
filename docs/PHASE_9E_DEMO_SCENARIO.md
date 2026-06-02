@@ -87,5 +87,10 @@ Exemples fictifs : Bistrot Demo Rive Droite, Cafe Demo Palais, Galerie Demo Pari
 10. Montrer les avis.
 11. Montrer la personnalisation hotel.
 
+## Controle environnement
+Avant de jouer ce scenario, distinguer clairement l'environnement utilise : local, staging ou production. Un audit Playwright local peut afficher un etat d'erreur, de fallback ou de login si l'API, la DB ou le tenant demo ne sont pas disponibles.
+
+Les captures reelles observees sur captures partagees le 2026-06-02 montrent des surfaces plus avancees que les premieres captures Playwright locales, mais ne remplacent pas la verification complete du tenant neutre `demo-paris-local`.
+
 ## Regle importante
 Aucune donnee reelle. Aucune capture infrastructure. Aucune exposition de configuration sensible.
