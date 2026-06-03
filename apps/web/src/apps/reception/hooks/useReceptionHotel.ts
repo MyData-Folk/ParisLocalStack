@@ -15,10 +15,10 @@ export function useReceptionHotel(currentUser: any, token: string | null, logout
     setError("");
     const loader = hotelSlug
       ? api.hotelBySlug(hotelSlug)
-      : currentUser.role === "super_admin"
-        ? api.hotelBySlug(neutralDemoHotelSlug)
       : currentUser.hotelIds[0]
         ? api.hotel(currentUser.hotelIds[0], token)
+      : currentUser.role === "super_admin"
+        ? api.hotelBySlug(neutralDemoHotelSlug)
         : Promise.resolve(null);
     void loader
       .then((loadedHotel) => {
