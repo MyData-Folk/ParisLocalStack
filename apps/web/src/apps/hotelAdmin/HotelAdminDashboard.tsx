@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, Compass, QrCode, Settings } from "lucide-react";
+import { ArrowRight, BarChart3, Compass, Hotel, QrCode, Settings } from "lucide-react";
 import { COMMERCIAL_PACKAGES, SERVICE_CATALOG, type CommercialPackage } from "@paris-local/shared";
 
 export function HotelAdminDashboard({ hotel, hotelId: _hotelId }: { hotel: any; hotelId: string }) {
@@ -16,18 +16,24 @@ export function HotelAdminDashboard({ hotel, hotelId: _hotelId }: { hotel: any; 
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">Admin Hotel</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">Bienvenue dans votre espace Admin Hotel</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Configurez votre concierge digital, vos recommandations locales et vos modules client.</p>
+      <section className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-300/10 via-transparent to-transparent" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-300 shadow-lg shadow-amber-950/20">
+              <Hotel className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">Pilotage hôtelier</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">Bienvenue dans votre espace Admin Hôtel</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">Configurez votre concierge digital, vos recommandations locales et vos modules client.</p>
+            </div>
           </div>
         </div>
         {hotel ? (
-          <div className="mt-6 grid gap-3 rounded-2xl border border-white/10 bg-slate-950/50 p-4 sm:grid-cols-3">
+          <div className="relative mt-6 grid gap-3 rounded-2xl border border-white/10 bg-slate-950/50 p-4 sm:grid-cols-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Hotel</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Hôtel</p>
               <p className="mt-1 font-semibold text-white">{hotel.name}</p>
             </div>
             <div>
