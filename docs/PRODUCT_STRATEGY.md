@@ -362,6 +362,25 @@ Objectif : eviter la dispersion, proteger la vitesse de lancement et garder un M
 - historique sejour ;
 - campagnes directes.
 
+## 11 bis. Roadmap produit Phase 10
+
+Reference detaillee : `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md`.
+
+Ordre recommande :
+
+1. Phase 10A - Services client et categories : reorganiser les services de la Guest App, remplacer le libelle `Serviettes` par `Service d'etage`, separer services internes et reservations externes.
+2. Phase 10B - Tags visibles des demandes : afficher des badges lisibles cote Reception a partir de `type`, `details`, `status` et `priority`.
+3. Phase 10C - Tri clients presents : ajouter les tris chambre, nom, date de depart, derniere activite et urgence.
+4. Phase 10D - Admin Hotel supervision demandes : donner au manager une vue de suivi demandes/messages sans melanger avec Super Admin.
+5. Phase 10E - Historique client et archivage apres depart : clarifier la separation clients presents / clients partis et conserver la timeline sejour.
+
+Garde-fous :
+
+- rester multi-hotel ;
+- ne pas coder de valeur specifique au tenant demo ;
+- ne pas modifier le modele de donnees sans validation explicite ;
+- garder des PR techniques courtes et testables.
+
 ## 12. Risques et mitigations
 
 - Onboarding trop complexe : limiter le premier setup a un hotel demo, QR, infos utiles, services P1 et quelques recommandations.

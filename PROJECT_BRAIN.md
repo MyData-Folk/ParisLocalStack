@@ -64,7 +64,7 @@ Termine : architecture multi-tenant, API commune, auth reelle, onboarding client
 
 En cours : garder la demo locale neutre prete RDV, clarifier l'environnement public/staging avant toute action, consolider les workflows client reception backend, ameliorer progressivement la maintenabilite frontend.
 
-Priorite suivante : obtenir la preuve d'un staging dedie et protege pour `demo-paris-local`, puis poursuivre demandes structurees plus riches, gestion avancee des recommandations par hotel, design system/templates Guest App, nettoyage des pages orphelines et types legacy.
+Priorite suivante : obtenir la preuve d'un staging dedie et protege pour `demo-paris-local`, puis poursuivre la Phase 10 documentee : services client/categories, tags demandes, tri clients presents, supervision Admin Hotel et historique client. Reference : `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md`.
 
 ## 8. Decisions majeures
 - Une seule application web multi-tenant, jamais une app par hotel.
@@ -94,6 +94,7 @@ Priorite suivante : obtenir la preuve d'un staging dedie et protege pour `demo-p
 - Preparer la phase demo neutre.
 - Distinguer audit UI local, staging et production ; ne pas traiter les captures localhost comme etat reel unique.
 - Continuer a enrichir la Guest App et les workflows reception sans casser le MVP.
+- Executer les futures PR Phase 10 dans un ordre simple : services, tags, tri, supervision Admin Hotel, historique.
 - Maintenir la securite multi-tenant comme priorite critique.
 
 ## 11. Prochaine etape recommandee
