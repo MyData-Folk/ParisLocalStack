@@ -28,7 +28,7 @@ import {
   Wrench,
   X
 } from "lucide-react";
-import { API_URL, api } from "../../lib/api";
+import { API_URL, api, type PublicSettingsResponse } from "../../lib/api";
 import { resolveTenantFromHostname, routeHotelSlug } from "../../lib/tenant";
 import { resolveGuestTheme, type GuestTheme } from "../../themes";
 import type { GuestCardConfig } from "@paris-local/shared";
@@ -77,7 +77,7 @@ export function GuestShell() {
   const section = getSection(location.pathname, basePath, Boolean(pathSlug));
 
   const [hotel, setHotel] = useState<any>(null);
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<PublicSettingsResponse | null>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
@@ -86,7 +86,7 @@ export function GuestShell() {
   const [toast, setToast] = useState("");
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [activeService, setActiveService] = useState<ServiceTemplate | null>(null);
-  const guestCardsData = useGuestCards(settings as any);
+  const guestCardsData = useGuestCards(settings);
   const navigate = useNavigate();
 
   const handleGuestCardAction = (card: GuestCardConfig) => {
