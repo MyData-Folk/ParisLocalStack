@@ -397,10 +397,14 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
   const theme = useGuestTheme();
   const recentRequests = requests.slice(0, 3);
   const quickServices = serviceTemplates.filter((service) => service.group === "hotel").slice(0, 4);
+  const fullGuestName = [session.firstName, session.lastName].filter(Boolean).join(" ");
+  const greetingName = fullGuestName || "Bienvenue";
+  const roomLabel = session.roomNumber ? `Chambre ${session.roomNumber}` : null;
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
-        <p className={`text-sm font-medium ${theme.classes.muted}`}>Bonjour {session.firstName || "et bienvenue"}</p>
+        <p className={`text-sm font-medium ${theme.classes.muted}`}>Bonjour {greetingName}</p>
+        {roomLabel ? <p className={`mt-0.5 text-xs font-medium uppercase tracking-wide ${theme.classes.muted}`}>{roomLabel}</p> : null}
         <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre séjour, simplement.</h2>
       </div>
 
