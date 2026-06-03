@@ -34,6 +34,9 @@
 - Phase 9E post-login locale : Super Admin, Reception demo et Admin Hotel demo valides localement ; Vendome absent du parcours demo Reception/Admin Hotel.
 - Vague 5 Guest App cards : PR #81 modele `guestCards` + `commercialPackage`, PR #82 API plan commercial, PR #84 UI Super Admin plan + Hotel Admin lecture seule, PR #85 API dediee guest-cards, PR #86 editeur Hotel Admin des cartes Guest App.
 - Vague 5F finalisee : PR #87 API publique expose `guestCards` actifs tries et tronques par plan, PR #88 composants isoles `GuestHeroCard` / `GuestShortcutCard` avec support securise `external_url`, PR #89 branchement `GuestShell` avec fallback legacy strict vers le rendu historique. Audit UI local 6/6, typecheck/build OK, aucun secret expose.
+- Vague 6B finalisee : PR #91 fondation types/schemas `HotelServiceConfig`, helpers `getHotelServicePlanLimits` et `enforceHotelServicePlanLimits` dans le package shared.
+- Vague 6C finalisee : PR #92 migration `HotelSettings.enabledServices Json` (`20260603120000_add_hotel_enabled_services`), routes `GET/PATCH /api/hotels/:hotelId/services` (super_admin ou hotel_admin, validation stricte du forfait), helpers web `getHotelServices` / `updateHotelServices`, casts Prisma nettoyes.
+- Vague 6D finalisee : section Super Admin "Services autorises" dans le detail hotel, lisant `SERVICE_CATALOG` et bloquant les services hors forfait selon le plan.
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.

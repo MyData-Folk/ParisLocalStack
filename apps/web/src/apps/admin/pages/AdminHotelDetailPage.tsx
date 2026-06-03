@@ -1,8 +1,9 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Palette, Trash2, Upload, Users, X } from "lucide-react";
-import { api, type CommercialPackageValue, type HotelPlanResponse } from "../../../lib/api";
+import { ArrowLeft, Loader2, Palette, ShieldCheck, Sparkles, Trash2, Upload, Users, X } from "lucide-react";
+import { SERVICE_CATALOG, type CommercialPackage, type ServiceCatalogItem } from "@paris-local/shared";
+import { api, type CommercialPackageValue, type HotelPlanResponse, type HotelServiceConfig, type HotelServicesResponse } from "../../../lib/api";
 import { useAppStore } from "../../../stores/appStore";
 import { resolveGuestTheme, type GuestThemeId } from "../../../themes";
 import { AdminShell } from "../AdminShell";
@@ -31,19 +32,32 @@ export function AdminHotelDetailPage() {
   const [receptionAccessSaving, setReceptionAccessSaving] = useState(false);
   const [themeSaving, setThemeSaving] = useState(false);
   const [themeMessage, setThemeMessage] = useState("");
+  const [hotelServices, setHotelServices] = useState<HotelServicesResponse | null>(null);
+  const [hotelServicesDraft, setHotelServicesDraft] = useState<HotelServiceConfig[]>([]);
+  const [hotelServicesSaving, setHotelServicesSaving] = useState(false);
+  const [hotelServicesMessage, setHotelServicesMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !hotelId) return;
     setLoading(true);
-    Promise.all([api.hotel(hotelId, token), api.hotelRecommendations(hotelId, token), api.getHotelPlan(hotelId, token)])
-      .then(([loaded, loadedRecommendations, loadedPlan]) => {
+    Promise.all([
+      api.hotel(hotelId, token),
+      api.hotelRecommendations(hotelId, token),
+      api.getHotelPlan(hotelId, token),
+      api.getHotelServices(hotelId, token).catch(() => null)
+    ])
+      .then(([loaded, loadedRecommendations, loadedPlan, loadedServices]) => {
         setHotel(loaded);
         setGuestTheme(resolveGuestTheme(loaded.settings?.guestTheme).id);
         setRecommendations(loadedRecommendations);
         setHotelPlan(loadedPlan);
         setSelectedPlan(loadedPlan.commercialPackage);
+        if (loadedServices) {
+          setHotelServices(loadedServices);
+          setHotelServicesDraft(loadedServices.enabledServices);
+        }
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Hotel introuvable"))
       .finally(() => setLoading(false));
@@ -112,6 +126,22 @@ export function AdminHotelDetailPage() {
       setReceptionAccessMessage(err instanceof Error ? err.message : "Creation acces reception impossible");
     } finally {
       setReceptionAccessSaving(false);
+    }
+  }
+
+  async function saveHotelServices() {
+    if (!token || !hotel) return;
+    setHotelServicesSaving(true);
+    setHotelServicesMessage("");
+    try {
+      const updated = await api.updateHotelServices(hotel.id, hotelServicesDraft, token);
+      setHotelServices(updated);
+      setHotelServicesDraft(updated.enabledServices);
+      setHotelServicesMessage("Services autorises mis a jour. Visibles cote Guest App apres sauvegarde.");
+    } catch (err) {
+      setHotelServicesMessage(err instanceof Error ? err.message : "Mise a jour des services impossible");
+    } finally {
+      setHotelServicesSaving(false);
     }
   }
 
@@ -189,6 +219,15 @@ export function AdminHotelDetailPage() {
               message={planMessage}
               onPlanChange={setSelectedPlan}
               onSave={() => void savePlan()}
+            />
+            <HotelServicesCard
+              plan={hotelPlan}
+              services={hotelServices}
+              draft={hotelServicesDraft}
+              saving={hotelServicesSaving}
+              message={hotelServicesMessage}
+              onChange={setHotelServicesDraft}
+              onSave={() => void saveHotelServices()}
             />
             <ReceptionAccessCard hotel={hotel} access={receptionAccess} message={receptionAccessMessage} saving={receptionAccessSaving} onCreate={() => void createReceptionAccess()} />
             <RecommendationManager
@@ -515,6 +554,173 @@ export function ReceptionAccessCard({ hotel, access, message, saving, onCreate }
         <InfoBlock label="Mot de passe temporaire" value={password || "Non affiche. Regenerez si besoin."} />
       </div>
       {message ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-sky-50">{message}</p> : null}
+    </div>
+  );
+}
+
+const PACKAGE_RANK: Record<CommercialPackage, number> = {
+  starter: 0,
+  boutique: 1,
+  premium: 2,
+  palace: 3
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  transport: "Transport",
+  food_beverage: "Restauration",
+  housekeeping: "Housekeeping",
+  maintenance: "Maintenance",
+  reception: "Reception",
+  concierge: "Conciergerie",
+  local_guide: "Guide local",
+  feedback: "Avis",
+  crm: "CRM",
+  partner: "Partenaire"
+};
+
+function HotelServicesCard({
+  plan,
+  services,
+  draft,
+  saving,
+  message,
+  onChange,
+  onSave
+}: {
+  plan: HotelPlanResponse | null;
+  services: HotelServicesResponse | null;
+  draft: HotelServiceConfig[];
+  saving: boolean;
+  message: string;
+  onChange: (next: HotelServiceConfig[]) => void;
+  onSave: () => void;
+}) {
+  const planId: CommercialPackage = (plan?.commercialPackage ?? "boutique") as CommercialPackage;
+  const planRank = PACKAGE_RANK[planId];
+  const limits = services?.limits;
+  const maxActive = limits?.maxActiveServices ?? 0;
+  const allowedCategories = limits?.allowedCategories ?? [];
+  const allowWellness = limits?.allowWellness ?? false;
+  const allowPartner = limits?.allowPartnerServices ?? false;
+  const allowCustomImages = limits?.allowCustomImages ?? false;
+  const allowCustomServices = limits?.allowCustomServices ?? false;
+
+  const draftByCode = useMemo(() => {
+    const map = new Map<string, HotelServiceConfig>();
+    for (const entry of draft) map.set(entry.serviceCode, entry);
+    return map;
+  }, [draft]);
+
+  const activeCount = draft.filter((entry) => entry.enabled).length;
+  const overLimit = activeCount > maxActive;
+
+  const eligible = (service: ServiceCatalogItem) => {
+    if (PACKAGE_RANK[service.minPackage] > planRank) return { allowed: false, reason: `Min ${service.minPackage}` };
+    if (service.isPartnerMonetizable && !allowPartner) return { allowed: false, reason: "Partenaire verrouille" };
+    if (allowedCategories.length && !allowedCategories.includes(service.category as never)) {
+      return { allowed: false, reason: "Categorie verrouillee" };
+    }
+    return { allowed: true, reason: "" };
+  };
+
+  function toggleService(service: ServiceCatalogItem) {
+    const check = eligible(service);
+    if (!check.allowed) return;
+    const existing = draftByCode.get(service.id);
+    if (existing) {
+      onChange(draft.map((entry) => entry.serviceCode === service.id ? { ...entry, enabled: !entry.enabled } : entry));
+    } else {
+      const next: HotelServiceConfig = {
+        serviceCode: service.id,
+        enabled: true,
+        order: draft.length,
+        visibleInGuestApp: true,
+        visibleAsCard: true,
+        visibleInServicesPage: true
+      };
+      onChange([...draft, next]);
+    }
+  }
+
+  return (
+    <div className="mt-7 rounded-2xl border border-violet-300/20 bg-violet-300/5 p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-200/90">Services Guest App</p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">Services autorises</h2>
+          <p className="mt-2 text-sm leading-6 text-violet-50/80">
+            Selectionnez les services que le client voit dans l'app. Les services hors forfait sont verrouilles. Le forfait se change plus haut.
+          </p>
+        </div>
+        <div className="flex flex-col items-start gap-2 lg:items-end">
+          <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${overLimit ? "border-red-300/30 bg-red-500/10 text-red-100" : "border-violet-300/30 bg-violet-300/10 text-violet-100"}`}>
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {activeCount} / {maxActive || "?"} services actifs
+          </div>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving || overLimit}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-violet-200 focus:outline-none focus:ring-4 focus:ring-violet-300/20 disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Enregistrer les services
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <InfoBlock label="Forfait actuel" value={formatPlanLabel(planId)} />
+        <InfoBlock label="Services max" value={String(maxActive)} />
+        <InfoBlock label="Wellness autorise" value={formatYesNo(allowWellness)} />
+        <InfoBlock label="Partenaires autorises" value={formatYesNo(allowPartner)} />
+        <InfoBlock label="Images personnalisees" value={formatYesNo(allowCustomImages)} />
+        <InfoBlock label="Services custom" value={formatYesNo(allowCustomServices)} />
+        <InfoBlock label="Categories autorisees" value={allowedCategories.length ? allowedCategories.join(", ") : "Aucune"} wide />
+      </div>
+
+      {overLimit ? (
+        <p className="mt-4 rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+          {activeCount - maxActive} service(s) au dessus de la limite du forfait. Desactivez avant d'enregistrer.
+        </p>
+      ) : null}
+      {message ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-violet-50">{message}</p> : null}
+
+      <div className="mt-5 grid gap-2">
+        {SERVICE_CATALOG.map((service) => {
+          const check = eligible(service);
+          const draftEntry = draftByCode.get(service.id);
+          const enabled = draftEntry?.enabled ?? false;
+          const label = CATEGORY_LABELS[service.category] ?? service.category;
+          return (
+            <label
+              key={service.id}
+              className={`flex items-start gap-3 rounded-2xl border p-3 transition ${check.allowed ? (enabled ? "border-violet-300/40 bg-violet-300/10" : "border-white/10 bg-slate-950/40 hover:bg-white/5") : "border-white/5 bg-slate-950/30 opacity-60"}`}
+            >
+              <input
+                type="checkbox"
+                checked={enabled}
+                disabled={!check.allowed || saving}
+                onChange={() => toggleService(service)}
+                className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950 text-violet-400 focus:ring-violet-300/30 disabled:cursor-not-allowed"
+                aria-label={`Activer ${service.labelFr}`}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-white">{service.labelFr}</p>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-slate-300">{label}</span>
+                  {service.isPartnerMonetizable ? (
+                    <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-[11px] font-semibold text-amber-100">Partenaire</span>
+                  ) : null}
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-slate-300">Min: {service.minPackage}</span>
+                </div>
+                <p className="mt-1 truncate text-xs text-slate-400">{service.descriptionFr}</p>
+                {!check.allowed ? <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-red-200">Verrouille: {check.reason}</p> : null}
+              </div>
+            </label>
+          );
+        })}
+      </div>
     </div>
   );
 }
