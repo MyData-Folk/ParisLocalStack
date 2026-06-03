@@ -45,12 +45,35 @@ export type GuestCardPlanLimits = {
   maxImageMb: number;
 };
 
+export type GuestCardConfig = {
+  id: string;
+  slot: "hero" | "shortcut";
+  slotIndex: number;
+  kind: "info" | "service" | "guide" | "promo" | "custom";
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  icon?: string;
+  actionLabel?: string;
+  actionType: "section" | "service_request" | "external_url" | "none";
+  actionTarget?: string;
+  enabled: boolean;
+  locked?: boolean;
+};
+
 export type HotelPlanResponse = {
   hotelId: string;
   name: string;
   slug: string;
   commercialPackage: CommercialPackageValue;
   limits: GuestCardPlanLimits;
+};
+
+export type HotelGuestCardsResponse = {
+  hotelId: string;
+  commercialPackage: CommercialPackageValue;
+  limits: GuestCardPlanLimits;
+  guestCards: GuestCardConfig[];
 };
 
 export type RecommendationPayload = {
@@ -144,6 +167,12 @@ export const api = {
     method: "PATCH",
     token,
     body: JSON.stringify({ commercialPackage })
+  }),
+  getHotelGuestCards: (hotelId: string, token: string) => request<HotelGuestCardsResponse>(`/api/hotels/${hotelId}/guest-cards`, { token }),
+  updateHotelGuestCards: (hotelId: string, guestCards: GuestCardConfig[], token: string) => request<HotelGuestCardsResponse>(`/api/hotels/${hotelId}/guest-cards`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ guestCards })
   }),
   createHotel: (body: HotelPayload, token: string) => request<any>("/api/hotels", {
     method: "POST",

@@ -1,13 +1,26 @@
 import { Router } from "express";
-import { settingsUpdateSchema } from "@paris-local/shared";
+import { commercialPackageSchema, guestCardsSchema, guestCardsUpdateSchema, settingsUpdateSchema, type CommercialPackage, type GuestCardConfig } from "@paris-local/shared";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess, requireRole } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { enforceGuestCardPlanLimits } from "../../utils/guestCardLimits.js";
+import { HttpError } from "../../utils/http.js";
 import { sendOk } from "../../utils/http.js";
 
 export const settingsRouter = Router();
 export const publicSettingsRouter = Router({ mergeParams: true });
+
+function parseStoredGuestCards(value: unknown): GuestCardConfig[] {
+  return guestCardsSchema.parse(Array.isArray(value) ? value : []);
+}
+
+function guestCardsResponse(hotel: { id: string; commercialPackage: string; settings: { guestCards: unknown } | null }) {
+  const commercialPackage = commercialPackageSchema.parse(hotel.commercialPackage) as CommercialPackage;
+  const guestCards = parseStoredGuestCards(hotel.settings?.guestCards);
+  const limits = enforceGuestCardPlanLimits(guestCards, commercialPackage).limits;
+  return { hotelId: hotel.id, commercialPackage, limits, guestCards };
+}
 
 publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({
@@ -51,4 +64,47 @@ settingsRouter.patch("/hotels/:hotelId/settings", authenticate, requireHotelAcce
     create: { ...req.body, hotelId: req.params.hotelId }
   });
   return sendOk(res, settings);
+}));
+
+settingsRouter.get("/hotels/:hotelId/guest-cards", authenticate, requireHotelAccess("hotelId"), requireRole("super_admin", "hotel_admin"), asyncHandler(async (req, res) => {
+  const hotel = await prisma.hotel.findUnique({
+    where: { id: req.params.hotelId },
+    select: {
+      id: true,
+      commercialPackage: true,
+      settings: { select: { guestCards: true } }
+    }
+  });
+  if (!hotel) throw new HttpError(404, "Hotel not found");
+  return sendOk(res, guestCardsResponse(hotel));
+}));
+
+settingsRouter.patch("/hotels/:hotelId/guest-cards", authenticate, requireHotelAccess("hotelId"), requireRole("super_admin", "hotel_admin"), validateBody(guestCardsUpdateSchema), asyncHandler(async (req, res) => {
+  const hotel = await prisma.hotel.findUnique({
+    where: { id: req.params.hotelId },
+    select: {
+      id: true,
+      commercialPackage: true,
+      settings: { select: { guestCards: true } }
+    }
+  });
+  if (!hotel) throw new HttpError(404, "Hotel not found");
+
+  const commercialPackage = commercialPackageSchema.parse(hotel.commercialPackage) as CommercialPackage;
+  const guestCards = req.body.guestCards ?? [];
+  const limitResult = enforceGuestCardPlanLimits(guestCards, commercialPackage);
+  if (!limitResult.ok) {
+    return res.status(400).json({
+      error: "Guest cards exceed the current plan limits",
+      details: limitResult.errors,
+      limits: limitResult.limits
+    });
+  }
+
+  const settings = await prisma.hotelSettings.upsert({
+    where: { hotelId: req.params.hotelId },
+    update: { guestCards },
+    create: { hotelId: req.params.hotelId, guestCards }
+  });
+  return sendOk(res, { hotelId: hotel.id, commercialPackage, limits: limitResult.limits, guestCards: parseStoredGuestCards(settings.guestCards) });
 }));
