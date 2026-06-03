@@ -11,13 +11,6 @@ import { HttpError, sendCreated, sendOk } from "../../utils/http.js";
 export const hotelsRouter = Router();
 export const publicHotelsRouter = Router();
 
-type HotelPlanRow = {
-  id: string;
-  name: string;
-  slug: string;
-  commercialPackage: string;
-};
-
 const defaultReceptionPassword = "ChangeMe123!";
 const publicUserSelect = {
   id: true,
@@ -140,10 +133,10 @@ hotelsRouter.delete("/:id", requireRole("super_admin"), asyncHandler(async (req,
 }));
 
 hotelsRouter.get("/:id/plan", requireRole("super_admin", "hotel_admin"), requireHotelAccess("id"), asyncHandler(async (req, res) => {
-  const hotel = (await prisma.hotel.findUnique({
+  const hotel = await prisma.hotel.findUnique({
     where: { id: req.params.id },
     select: { id: true, name: true, slug: true, commercialPackage: true }
-  })) as HotelPlanRow | null;
+  });
   if (!hotel) throw new HttpError(404, "Hotel not found");
   const plan = commercialPackageSchema.parse(hotel.commercialPackage);
   const limits = getGuestCardPlanLimits(plan);
@@ -151,11 +144,11 @@ hotelsRouter.get("/:id/plan", requireRole("super_admin", "hotel_admin"), require
 }));
 
 hotelsRouter.patch("/:id/plan", requireRole("super_admin"), validateBody(hotelPlanUpdateSchema), asyncHandler(async (req, res) => {
-  const updated = (await prisma.hotel.update({
+  const updated = await prisma.hotel.update({
     where: { id: req.params.id },
     data: { commercialPackage: req.body.commercialPackage },
     select: { id: true, name: true, slug: true, commercialPackage: true }
-  })) as HotelPlanRow;
+  });
   const plan = commercialPackageSchema.parse(updated.commercialPackage);
   const limits = getGuestCardPlanLimits(plan);
   return sendOk(res, { hotelId: updated.id, name: updated.name, slug: updated.slug, commercialPackage: plan, limits });
