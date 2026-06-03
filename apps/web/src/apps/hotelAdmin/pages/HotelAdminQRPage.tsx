@@ -55,7 +55,7 @@ export function HotelAdminQRPage({ hotelId, token }: { hotelId: string; token: s
         <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">Lien client</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">{hotel?.name ?? "Hotel"}</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-400">Le QR code ouvre l'app client de votre hotel. Sans session existante, le client arrive directement sur l'enregistrement : identite, coordonnees, chambre et dates de sejour.</p>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">Le QR code ouvre l'app client de votre hôtel. Sans session existante, le client arrive directement sur l'enregistrement : identité, coordonnées, chambre et dates de séjour.</p>
           <div className="mt-5 rounded-2xl border border-white/[0.07] bg-[#09090b] p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Lien a partager</p>
             <div className="mt-2 flex items-center gap-2">
