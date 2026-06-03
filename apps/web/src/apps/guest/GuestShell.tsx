@@ -122,7 +122,7 @@ export function GuestShell() {
       setMessages((current) => upsertById(current, message).sort(sortByCreatedAtAsc));
       if (message.senderType === "reception") {
         if (section !== "messages") setUnreadMessagesCount((current) => current + 1);
-        showToast(setToast, "Nouveau message de la reception.");
+        showToast(setToast, "Nouveau message de la réception.");
       }
     };
     const onMessageStatus = (message: MessageItem) => {
@@ -222,7 +222,7 @@ export function GuestShell() {
               onClose={() => setActiveService(null)}
               onCreated={(created) => {
                 setRequests((current) => upsertById(current, created).sort(sortByCreatedAtDesc));
-                showToast(setToast, `${activeService.title} transmis a la reception.`);
+                showToast(setToast, `${activeService.title} transmis à la réception.`);
                 setActiveService(null);
               }}
             />
@@ -253,7 +253,7 @@ function GuestHeader({ hotel, settings, session, unreadMessagesCount }: { hotel:
             {session ? (
               <div
                 className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/15 shadow-lg backdrop-blur"
-                aria-label={unreadMessagesCount > 0 ? `${unreadMessagesCount} nouveau message reception` : "Aucun nouveau message reception"}
+                aria-label={unreadMessagesCount > 0 ? `${unreadMessagesCount} nouveau message réception` : "Aucun nouveau message réception"}
                 aria-live="polite"
               >
                 <Bell className="h-5 w-5" />
@@ -335,7 +335,7 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
           <div>
             <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Bienvenue a {hotel?.name}</p>
             <h2 className={`mt-1 text-2xl font-semibold ${theme.classes.title}`}>Activez votre concierge</h2>
-            <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Quelques secondes suffisent pour personnaliser votre sejour et joindre la reception sans attente.</p>
+            <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Quelques secondes suffisent pour personnaliser votre sejour et joindre la réception sans attente.</p>
           </div>
         </div>
       </div>
@@ -375,6 +375,7 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
 function HomeSection({ hotel, settings, session, requests, onServiceRequest }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void }) {
   const theme = useGuestTheme();
   const recentRequests = requests.slice(0, 3);
+  const quickServices = serviceTemplates.filter((service) => service.group === "hotel").slice(0, 4);
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
@@ -383,10 +384,10 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StayCard icon={<Wifi className="h-5 w-5" />} label="Wi-Fi" title={settings?.wifiName || "Reseau invite"} detail={settings?.wifiPassword || "Mot de passe a la reception"} />
-        <StayCard icon={<Coffee className="h-5 w-5" />} label="Petit-dejeuner" title={settings?.breakfastHours || "07:00 - 10:30"} detail="Salon principal" />
+        <StayCard icon={<Wifi className="h-5 w-5" />} label="Wi-Fi" title={settings?.wifiName || "Reseau invite"} detail={settings?.wifiPassword || "Mot de passe à la réception"} />
+        <StayCard icon={<Coffee className="h-5 w-5" />} label="Petit-déjeuner" title={settings?.breakfastHours || "07:00 - 10:30"} detail="Salon principal" />
         <StayCard icon={<Clock className="h-5 w-5" />} label="Check-out" title={settings?.checkoutTime || "11:00"} detail={`Check-in ${settings?.checkinTime || "15:00"}`} />
-        <StayCard icon={<Phone className="h-5 w-5" />} label="Reception" title={settings?.receptionPhone || "24/7"} detail="Assistance sejour" />
+        <StayCard icon={<Phone className="h-5 w-5" />} label="Réception" title={settings?.receptionPhone || "24/7"} detail="Assistance sejour" />
       </div>
 
       <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
@@ -398,8 +399,8 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
           <ConciergeBell className="h-5 w-5 text-stone-400" />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {serviceTemplates.slice(0, 4).map((service) => (
-            <button key={service.type} onClick={() => onServiceRequest(service)} className={`group rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
+          {quickServices.map((service) => (
+            <button key={service.id} onClick={() => onServiceRequest(service)} className={`group rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
               <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm ${theme.classes.iconSoft}`}>
                 {service.icon}
               </div>
@@ -413,13 +414,13 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
       <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Suivi reception</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Suivi réception</p>
             <h3 className="text-lg font-semibold tracking-tight">Vos demandes</h3>
           </div>
           <Link to="services" className={`rounded-full px-3 py-1.5 text-xs font-semibold ${theme.classes.secondaryButton}`}>Voir tout</Link>
         </div>
         <div className="mt-4 space-y-2">
-          {recentRequests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. La reception reste disponible a tout moment.</p>}
+          {recentRequests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. La réception reste disponible a tout moment.</p>}
           {recentRequests.map((request) => <RequestRow key={request.id} request={request} />)}
         </div>
       </div>
@@ -441,15 +442,35 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
 
 function ServicesSection({ session, requests, onServiceRequest }: { hotelSlug: string; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void }) {
   const theme = useGuestTheme();
+  const hotelServices = serviceTemplates.filter((service) => service.group === "hotel");
+  const externalServices = serviceTemplates.filter((service) => service.group === "external");
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
         <p className={`text-sm font-medium ${theme.classes.muted}`}>Chambre {session.roomNumber}</p>
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Services de l'hotel</h2>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Services</h2>
       </div>
+      <ServiceGroup title="Services de l’hôtel" services={hotelServices} onServiceRequest={onServiceRequest} />
+      <ServiceGroup title="Réservations externes" services={externalServices} onServiceRequest={onServiceRequest} />
+      <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
+        <h3 className="font-semibold tracking-tight">Suivi en temps reel</h3>
+        <div className="mt-4 space-y-2">
+          {requests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Vos demandes apparaitront ici des leur envoi.</p>}
+          {requests.map((request) => <RequestRow key={request.id} request={request} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ServiceGroup({ title, services, onServiceRequest }: { title: string; services: ServiceTemplate[]; onServiceRequest: (service: ServiceTemplate) => void }) {
+  const theme = useGuestTheme();
+  return (
+    <div className="space-y-3">
+      <h3 className={`text-sm font-semibold uppercase tracking-wide ${theme.classes.muted}`}>{title}</h3>
       <div className="grid gap-3">
-        {serviceTemplates.map((service) => (
-          <button key={service.type} onClick={() => onServiceRequest(service)} className={`flex items-center gap-4 rounded-3xl p-4 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 ${theme.classes.elevatedCard}`}>
+        {services.map((service) => (
+          <button key={service.id} onClick={() => onServiceRequest(service)} className={`flex items-center gap-4 rounded-3xl p-4 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 ${theme.classes.elevatedCard}`}>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${theme.classes.iconTile}`}>
               {service.icon}
             </div>
@@ -461,14 +482,7 @@ function ServicesSection({ session, requests, onServiceRequest }: { hotelSlug: s
           </button>
         ))}
       </div>
-      <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
-        <h3 className="font-semibold tracking-tight">Suivi en temps reel</h3>
-        <div className="mt-4 space-y-2">
-          {requests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Vos demandes apparaitront ici des leur envoi.</p>}
-          {requests.map((request) => <RequestRow key={request.id} request={request} />)}
-        </div>
-      </div>
-    </section>
+    </div>
   );
 }
 
@@ -492,7 +506,7 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
   return (
     <section className="flex min-h-[calc(100vh-18rem)] flex-col px-5 py-6">
       <div className="mb-4">
-        <p className={`text-sm font-medium ${theme.classes.muted}`}>Reception</p>
+        <p className={`text-sm font-medium ${theme.classes.muted}`}>Réception</p>
         <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre messagerie</h2>
       </div>
       <div className={`flex-1 space-y-3 overflow-y-auto rounded-3xl p-4 ${theme.classes.card}`}>
@@ -500,7 +514,7 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
           <div className={`grid min-h-56 place-items-center rounded-3xl p-6 text-center ${theme.classes.subtleCard}`}>
             <div>
               <MessageCircle className={`mx-auto h-10 w-10 ${theme.classes.muted}`} />
-              <p className="mt-3 font-semibold">La reception est a votre ecoute</p>
+              <p className="mt-3 font-semibold">La réception est à votre écoute</p>
               <p className={`mt-1 text-sm ${theme.classes.muted}`}>Envoyez un message, la reponse apparaitra ici instantanement.</p>
             </div>
           </div>
@@ -509,7 +523,7 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
           <div key={message.id} className={`flex ${message.senderType === "guest" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[82%] rounded-[1.35rem] px-4 py-3 shadow-sm ${message.senderType === "guest" ? theme.classes.messageGuest : theme.classes.messageReception}`}>
               <div className="mb-1 flex items-center justify-between gap-3 text-xs opacity-65">
-                <span>{message.senderType === "guest" ? "Vous" : "Reception"}</span>
+                <span>{message.senderType === "guest" ? "Vous" : "Réception"}</span>
                 <span>{formatTime(message.createdAt)}</span>
               </div>
               <p className="text-sm leading-6">{message.content}</p>
@@ -518,7 +532,7 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
         ))}
       </div>
       <div className={`mt-3 flex items-end gap-2 rounded-3xl p-2 ${theme.classes.card}`}>
-        <textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Ecrire a la reception..." className={`min-h-12 flex-1 resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 ${theme.classes.input}`} />
+        <textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Ecrire à la réception..." className={`min-h-12 flex-1 resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 ${theme.classes.input}`} />
         <button onClick={() => void sendMessage()} disabled={sending || !content.trim()} aria-label="Envoyer le message" className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
@@ -618,7 +632,7 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
       const review = await api.createReview(hotelSlug, { ...session, rating, comment });
       setCurrentReview(review);
       setEditing(false);
-      showToast(setToast, rating <= 3 ? "La reception est alertee. Votre avis sera valide avant publication." : "Merci. Votre avis est en attente de validation.");
+      showToast(setToast, rating <= 3 ? "La réception est alertee. Votre avis sera valide avant publication." : "Merci. Votre avis est en attente de validation.");
     } finally {
       setLoading(false);
     }
@@ -635,7 +649,7 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
             {[1, 2, 3, 4, 5].map((value) => <Star key={value} className={`h-6 w-6 ${value <= currentReview.rating ? "fill-current" : "opacity-25"}`} />)}
           </div>
           <p className={`mt-4 text-sm leading-6 ${theme.classes.muted}`}>{currentReview.comment || "Aucun commentaire ajoute."}</p>
-          <p className={`mt-3 text-xs leading-5 ${theme.classes.muted}`}>Si vous modifiez votre avis, il repassera en validation reception avant publication.</p>
+          <p className={`mt-3 text-xs leading-5 ${theme.classes.muted}`}>Si vous modifiez votre avis, il repassera en validation réception avant publication.</p>
           <button onClick={() => setEditing(true)} className={`mt-5 inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 ${theme.classes.primaryButton}`}>
             Modifier mon avis
           </button>
@@ -653,7 +667,7 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
       <div>
         <p className={`text-sm font-medium ${theme.classes.muted}`}>Satisfaction</p>
         <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>{currentReview ? "Modifier votre avis" : "Comment se passe votre sejour ?"}</h2>
-        <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Un seul avis est associe a votre sejour. Il sera publie uniquement apres validation par la reception.</p>
+        <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Un seul avis est associe a votre sejour. Il sera publie uniquement apres validation par la réception.</p>
       </div>
       <div className={`rounded-3xl p-5 text-center ${theme.classes.card}`}>
         <p className={`text-sm ${theme.classes.muted}`}>Votre note globale</p>
@@ -668,7 +682,7 @@ function ReviewSection({ hotelSlug, session, setToast }: { hotelSlug: string; se
           <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-left">
             <div className="flex gap-3">
               <Bell className="h-5 w-5 shrink-0 text-red-600" />
-              <p className="text-sm leading-6 text-red-800">Une alerte sera envoyee a la reception pour vous recontacter rapidement.</p>
+              <p className="text-sm leading-6 text-red-800">Une alerte sera envoyee à la réception pour vous recontacter rapidement.</p>
             </div>
           </div>
         )}
@@ -699,7 +713,7 @@ function PublishedReviewsPanel({ reviews }: { reviews: any[] }) {
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${theme.classes.subtleCard}`}>{reviews.length}</span>
       </div>
       {reviews.length === 0 ? (
-        <p className={`mt-4 rounded-2xl p-4 text-sm leading-6 ${theme.classes.subtleCard}`}>Aucun avis public pour le moment. Les avis sont affiches uniquement apres validation par la reception.</p>
+        <p className={`mt-4 rounded-2xl p-4 text-sm leading-6 ${theme.classes.subtleCard}`}>Aucun avis public pour le moment. Les avis sont affiches uniquement apres validation par la réception.</p>
       ) : (
         <div className="mt-4 space-y-3">
           {reviews.map((review) => (
@@ -719,21 +733,39 @@ function PublishedReviewsPanel({ reviews }: { reviews: any[] }) {
   );
 }
 
-type ServiceTemplate = { type: string; title: string; description: string; priority: "medium" | "high" | "urgent"; icon: React.ReactNode };
+type ServiceTemplate = {
+  id: string;
+  type: "taxi" | "restaurant" | "room_service" | "towels" | "reception" | "maintenance";
+  title: string;
+  description: string;
+  priority: "medium" | "high" | "urgent";
+  icon: React.ReactNode;
+  group: "hotel" | "external";
+  requestTitle?: string;
+  detailsPreset?: RequestDetails;
+};
 
 const serviceTemplates: ServiceTemplate[] = [
-  { type: "taxi", title: "Taxi", description: "La reception reserve votre trajet.", priority: "medium", icon: <Car className="h-5 w-5" /> },
-  { type: "restaurant", title: "Restaurant", description: "Une table ou une recommandation.", priority: "medium", icon: <Utensils className="h-5 w-5" /> },
-  { type: "room_service", title: "Room service", description: "Commande ou demande en chambre.", priority: "medium", icon: <ShoppingBag className="h-5 w-5" /> },
-  { type: "towels", title: "Serviettes", description: "Serviettes ou linge supplementaire.", priority: "medium", icon: <Waves className="h-5 w-5" /> },
-  { type: "reception", title: "Assistance reception", description: "Question urgente ou besoin particulier.", priority: "urgent", icon: <ConciergeBell className="h-5 w-5" /> },
-  { type: "maintenance", title: "Maintenance", description: "Signaler un probleme dans la chambre.", priority: "medium", icon: <Wrench className="h-5 w-5" /> }
+  { id: "service-etage", type: "towels", title: "Service d’étage", description: "Linge, chambre ou besoin a faire suivre a l'equipe.", priority: "medium", icon: <Waves className="h-5 w-5" />, group: "hotel", requestTitle: "Demande service d’étage", detailsPreset: { itemType: "linge", quantity: 1 } },
+  { id: "room-service", type: "room_service", title: "Room service", description: "Commande ou demande en chambre.", priority: "medium", icon: <ShoppingBag className="h-5 w-5" />, group: "hotel" },
+  { id: "petit-dejeuner", type: "room_service", title: "Petit-déjeuner", description: "Demander un petit-déjeuner ou une adaptation.", priority: "medium", icon: <Coffee className="h-5 w-5" />, group: "hotel", requestTitle: "Demande petit-déjeuner", detailsPreset: { category: "Petit-déjeuner" } },
+  { id: "maintenance", type: "maintenance", title: "Maintenance", description: "Signaler un probleme dans la chambre.", priority: "medium", icon: <Wrench className="h-5 w-5" />, group: "hotel" },
+  { id: "bagagerie", type: "reception", title: "Bagagerie", description: "Demander une prise en charge des bagages.", priority: "medium", icon: <Hotel className="h-5 w-5" />, group: "hotel", requestTitle: "Demande bagagerie", detailsPreset: { subject: "Bagagerie" } },
+  { id: "spa-piscine", type: "reception", title: "Spa / piscine", description: "Verifier les disponibilites ou reserver un creneau.", priority: "medium", icon: <Sparkles className="h-5 w-5" />, group: "hotel", requestTitle: "Demande spa / piscine", detailsPreset: { subject: "Spa / piscine" } },
+  { id: "parking", type: "reception", title: "Parking", description: "Demander une place, un acces ou une information.", priority: "medium", icon: <Car className="h-5 w-5" />, group: "hotel", requestTitle: "Demande parking", detailsPreset: { subject: "Parking" } },
+  { id: "restaurant-hotel", type: "room_service", title: "Restauration de l'hotel", description: "Question sur le restaurant, le bar ou un service repas.", priority: "medium", icon: <Utensils className="h-5 w-5" />, group: "hotel", requestTitle: "Demande restauration de l'hotel", detailsPreset: { category: "Restauration de l'hotel" } },
+  { id: "taxi", type: "taxi", title: "Taxi", description: "La réception reserve votre trajet.", priority: "medium", icon: <Car className="h-5 w-5" />, group: "external" },
+  { id: "restaurant-exterieur", type: "restaurant", title: "Restaurant exterieur", description: "Une table ou une recommandation en ville.", priority: "medium", icon: <Utensils className="h-5 w-5" />, group: "external" },
+  { id: "musee", type: "reception", title: "Musee", description: "Conseil ou reservation d'une visite culturelle.", priority: "medium", icon: <TicketCheck className="h-5 w-5" />, group: "external", requestTitle: "Demande musee", detailsPreset: { subject: "Musee" } },
+  { id: "excursion", type: "reception", title: "Excursion", description: "Organiser une sortie ou une experience locale.", priority: "medium", icon: <MapPin className="h-5 w-5" />, group: "external", requestTitle: "Demande excursion", detailsPreset: { subject: "Excursion" } },
+  { id: "transfert-aeroport", type: "taxi", title: "Transfert aeroport", description: "Preparer un trajet vers ou depuis l'aeroport.", priority: "medium", icon: <Car className="h-5 w-5" />, group: "external", requestTitle: "Demande transfert aeroport", detailsPreset: { destinationType: "airport", airport: "CDG" } },
+  { id: "visite-guidee", type: "reception", title: "Visite guidee", description: "Demander une visite accompagnee ou un guide.", priority: "medium", icon: <TicketCheck className="h-5 w-5" />, group: "external", requestTitle: "Demande visite guidee", detailsPreset: { subject: "Visite guidee" } }
 ];
 
 function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }: { service: ServiceTemplate; session: Session; hotelSlug: string; onClose: () => void; onCreated: (request: RequestItem) => void }) {
   const theme = useGuestTheme();
   const today = new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState<RequestDetails>(() => defaultRequestDetails(service.type, today));
+  const [form, setForm] = useState<RequestDetails>(() => defaultRequestDetails(service, today));
   const [saving, setSaving] = useState(false);
 
   function update(field: string, value: string | number | boolean) {
@@ -782,7 +814,7 @@ function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }
         </div>
         <button type="submit" disabled={saving} className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarDays className="h-4 w-4" />}
-          Envoyer a la reception
+          Envoyer à la réception
         </button>
       </form>
     </div>
@@ -836,7 +868,7 @@ function RoomServiceFields({ form, update }: { form: RequestDetails; update: (fi
       <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.asap)} onChange={(event) => update("asap", event.target.checked)} /> Des que possible</label>
       {!form.asap ? <GuestInput label="Heure souhaitee" type="time" value={String(form.requestedTime ?? "")} onChange={(value) => update("requestedTime", value)} /> : null}
       <GuestSelect label="Categorie" value={String(form.category ?? "")} onChange={(value) => update("category", value)} options={[
-        ["Petit-dejeuner", "Petit-dejeuner"],
+        ["Petit-déjeuner", "Petit-déjeuner"],
         ["Boissons", "Boissons"],
         ["Collations", "Collations"],
         ["Repas", "Repas"],
@@ -851,7 +883,7 @@ function RoomServiceFields({ form, update }: { form: RequestDetails; update: (fi
 function LinenFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
   return (
     <>
-      <GuestSelect label="Type" value={String(form.itemType ?? "serviettes")} onChange={(value) => update("itemType", value)} options={[["serviettes", "Serviettes"], ["oreillers", "Oreillers"], ["couvertures", "Couvertures"], ["autre", "Autre"]]} />
+      <GuestSelect label="Besoin" value={String(form.itemType ?? "linge")} onChange={(value) => update("itemType", value)} options={[["linge", "Linge supplementaire"], ["serviettes", "Serviettes"], ["oreillers", "Oreillers"], ["couvertures", "Couvertures"], ["autre", "Autre"]]} />
       <GuestInput label="Quantite" type="number" value={String(form.quantity ?? 1)} onChange={(value) => update("quantity", Number(value))} required />
       <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.urgent)} onChange={(event) => update("urgent", event.target.checked)} /> Urgent</label>
       <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
@@ -915,13 +947,15 @@ function GuestTextarea({ label, value, onChange, required = false }: { label: st
   );
 }
 
-function defaultRequestDetails(type: string, today: string): RequestDetails {
-  if (type === "taxi") return { requestedDate: today, requestedTime: "12:00", pickup: "hotel", destinationType: "address", passengers: 1, luggage: 0 };
-  if (type === "restaurant") return { requestedDate: today, requestedTime: "20:00", people: 2, budget: "medium" };
-  if (type === "room_service") return { asap: true, category: "Autre", quantity: 1 };
-  if (type === "towels") return { itemType: "serviettes", quantity: 2, urgent: false };
-  if (type === "maintenance") return { category: "Plomberie", description: "", urgent: false, availability: "" };
-  return { subject: "", urgent: false, notes: "" };
+function defaultRequestDetails(service: ServiceTemplate, today: string): RequestDetails {
+  let defaults: RequestDetails;
+  if (service.type === "taxi") defaults = { requestedDate: today, requestedTime: "12:00", pickup: "hotel", destinationType: "address", passengers: 1, luggage: 0 };
+  else if (service.type === "restaurant") defaults = { requestedDate: today, requestedTime: "20:00", people: 2, budget: "medium" };
+  else if (service.type === "room_service") defaults = { asap: true, category: "Autre", quantity: 1 };
+  else if (service.type === "towels") defaults = { itemType: "linge", quantity: 1, urgent: false };
+  else if (service.type === "maintenance") defaults = { category: "Plomberie", description: "", urgent: false, availability: "" };
+  else defaults = { subject: service.title, urgent: false, notes: "" };
+  return { ...defaults, ...(service.detailsPreset ?? {}) };
 }
 
 function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails) {
@@ -932,7 +966,7 @@ function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails)
       if (priority !== "urgent") priority = "high";
     }
     return {
-      title: "Demande reservation restaurant",
+      title: service.requestTitle ?? "Demande reservation restaurant",
       priority,
       details,
       description: `Table pour ${form.people || 2} le ${form.requestedDate || "-"} a ${form.requestedTime || "-"}${form.cuisine ? `, cuisine ${form.cuisine}` : ""}${form.area ? `, quartier ${form.area}` : ""}.${form.notes ? ` ${form.notes}` : ""}`
@@ -941,7 +975,7 @@ function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails)
   if (service.type === "taxi") {
     const destination = taxiDestinationLabel(form);
     return {
-      title: "Demande taxi",
+      title: service.requestTitle ?? "Demande taxi",
       priority,
       details,
       description: `Taxi le ${form.requestedDate || "-"} a ${form.requestedTime || "-"} vers ${destination}. ${form.passengers || 1} passager(s), ${form.luggage || 0} bagage(s).${form.notes ? ` ${form.notes}` : ""}`
@@ -949,10 +983,10 @@ function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails)
   }
   if (service.type === "room_service") {
     const category = form.category || form.requestType || "Demande en chambre";
-    return { title: "Demande room service", priority, details, description: `${form.asap ? "Des que possible" : `A ${form.requestedTime || "-"}`} - ${category}${form.quantity ? ` x${form.quantity}` : ""}.${form.notes ? ` ${form.notes}` : ""}` };
+    return { title: service.requestTitle ?? "Demande room service", priority, details, description: `${form.asap ? "Des que possible" : `A ${form.requestedTime || "-"}`} - ${category}${form.quantity ? ` x${form.quantity}` : ""}.${form.notes ? ` ${form.notes}` : ""}` };
   }
   if (service.type === "towels") {
-    return { title: "Demande linge", priority, details, description: `${form.quantity || 1} ${form.itemType || "article(s)"} demande(s).${form.notes ? ` ${form.notes}` : ""}` };
+    return { title: service.requestTitle ?? "Demande service d’étage", priority, details, description: `${form.quantity || 1} ${form.itemType || "article(s)"} demande(s).${form.notes ? ` ${form.notes}` : ""}` };
   }
   if (service.type === "maintenance") {
     return {
@@ -962,7 +996,7 @@ function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails)
       description: `${form.category || "Probleme"} : ${form.description || "Pas de description."}`
     };
   }
-  return { title: "Assistance reception", priority, details, description: `${form.subject || "Assistance"} - ${form.notes || ""}` };
+  return { title: service.requestTitle ?? "Assistance réception", priority, details, description: `${form.subject || service.title || "Assistance"} - ${form.notes || ""}` };
 }
 
 function taxiDestinationLabel(form: RequestDetails) {
@@ -1154,8 +1188,8 @@ function requestStatusLabel(status?: string) {
 function reviewStatusLabel(status?: string) {
   if (status === "approved") return "Valide et publie";
   if (status === "rejected") return "Non publie";
-  if (status === "negative_alert") return "Alerte reception en validation";
-  if (status === "resolved") return "Traite par la reception";
+  if (status === "negative_alert") return "Alerte réception en validation";
+  if (status === "resolved") return "Traite par la réception";
   return "En attente de validation";
 }
 
