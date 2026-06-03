@@ -1,15 +1,22 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { adminUserUpdateSchema, hotelCreateSchema, hotelUpdateSchema, receptionUserCreateSchema } from "@paris-local/shared";
+import { adminUserUpdateSchema, commercialPackageSchema, hotelCreateSchema, hotelPlanUpdateSchema, hotelUpdateSchema, receptionUserCreateSchema, getGuestCardPlanLimits } from "@paris-local/shared";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess, requireRole } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
-import { sendCreated, sendOk } from "../../utils/http.js";
+import { HttpError, sendCreated, sendOk } from "../../utils/http.js";
 
 export const hotelsRouter = Router();
 export const publicHotelsRouter = Router();
+
+type HotelPlanRow = {
+  id: string;
+  name: string;
+  slug: string;
+  commercialPackage: string;
+};
 
 const defaultReceptionPassword = "ChangeMe123!";
 const publicUserSelect = {
@@ -130,6 +137,28 @@ hotelsRouter.patch("/:id", requireHotelAccess("id"), validateBody(hotelUpdateSch
 hotelsRouter.delete("/:id", requireRole("super_admin"), asyncHandler(async (req, res) => {
   await prisma.hotel.delete({ where: { id: req.params.id } });
   return sendOk(res, { ok: true });
+}));
+
+hotelsRouter.get("/:id/plan", requireRole("super_admin", "hotel_admin"), requireHotelAccess("id"), asyncHandler(async (req, res) => {
+  const hotel = (await prisma.hotel.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, name: true, slug: true, commercialPackage: true }
+  })) as HotelPlanRow | null;
+  if (!hotel) throw new HttpError(404, "Hotel not found");
+  const plan = commercialPackageSchema.parse(hotel.commercialPackage);
+  const limits = getGuestCardPlanLimits(plan);
+  return sendOk(res, { hotelId: hotel.id, name: hotel.name, slug: hotel.slug, commercialPackage: plan, limits });
+}));
+
+hotelsRouter.patch("/:id/plan", requireRole("super_admin"), validateBody(hotelPlanUpdateSchema), asyncHandler(async (req, res) => {
+  const updated = (await prisma.hotel.update({
+    where: { id: req.params.id },
+    data: { commercialPackage: req.body.commercialPackage },
+    select: { id: true, name: true, slug: true, commercialPackage: true }
+  })) as HotelPlanRow;
+  const plan = commercialPackageSchema.parse(updated.commercialPackage);
+  const limits = getGuestCardPlanLimits(plan);
+  return sendOk(res, { hotelId: updated.id, name: updated.name, slug: updated.slug, commercialPackage: plan, limits });
 }));
 
 publicHotelsRouter.get("/by-slug/:slug", asyncHandler(async (req, res) => {
