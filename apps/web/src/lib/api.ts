@@ -33,6 +33,30 @@ export type SettingsPayload = {
   modules?: Record<string, boolean>;
 };
 
+export type PublicSettingsResponse = {
+  id: string;
+  hotelId: string;
+  wifiName: string | null;
+  breakfastHours: string | null;
+  checkinTime: string | null;
+  checkoutTime: string | null;
+  roomServiceHours: string | null;
+  receptionPhone: string | null;
+  guestTheme: string;
+  languages: string[];
+  modules: Record<string, boolean>;
+  commercialPackage: CommercialPackageValue;
+  limits: GuestCardPlanLimits;
+  guestCards: GuestCardConfig[];
+  _meta?: {
+    totalEnabled: number;
+    heroCount: number;
+    shortcutCount: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CommercialPackageValue = "starter" | "boutique" | "premium" | "palace";
 
 export type GuestCardPlanLimits = {
@@ -115,7 +139,7 @@ export const api = {
   me: (token: string) => request<ApiUser>("/api/auth/me", { token }),
   logout: (token: string) => request<{ ok: boolean }>("/api/auth/logout", { method: "POST", token }),
   hotelBySlug: (slug: string) => request<any>(`/api/public/hotels/by-slug/${slug}`),
-  settings: (slug: string) => request<any>(`/api/public/${slug}/settings`),
+  settings: (slug: string) => request<PublicSettingsResponse>(`/api/public/${slug}/settings`),
   recommendations: (slug: string) => request<any[]>(`/api/public/${slug}/recommendations`),
   createGuest: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/guests`, { method: "POST", body: JSON.stringify(body) }),
   createStay: (slug: string, body: unknown) => request<any>(`/api/public/${slug}/stays`, { method: "POST", body: JSON.stringify(body) }),

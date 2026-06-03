@@ -22,11 +22,42 @@ function guestCardsResponse(hotel: { id: string; commercialPackage: string; sett
   return { hotelId: hotel.id, commercialPackage, limits, guestCards };
 }
 
+function publicGuestCardsPayload(hotel: { id: string; commercialPackage: string; settings: { guestCards: unknown } | null }) {
+  const { limits, commercialPackage } = guestCardsResponse(hotel);
+  const allCards = parseStoredGuestCards(hotel.settings?.guestCards);
+  const enabledCards = allCards.filter((card) => card.enabled);
+  const slotOrder: Record<string, number> = { hero: 0, shortcut: 1 };
+  const sorted = [...enabledCards].sort((a, b) => {
+    const slotDiff = (slotOrder[a.slot] ?? 99) - (slotOrder[b.slot] ?? 99);
+    if (slotDiff !== 0) return slotDiff;
+    return a.slotIndex - b.slotIndex;
+  });
+  const heroCount = sorted.filter((c) => c.slot === "hero").length;
+  const shortcutCount = sorted.filter((c) => c.slot === "shortcut").length;
+  const truncated = [
+    ...sorted.filter((c) => c.slot === "hero").slice(0, limits.maxHeroCards),
+    ...sorted.filter((c) => c.slot === "shortcut").slice(0, limits.maxShortcutCards)
+  ];
+  return {
+    hotelId: hotel.id,
+    commercialPackage,
+    limits,
+    guestCards: truncated,
+    _meta: {
+      totalEnabled: enabledCards.length,
+      heroCount,
+      shortcutCount
+    }
+  };
+}
+
 publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({
     where: { slug: req.params.hotelSlug },
     select: {
+      id: true,
       status: true,
+      commercialPackage: true,
       settings: {
         select: {
           id: true,
@@ -42,6 +73,7 @@ publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
           guestTheme: true,
           languages: true,
           modules: true,
+          guestCards: true,
           createdAt: true,
           updatedAt: true
         }
@@ -49,7 +81,12 @@ publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
     }
   });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
-  return sendOk(res, hotel.settings);
+  const payload = publicGuestCardsPayload({
+    id: hotel.id,
+    commercialPackage: hotel.commercialPackage,
+    settings: hotel.settings
+  });
+  return sendOk(res, { ...hotel.settings, ...payload });
 }));
 
 settingsRouter.get("/hotels/:hotelId/settings", authenticate, requireHotelAccess("hotelId"), asyncHandler(async (req, res) => {
