@@ -401,7 +401,7 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
     <section className="space-y-5 px-5 py-6">
       <div>
         <p className={`text-sm font-medium ${theme.classes.muted}`}>Bonjour {session.firstName || "et bienvenue"}</p>
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre sejour, simplement.</h2>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre séjour, simplement.</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -435,10 +435,11 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
       <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Suivi réception</p>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Suivi réception</p>
             <h3 className="text-lg font-semibold tracking-tight">Vos demandes</h3>
+            <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>La réception reçoit votre demande et peut vous répondre depuis son espace.</p>
           </div>
-          <Link to="services" className={`rounded-full px-3 py-1.5 text-xs font-semibold ${theme.classes.secondaryButton}`}>Voir tout</Link>
+          <Link to="services" className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${theme.classes.secondaryButton}`}>Voir tout</Link>
         </div>
         <div className="mt-4 space-y-2">
           {recentRequests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. La réception reste disponible a tout moment.</p>}
@@ -469,14 +470,16 @@ function ServicesSection({ session, requests, onServiceRequest }: { hotelSlug: s
     <section className="space-y-5 px-5 py-6">
       <div>
         <p className={`text-sm font-medium ${theme.classes.muted}`}>Chambre {session.roomNumber}</p>
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Services</h2>
+        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Services de l'hôtel</h2>
+        <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Choisissez une catégorie pour trouver rapidement le service adapté. La réception vous répond depuis son espace.</p>
       </div>
-      <ServiceGroup title="Services de l’hôtel" services={hotelServices} onServiceRequest={onServiceRequest} />
-      <ServiceGroup title="Réservations externes" services={externalServices} onServiceRequest={onServiceRequest} />
+      <ServiceGroup title="À l'hôtel" services={hotelServices} onServiceRequest={onServiceRequest} />
+      <ServiceGroup title="À l'extérieur" services={externalServices} onServiceRequest={onServiceRequest} />
       <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
-        <h3 className="font-semibold tracking-tight">Suivi en temps reel</h3>
+        <h3 className="font-semibold tracking-tight">Suivi en temps réel</h3>
+        <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>Vos demandes envoyées et leurs réponses de la réception.</p>
         <div className="mt-4 space-y-2">
-          {requests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Vos demandes apparaitront ici des leur envoi.</p>}
+          {requests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. Vos demandes apparaîtront ici dès leur envoi.</p>}
           {requests.map((request) => <RequestRow key={request.id} request={request} />)}
         </div>
       </div>
@@ -817,7 +820,7 @@ function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }
       <form onSubmit={submit} className={`max-h-[88vh] w-full overflow-y-auto rounded-[2rem] p-5 shadow-2xl md:max-w-md ${theme.classes.elevatedCard}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>Demande structuree</p>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>Envoyer à la réception</p>
             <h2 className={`mt-1 text-2xl font-semibold tracking-tight ${theme.classes.title}`}>{service.title}</h2>
             <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>{service.description}</p>
           </div>
