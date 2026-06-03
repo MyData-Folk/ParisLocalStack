@@ -236,7 +236,7 @@ export function GuestShell() {
 function GuestHeader({ hotel, settings, session, unreadMessagesCount }: { hotel: any; settings: any; session: Session | null; unreadMessagesCount: number }) {
   const theme = useGuestTheme();
   return (
-    <header className={`relative isolate overflow-hidden rounded-b-[2rem] ${theme.classes.header}`}>
+    <header className={`relative isolate overflow-hidden rounded-b-[2rem] border-b border-white/10 ${theme.classes.header}`}>
       <img src={heroImage} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
       <div className={`absolute inset-0 -z-10 ${theme.classes.headerOverlay}`} />
       <div className="px-5 pb-6 pt-7">
@@ -246,7 +246,7 @@ function GuestHeader({ hotel, settings, session, unreadMessagesCount }: { hotel:
               <Sparkles className="h-3.5 w-3.5" />
               Concierge prive
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight">{hotel?.name}</h1>
+            <h1 className="mt-4 text-3xl font-semibold tracking-[-0.015em] leading-[1.1]">{hotel?.name}</h1>
             <p className="mt-2 line-clamp-2 text-sm leading-6 opacity-85">{hotel?.description || "Votre assistant de sejour, disponible a tout moment."}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -1090,8 +1090,8 @@ function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string
   return (
     <div className="rounded-2xl border border-white/15 bg-white/12 p-3 backdrop-blur">
       <div className="text-amber-100">{icon}</div>
-      <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-wide text-white/60">{label}</p>
-      <p className="mt-0.5 truncate text-xs font-semibold text-white">{value}</p>
+      <p className="mt-2 text-[0.7rem] font-semibold uppercase tracking-wide text-white/60">{label}</p>
+      <p className="mt-0.5 truncate text-sm font-semibold text-white">{value}</p>
     </div>
   );
 }
