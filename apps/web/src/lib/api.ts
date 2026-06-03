@@ -100,6 +100,37 @@ export type HotelGuestCardsResponse = {
   guestCards: GuestCardConfig[];
 };
 
+export type HotelServicePlanLimits = {
+  plan: CommercialPackageValue;
+  maxActiveServices: number;
+  allowedCategories: string[];
+  allowWellness: boolean;
+  allowCustomImages: boolean;
+  allowCustomServices: boolean;
+  allowPartnerServices: boolean;
+  allowPremiumBranding: boolean;
+};
+
+export type HotelServiceConfig = {
+  serviceCode: string;
+  enabled: boolean;
+  order: number;
+  customTitle?: string;
+  customDescription?: string;
+  imageUrl?: string;
+  visibleInGuestApp: boolean;
+  visibleAsCard: boolean;
+  visibleInServicesPage: boolean;
+  actionLabel?: string;
+};
+
+export type HotelServicesResponse = {
+  hotelId: string;
+  commercialPackage: CommercialPackageValue;
+  limits: HotelServicePlanLimits;
+  enabledServices: HotelServiceConfig[];
+};
+
 export type RecommendationPayload = {
   category: string;
   name: string;
@@ -197,6 +228,12 @@ export const api = {
     method: "PATCH",
     token,
     body: JSON.stringify({ guestCards })
+  }),
+  getHotelServices: (hotelId: string, token: string) => request<HotelServicesResponse>(`/api/hotels/${hotelId}/services`, { token }),
+  updateHotelServices: (hotelId: string, enabledServices: HotelServiceConfig[], token: string) => request<HotelServicesResponse>(`/api/hotels/${hotelId}/services`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ enabledServices })
   }),
   createHotel: (body: HotelPayload, token: string) => request<any>("/api/hotels", {
     method: "POST",

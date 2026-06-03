@@ -1,12 +1,14 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { adminUserUpdateSchema, commercialPackageSchema, hotelCreateSchema, hotelPlanUpdateSchema, hotelUpdateSchema, receptionUserCreateSchema, getGuestCardPlanLimits } from "@paris-local/shared";
+import { adminUserUpdateSchema, commercialPackageSchema, hotelCreateSchema, hotelPlanUpdateSchema, hotelServicesUpdateSchema, hotelUpdateSchema, receptionUserCreateSchema, enabledServicesSchema, getGuestCardPlanLimits, getHotelServicePlanLimits, type CommercialPackage, type HotelServiceConfig } from "@paris-local/shared";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess, requireRole } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { HttpError, sendCreated, sendOk } from "../../utils/http.js";
+import { enforceHotelServiceApiLimits } from "../../utils/hotelServiceLimits.js";
+import { categoryOfServiceCode, isPartnerServiceCode } from "../../utils/hotelServiceCatalog.js";
 
 export const hotelsRouter = Router();
 export const publicHotelsRouter = Router();
@@ -144,14 +146,86 @@ hotelsRouter.get("/:id/plan", requireRole("super_admin", "hotel_admin"), require
 }));
 
 hotelsRouter.patch("/:id/plan", requireRole("super_admin"), validateBody(hotelPlanUpdateSchema), asyncHandler(async (req, res) => {
-  const updated = await prisma.hotel.update({
+  const updated = (await prisma.hotel.update({
     where: { id: req.params.id },
     data: { commercialPackage: req.body.commercialPackage },
     select: { id: true, name: true, slug: true, commercialPackage: true }
-  });
+  })) as { id: string; name: string; slug: string; commercialPackage: string };
   const plan = commercialPackageSchema.parse(updated.commercialPackage);
   const limits = getGuestCardPlanLimits(plan);
   return sendOk(res, { hotelId: updated.id, name: updated.name, slug: updated.slug, commercialPackage: plan, limits });
+}));
+
+hotelsRouter.get("/:hotelId/services", authenticate, requireRole("super_admin", "hotel_admin"), requireHotelAccess("hotelId"), asyncHandler(async (req, res) => {
+  const select: any = { id: true, commercialPackage: true, settings: { select: { enabledServices: true } } };
+  const hotel = (await prisma.hotel.findUnique({
+    where: { id: req.params.hotelId },
+    select
+  })) as { id: string; commercialPackage: string; settings: { enabledServices: unknown } | null } | null;
+  if (!hotel) throw new HttpError(404, "Hotel not found");
+  const plan = commercialPackageSchema.parse(hotel.commercialPackage) as CommercialPackage;
+  const services = enabledServicesSchema.parse(Array.isArray(hotel.settings?.enabledServices) ? hotel.settings.enabledServices : []);
+  const limits = getHotelServicePlanLimits(plan);
+  return sendOk(res, { hotelId: hotel.id, commercialPackage: plan, limits, enabledServices: services });
+}));
+
+hotelsRouter.patch("/:hotelId/services", authenticate, requireRole("super_admin", "hotel_admin"), requireHotelAccess("hotelId"), validateBody(hotelServicesUpdateSchema), asyncHandler(async (req, res) => {
+  const select: any = { id: true, commercialPackage: true, settings: { select: { enabledServices: true } } };
+  const hotel = (await prisma.hotel.findUnique({
+    where: { id: req.params.hotelId },
+    select
+  })) as { id: string; commercialPackage: string; settings: { enabledServices: unknown } | null } | null;
+  if (!hotel) throw new HttpError(404, "Hotel not found");
+
+  const plan = commercialPackageSchema.parse(hotel.commercialPackage) as CommercialPackage;
+  const enabledServices: HotelServiceConfig[] = req.body.enabledServices ?? [];
+  const limitResult = enforceHotelServiceApiLimits(enabledServices, plan);
+  if (!limitResult.ok) {
+    return res.status(400).json({
+      error: "Enabled services exceed the current plan limits",
+      details: limitResult.errors,
+      limits: limitResult.limits
+    });
+  }
+
+  const updateData: any = { enabledServices };
+  const createData: any = { hotelId: req.params.hotelId, enabledServices };
+  const settings = await prisma.hotelSettings.upsert({
+    where: { hotelId: req.params.hotelId },
+    update: updateData,
+    create: createData
+  });
+  const stored = enabledServicesSchema.parse(Array.isArray((settings as any).enabledServices) ? (settings as any).enabledServices : []);
+  return sendOk(res, { hotelId: hotel.id, commercialPackage: plan, limits: limitResult.limits, enabledServices: stored });
+}));
+
+hotelsRouter.patch("/:hotelId/services", authenticate, requireRole("super_admin", "hotel_admin"), requireHotelAccess("hotelId"), validateBody(hotelServicesUpdateSchema), asyncHandler(async (req, res) => {
+  const hotel = (await prisma.hotel.findUnique({
+    where: { id: req.params.hotelId },
+    select: { id: true, commercialPackage: true, settings: { select: { enabledServices: true } } }
+  })) as unknown as { id: string; commercialPackage: string; settings: { enabledServices: unknown } | null } | null;
+  if (!hotel) throw new HttpError(404, "Hotel not found");
+
+  const plan = commercialPackageSchema.parse(hotel.commercialPackage) as CommercialPackage;
+  const enabledServices: HotelServiceConfig[] = req.body.enabledServices ?? [];
+  const limitResult = enforceHotelServiceApiLimits(enabledServices, plan);
+  if (!limitResult.ok) {
+    return res.status(400).json({
+      error: "Enabled services exceed the current plan limits",
+      details: limitResult.errors,
+      limits: limitResult.limits
+    });
+  }
+
+  const updateData: any = { enabledServices };
+  const createData: any = { hotelId: req.params.hotelId, enabledServices };
+  const settings = await prisma.hotelSettings.upsert({
+    where: { hotelId: req.params.hotelId },
+    update: updateData,
+    create: createData
+  });
+  const stored = enabledServicesSchema.parse(Array.isArray((settings as any).enabledServices) ? (settings as any).enabledServices : []);
+  return sendOk(res, { hotelId: hotel.id, commercialPackage: plan, limits: limitResult.limits, enabledServices: stored });
 }));
 
 publicHotelsRouter.get("/by-slug/:slug", asyncHandler(async (req, res) => {

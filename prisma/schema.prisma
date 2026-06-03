@@ -237,6 +237,7 @@ model HotelSettings {
   languages        Json     @default("[\"fr\",\"en\"]")
   modules          Json     @default("{}")
   guestCards       Json     @default("[]")
+  enabledServices  Json     @default("[]")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
   hotel            Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
