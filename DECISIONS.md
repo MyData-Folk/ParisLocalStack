@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-03
+Decision : decouper la personnalisation des cartes Guest App en couches successives.
+
+Motif : eviter de melanger modele, API, plan commercial, editeur Hotel Admin et affichage public dans une seule PR.
+
+Impact : PR #81 integre `guestCards` + `commercialPackage`; PR #82 integre l'API plan commercial ; PR #84 permet au Super Admin de modifier le forfait et a Hotel Admin de le lire ; PR #85 ajoute l'API privee guest-cards ; PR #86 ajoute l'editeur Hotel Admin. `GuestShell` et la route publique restent inchanges jusqu'a la Vague 5F.
+
+Statut : adopte.
+
+---
+
+## 2026-06-03
 Decision : cadrer la Phase 10 produit autour de cinq petites PR ordonnees.
 
 Motif : la messagerie Reception / Client est stabilisee et les prochaines demandes doivent rester decoupees : services client, tags de demandes, tri clients presents, supervision Admin Hotel, historique client.

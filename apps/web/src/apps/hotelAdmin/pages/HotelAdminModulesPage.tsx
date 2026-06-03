@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowUpRight, BadgeCheck, Crown, Gem, Mail, Sparkles, Star, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, BadgeCheck, Crown, Gem, Mail, Plus, Save, Sparkles, Star, Trash2, Zap } from "lucide-react";
 import {
   COMMERCIAL_PACKAGES,
   getServicesByPackage,
@@ -8,7 +8,7 @@ import {
   type ServiceCatalogItem,
   type CommercialPackageDef
 } from "@paris-local/shared";
-import { api, type HotelPlanResponse } from "../../../lib/api";
+import { api, type GuestCardConfig, type GuestCardPlanLimits, type HotelGuestCardsResponse, type HotelPlanResponse } from "../../../lib/api";
 
 const HIGHLIGHT_SERVICE_IDS = new Set([
   "taxi",
@@ -32,6 +32,23 @@ const CATEGORY_LABELS: Record<string, string> = {
   crm: "CRM",
   partner: "Partenaires"
 };
+
+const CARD_KIND_LABELS: Record<GuestCardConfig["kind"], string> = {
+  info: "Information",
+  service: "Service",
+  guide: "Guide",
+  promo: "Promotion",
+  custom: "Personnalisee"
+};
+
+const ACTION_TYPE_LABELS: Record<GuestCardConfig["actionType"], string> = {
+  section: "Section Guest App",
+  service_request: "Demande de service",
+  external_url: "Lien externe",
+  none: "Aucune action"
+};
+
+const ACTION_TYPES: GuestCardConfig["actionType"][] = ["none", "section", "service_request", "external_url"];
 
 export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; hotelId: string; token: string }) {
   const [upgradeMessage, setUpgradeMessage] = useState("");
@@ -131,6 +148,8 @@ export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; h
           </div>
         </section>
       ) : null}
+
+      <GuestCardsEditor hotelId={hotelId} token={token} currentPackageLabel={currentPackage?.labelFr ?? currentPackageId} />
 
       {/* Section 2 — Packages disponibles */}
       <section className="space-y-4">
@@ -368,6 +387,442 @@ function PlanLimit({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-sm font-semibold text-white">{value}</p>
     </div>
   );
+}
+
+function GuestCardsEditor({
+  hotelId,
+  token,
+  currentPackageLabel
+}: {
+  hotelId: string;
+  token: string;
+  currentPackageLabel: string;
+}) {
+  const [guestCardsConfig, setGuestCardsConfig] = useState<HotelGuestCardsResponse | null>(null);
+  const [guestCards, setGuestCards] = useState<GuestCardConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (!hotelId || !token) return;
+    setLoading(true);
+    setError("");
+    api.getHotelGuestCards(hotelId, token)
+      .then((response) => {
+        setGuestCardsConfig(response);
+        setGuestCards(sortGuestCards(response.guestCards));
+      })
+      .catch(() => setError("Impossible de charger les cartes Guest App."))
+      .finally(() => setLoading(false));
+  }, [hotelId, token]);
+
+  const limits = guestCardsConfig?.limits;
+  const validationErrors = useMemo(() => validateGuestCards(guestCards, limits), [guestCards, limits]);
+  const heroCards = useMemo(() => cardsForSlot(guestCards, "hero"), [guestCards]);
+  const shortcutCards = useMemo(() => cardsForSlot(guestCards, "shortcut"), [guestCards]);
+  const canAddHero = Boolean(limits && heroCards.length < limits.maxHeroCards);
+  const canAddShortcut = Boolean(limits && shortcutCards.length < limits.maxShortcutCards);
+
+  function updateCard(cardId: string, patch: Partial<GuestCardConfig>) {
+    setGuestCards((current) => sortGuestCards(current.map((card) => {
+      if (card.id !== cardId) return card;
+      const next = { ...card, ...patch };
+      if (patch.actionType === "none") return { ...next, actionTarget: "", actionLabel: "" };
+      if (patch.actionType === "external_url" && !limits?.allowExternalLinks) {
+        return { ...next, actionType: "none", actionTarget: "" };
+      }
+      return next;
+    })));
+    setSuccess("");
+  }
+
+  function addCard(slot: GuestCardConfig["slot"]) {
+    if (!limits) return;
+    const existing = cardsForSlot(guestCards, slot);
+    const kind = (limits.allowedKinds.includes("info") ? "info" : limits.allowedKinds[0]) as GuestCardConfig["kind"];
+    const nextCard: GuestCardConfig = {
+      id: `card-${Date.now()}-${slot}`,
+      slot,
+      slotIndex: existing.length,
+      kind,
+      title: slot === "hero" ? "Nouvelle carte principale" : "Nouveau raccourci",
+      description: "",
+      imageUrl: "",
+      icon: "",
+      actionLabel: "",
+      actionType: "none",
+      actionTarget: "",
+      enabled: true
+    };
+    setGuestCards((current) => sortGuestCards([...current, nextCard]));
+    setSuccess("");
+  }
+
+  function removeCard(cardId: string) {
+    setGuestCards((current) => normalizeSlotIndexes(current.filter((card) => card.id !== cardId)));
+    setSuccess("");
+  }
+
+  async function saveCards() {
+    if (!limits) return;
+    const errors = validateGuestCards(guestCards, limits);
+    if (errors.length > 0) {
+      setError(errors[0]);
+      setSuccess("");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const sanitizedCards = normalizeSlotIndexes(guestCards).map((card) => sanitizeCardForPlan(card, limits));
+      const response = await api.updateHotelGuestCards(hotelId, sanitizedCards, token);
+      setGuestCardsConfig(response);
+      setGuestCards(sortGuestCards(response.guestCards));
+      setSuccess("Cartes Guest App enregistrees.");
+    } catch {
+      setError("Impossible d'enregistrer les cartes Guest App.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-white">Cartes Guest App</h2>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-400">
+            Preparez les cartes visibles dans l'application client. Elles seront affichees cote Guest App dans une prochaine evolution.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={saveCards}
+          disabled={saving || loading || validationErrors.length > 0}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? "Enregistrement..." : "Enregistrer"}
+        </button>
+      </div>
+
+      <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
+        {loading ? (
+          <p className="text-sm text-zinc-400">Chargement des cartes Guest App...</p>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <PlanLimit label="Offre" value={guestCardsConfig?.commercialPackage ?? currentPackageLabel} />
+              <PlanLimit label="Cartes principales" value={`${heroCards.length}/${limits?.maxHeroCards ?? 0}`} />
+              <PlanLimit label="Raccourcis" value={`${shortcutCards.length}/${limits?.maxShortcutCards ?? 0}`} />
+              <PlanLimit label="Liens externes" value={limits?.allowExternalLinks ? "Autorises" : "Non inclus"} />
+            </div>
+
+            {limits ? (
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                <p className="text-xs text-zinc-400">
+                  Types autorises : {limits.allowedKinds.map((kind) => CARD_KIND_LABELS[kind as GuestCardConfig["kind"]] ?? kind).join(", ")}.
+                  {" "}Images personnalisees : {limits.allowCustomImages ? `oui, jusqu'a ${limits.maxImageMb} Mo` : "non incluses"}.
+                </p>
+              </div>
+            ) : null}
+
+            {validationErrors.length > 0 ? (
+              <div className="rounded-xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-200">
+                {validationErrors[0]}
+              </div>
+            ) : null}
+            {error ? (
+              <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>
+            ) : null}
+            {success ? (
+              <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{success}</div>
+            ) : null}
+
+            <GuestCardSlotEditor
+              title="Cartes principales"
+              description="Cartes mises en avant dans l'accueil client."
+              cards={heroCards}
+              slot="hero"
+              limits={limits}
+              canAdd={canAddHero}
+              onAdd={() => addCard("hero")}
+              onRemove={removeCard}
+              onUpdate={updateCard}
+            />
+            <GuestCardSlotEditor
+              title="Raccourcis"
+              description="Acces rapides vers les services ou contenus utiles."
+              cards={shortcutCards}
+              slot="shortcut"
+              limits={limits}
+              canAdd={canAddShortcut}
+              onAdd={() => addCard("shortcut")}
+              onRemove={removeCard}
+              onUpdate={updateCard}
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function GuestCardSlotEditor({
+  title,
+  description,
+  cards,
+  slot,
+  limits,
+  canAdd,
+  onAdd,
+  onRemove,
+  onUpdate
+}: {
+  title: string;
+  description: string;
+  cards: GuestCardConfig[];
+  slot: GuestCardConfig["slot"];
+  limits?: GuestCardPlanLimits;
+  canAdd: boolean;
+  onAdd: () => void;
+  onRemove: (cardId: string) => void;
+  onUpdate: (cardId: string, patch: Partial<GuestCardConfig>) => void;
+}) {
+  const maxCards = slot === "hero" ? limits?.maxHeroCards ?? 0 : limits?.maxShortcutCards ?? 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-white">{title}</h3>
+          <p className="text-xs text-zinc-500">{description}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={!canAdd}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Ajouter
+        </button>
+      </div>
+      {!canAdd ? (
+        <p className="rounded-xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs text-amber-200">
+          Limite atteinte pour votre offre : {cards.length}/{maxCards}.
+        </p>
+      ) : null}
+      {cards.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-5 text-sm text-zinc-500">
+          Aucune carte configuree pour cette section.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {cards.map((card) => (
+            <GuestCardForm
+              key={card.id}
+              card={card}
+              limits={limits}
+              onRemove={() => onRemove(card.id)}
+              onUpdate={(patch) => onUpdate(card.id, patch)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GuestCardForm({
+  card,
+  limits,
+  onRemove,
+  onUpdate
+}: {
+  card: GuestCardConfig;
+  limits?: GuestCardPlanLimits;
+  onRemove: () => void;
+  onUpdate: (patch: Partial<GuestCardConfig>) => void;
+}) {
+  const allowedKinds = (limits?.allowedKinds ?? ["info"]) as GuestCardConfig["kind"][];
+  const actionTypes = ACTION_TYPES.filter((actionType) => actionType !== "external_url" || limits?.allowExternalLinks);
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <label className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+          <input
+            type="checkbox"
+            checked={card.enabled}
+            onChange={(event) => onUpdate({ enabled: event.target.checked })}
+            className="h-4 w-4 rounded border-white/20 bg-zinc-900 text-amber-300 focus:ring-amber-300/30"
+          />
+          Carte active
+        </label>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/15"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Supprimer
+        </button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Titre">
+          <input
+            value={card.title}
+            maxLength={60}
+            onChange={(event) => onUpdate({ title: event.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50"
+            placeholder="Titre affiche au client"
+          />
+        </Field>
+        <Field label="Ordre">
+          <input
+            type="number"
+            min={0}
+            value={card.slotIndex}
+            onChange={(event) => onUpdate({ slotIndex: Math.max(0, Number(event.target.value) || 0) })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition focus:border-amber-300/50"
+          />
+        </Field>
+        <Field label="Type de carte">
+          <select
+            value={allowedKinds.includes(card.kind) ? card.kind : allowedKinds[0]}
+            onChange={(event) => onUpdate({ kind: event.target.value as GuestCardConfig["kind"] })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition focus:border-amber-300/50"
+          >
+            {allowedKinds.map((kind) => (
+              <option key={kind} value={kind}>{CARD_KIND_LABELS[kind]}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Action">
+          <select
+            value={actionTypes.includes(card.actionType) ? card.actionType : "none"}
+            onChange={(event) => onUpdate({ actionType: event.target.value as GuestCardConfig["actionType"] })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition focus:border-amber-300/50"
+          >
+            {actionTypes.map((actionType) => (
+              <option key={actionType} value={actionType}>{ACTION_TYPE_LABELS[actionType]}</option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <Field label="Description">
+          <textarea
+            value={card.description ?? ""}
+            maxLength={200}
+            rows={3}
+            onChange={(event) => onUpdate({ description: event.target.value })}
+            className="w-full resize-none rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50"
+            placeholder="Texte court affiche au client"
+          />
+        </Field>
+        <Field label="Image">
+          <input
+            value={card.imageUrl ?? ""}
+            disabled={!limits?.allowCustomImages}
+            onChange={(event) => onUpdate({ imageUrl: event.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50 disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder={limits?.allowCustomImages ? "https://..." : "Images non incluses dans cette offre"}
+          />
+          {!limits?.allowCustomImages ? (
+            <p className="mt-1 text-[11px] text-zinc-500">Les images personnalisees sont reservees aux offres superieures.</p>
+          ) : null}
+        </Field>
+        <Field label="Libelle du bouton">
+          <input
+            value={card.actionLabel ?? ""}
+            maxLength={40}
+            disabled={card.actionType === "none"}
+            onChange={(event) => onUpdate({ actionLabel: event.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50 disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="Ex. Voir le service"
+          />
+        </Field>
+        <Field label="Cible de l'action">
+          <input
+            value={card.actionTarget ?? ""}
+            disabled={card.actionType === "none"}
+            onChange={(event) => onUpdate({ actionTarget: event.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50 disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder={card.actionType === "external_url" ? "https://..." : "Identifiant section ou service"}
+          />
+        </Field>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold text-zinc-400">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function cardsForSlot(cards: GuestCardConfig[], slot: GuestCardConfig["slot"]) {
+  return cards.filter((card) => card.slot === slot).sort((a, b) => a.slotIndex - b.slotIndex);
+}
+
+function sortGuestCards(cards: GuestCardConfig[]) {
+  return [...cards].sort((a, b) => a.slot === b.slot ? a.slotIndex - b.slotIndex : a.slot.localeCompare(b.slot));
+}
+
+function normalizeSlotIndexes(cards: GuestCardConfig[]) {
+  return (["hero", "shortcut"] as GuestCardConfig["slot"][]).flatMap((slot) =>
+    cardsForSlot(cards, slot).map((card, slotIndex) => ({ ...card, slotIndex }))
+  );
+}
+
+function sanitizeCardForPlan(card: GuestCardConfig, limits: GuestCardPlanLimits): GuestCardConfig {
+  const allowedKinds = limits.allowedKinds as GuestCardConfig["kind"][];
+  const kind = allowedKinds.includes(card.kind) ? card.kind : allowedKinds[0];
+  const actionType = card.actionType === "external_url" && !limits.allowExternalLinks ? "none" : card.actionType;
+  return {
+    ...card,
+    kind,
+    imageUrl: limits.allowCustomImages ? normalizeOptionalText(card.imageUrl) : undefined,
+    description: normalizeOptionalText(card.description),
+    icon: normalizeOptionalText(card.icon),
+    actionLabel: actionType === "none" ? undefined : normalizeOptionalText(card.actionLabel),
+    actionType,
+    actionTarget: actionType === "none" ? undefined : normalizeOptionalText(card.actionTarget)
+  };
+}
+
+function validateGuestCards(cards: GuestCardConfig[], limits?: GuestCardPlanLimits) {
+  if (!limits) return [];
+  const errors: string[] = [];
+  const heroCount = cardsForSlot(cards, "hero").length;
+  const shortcutCount = cardsForSlot(cards, "shortcut").length;
+  if (heroCount > limits.maxHeroCards) errors.push(`Votre offre autorise ${limits.maxHeroCards} cartes principales maximum.`);
+  if (shortcutCount > limits.maxShortcutCards) errors.push(`Votre offre autorise ${limits.maxShortcutCards} raccourcis maximum.`);
+
+  cards.forEach((card) => {
+    if (!card.title.trim()) errors.push("Chaque carte doit avoir un titre.");
+    if (!limits.allowedKinds.includes(card.kind)) errors.push(`Le type ${CARD_KIND_LABELS[card.kind]} n'est pas inclus dans votre offre.`);
+    if (card.imageUrl?.trim() && !limits.allowCustomImages) errors.push("Les images personnalisees ne sont pas incluses dans votre offre.");
+    if (card.actionType === "external_url" && !limits.allowExternalLinks) errors.push("Les liens externes ne sont pas inclus dans votre offre.");
+  });
+  return errors;
+}
+
+function normalizeOptionalText(value?: string) {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
 }
 
 function ServiceCard({ svc, highlighted }: { svc: ServiceCatalogItem; highlighted: boolean }) {

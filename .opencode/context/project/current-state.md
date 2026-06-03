@@ -168,6 +168,9 @@ Next possible phase after decision:
 - Public demo URLs are not validated as staging: the Guest App URL returns HTTP 200 with `Hotel not found`, and the admin/reception URL returns HTTP 200 with a generic login. Dedicated staging DB/API/Web, access protection, and absence of real data remain unverified.
 - Next step is Coolify/environment clarification before any non-local seed, deploy, migration, reset, or db push.
 - `DEPLOIEMENT.md` now defines the mandatory staging validation checklist before any non-local demo seed, migration, or deploy.
+- Guest App card configuration is being delivered in layers: PR #81 added `guestCards` and `commercialPackage`; PR #82 added the commercial plan API; PR #84 added Super Admin plan editing and Hotel Admin read-only plan display; PR #85 added private guest-cards endpoints; PR #86 added the Hotel Admin guest cards editor.
+- Hotel Admin can configure card image, title, description, action, target, order, and enabled state within plan limits. Super Admin remains responsible for the commercial package.
+- GuestShell is not yet wired to `guestCards`; saved cards are not publicly visible in the Guest App until Vague 5F. No public guestCards exposure is validated yet.
 - Phase 10 — Design System / Templates.
 
 Safe approach going forward:

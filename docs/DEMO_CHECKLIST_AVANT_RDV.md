@@ -79,6 +79,20 @@ Super Admin est interne uniquement et ne doit pas etre montre en demo client. Ve
 
 Ne jamais ecrire de mot de passe, hash ou secret dans Git.
 
+## 4 ter. Cartes Guest App / Hotel Admin
+Etat Vague 5 :
+- PR #81 : modele `guestCards` + `commercialPackage` integre.
+- PR #82 : API plan commercial integree.
+- PR #84 : Super Admin modifie le forfait ; Hotel Admin le voit en lecture seule.
+- PR #85 : API privee guest-cards integree.
+- PR #86 : Hotel Admin peut editer les cartes Guest App.
+
+Dans Admin Hotel, les champs configurables sont : image, titre, description, action, cible, ordre et actif/inactif. Super Admin reste maitre du forfait ; Hotel Admin reste limite par son forfait.
+
+Important demo : `GuestShell` n'est pas encore branche sur `guestCards`. Les cartes sauvegardees dans Admin Hotel ne seront visibles dans la Guest App qu'en Vague 5F. Ne pas presenter cette personnalisation comme visible cote client avant 5F.
+
+Aucune exposition publique des `guestCards` et aucune action staging/production ne sont validees a ce stade.
+
 ## 5. Scenario a jouer
 - Scanner ou ouvrir QR demo.
 - Creer un client demo.

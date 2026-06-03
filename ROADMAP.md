@@ -32,6 +32,7 @@
 - Phase 9E-6 : seed demo neutre isole prepare en fichier manuel non automatique.
 - Phase 9E locale : tenant `demo-paris-local` / Hôtel Lumière Demo Paris valide localement, donnees fictives, Guest App OK, Reception OK, Admin Hotel OK.
 - Phase 9E post-login locale : Super Admin, Reception demo et Admin Hotel demo valides localement ; Vendome absent du parcours demo Reception/Admin Hotel.
+- Vague 5 Guest App cards : PR #81 modele `guestCards` + `commercialPackage`, PR #82 API plan commercial, PR #84 UI Super Admin plan + Hotel Admin lecture seule, PR #85 API dediee guest-cards, PR #86 editeur Hotel Admin des cartes Guest App.
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.
@@ -41,6 +42,7 @@
 - Cadrage Phase 10 : services client, tags de demandes, supervision Admin Hotel, tri clients presents et historique client.
 - Refactorisation progressive des gros fichiers frontend, uniquement par phases validees.
 - Distinction audit UI local / staging / production apres les observations du 2026-06-02.
+- Preparation Vague 5F : brancher la Guest App publique sur les cartes `guestCards` sauvegardees, sans exposer de donnees privees.
 
 ## A faire
 - Confirmer quel web/API/DB servent les domaines publics `demo-paris-local` et `admin-demo-paris-local`.
@@ -59,6 +61,7 @@
 - Continuer a decomposer les monofichiers frontend.
 - Ajouter tests automatises cibles si priorite commerciale.
 - Produire supports de vente et onboarding client.
+- Vague 5F : afficher dynamiquement les cartes sauvegardees dans GuestShell apres validation publique des donnees exposees.
 
 ## Bloque
 Aucun blocage documente dans cette passe.
@@ -79,6 +82,18 @@ Point de vigilance : l'audit Playwright/axe local est operationnel et utile, mai
 Statut public actuel : la Guest App publique `https://demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 mais affiche `Hotel not found`; l'URL `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 avec un login generique. Staging non valide, separation staging/production non verifiee.
 
 Statut local post-login : pret RDV local. Super Admin reste une surface interne uniquement et ne doit pas etre montre au prospect.
+
+## Statut Vague 5 - Cartes Guest App
+La configuration produit des cartes Guest App est partiellement integree :
+- PR #81 : modele `guestCards` et champ `commercialPackage` integres.
+- PR #82 : API plan commercial et limites de forfait integrees.
+- PR #84 : Super Admin peut modifier le forfait ; Hotel Admin le voit en lecture seule.
+- PR #85 : API privee dediee `guest-cards` integree.
+- PR #86 : Hotel Admin peut editer les cartes Guest App selon son forfait.
+
+Champs configurables par Hotel Admin : image, titre, description, action, cible, ordre et actif/inactif.
+
+Limites : Super Admin reste maitre du forfait. Hotel Admin reste limite par son forfait. `GuestShell` n'est pas encore branche sur `guestCards`; les cartes sauvegardees ne seront visibles dans la Guest App qu'en Vague 5F. Aucune exposition publique des `guestCards` avant 5F.
 
 ## Priorite suivante
 Apres clarification staging : proteger les URLs demo si elles restent publiques, valider un environnement staging dedie, puis lancer les petites PR Phase 10 dans l'ordre recommande par `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md` : services/categories, tags demandes, tri clients presents, supervision Admin Hotel, historique client.

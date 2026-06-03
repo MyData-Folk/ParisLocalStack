@@ -54,6 +54,17 @@ Information non verifiee dans cette passe : configuration Cloudflare exacte, reg
 ## 8. Modules existants
 Existants et fonctionnels selon etat connu : onboarding hotel/client, messagerie, demandes, avis et validation, CRM, clients presents/historique, fiche client/sejour, QR code, Super Admin, Generator, Hotel Admin, exports CRM, media hotel, monitoring/backups documentes.
 
+Vague 5 cartes Guest App :
+- PR #81 a ajoute le modele de configuration `guestCards` et le champ hotel `commercialPackage`.
+- PR #82 a ajoute l'API de plan commercial et le helper de limites.
+- PR #84 a ajoute la modification du plan par Super Admin et la lecture seule du plan cote Hotel Admin.
+- PR #85 a ajoute l'API privee dediee `GET/PATCH /api/hotels/:hotelId/guest-cards`.
+- PR #86 a ajoute l'editeur Hotel Admin des cartes Guest App.
+
+Champs cartes pris en charge : image, titre, description, action, cible, ordre, actif/inactif. Les limites de forfait pilotent le nombre de cartes principales, les raccourcis, les types autorises, les images personnalisees et les liens externes.
+
+Limite actuelle : `GuestShell.tsx` n'est pas encore branche sur `guestCards`; la route publique ne doit pas exposer les cartes avant la Vague 5F. Super Admin reste maitre du forfait et Hotel Admin reste contraint par ce forfait.
+
 Phase 10 documentee : `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md` cadre les prochaines evolutions services client, tags demandes, tri clients presents, supervision Admin Hotel et historique client. Le premier niveau peut rester frontend/API existante ; toute migration doit etre validee avant implementation.
 
 ## 9. Modules absents ou incomplets
