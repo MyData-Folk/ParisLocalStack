@@ -385,6 +385,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
   const [activeStays, setActiveStays] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
+  const [messageTarget, setMessageTarget] = useState<GuestMessageTarget | null>(null);
   const [reply, setReply] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -510,7 +511,14 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
           </div>
           {filtered.length === 0 && <EmptyState icon={<Inbox className="h-6 w-6" />} title="Aucun client contactable" description="Les clients actifs apparaitront ici, meme sans conversation prealable." />}
           {filtered.map((conversation) => (
-            <button key={conversation.id} onClick={() => setActiveId(conversation.id)} className={`block w-full border-b border-white/10 p-4 text-left transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-inset focus:ring-amber-300/10 ${active?.id === conversation.id ? "bg-amber-300/10 ring-1 ring-inset ring-amber-300/20" : ""}`}>
+            <button
+              key={conversation.id}
+              onClick={() => {
+                setActiveId(conversation.id);
+                setMessageTarget(conversationToMessageTarget(conversation, "Inbox reception"));
+              }}
+              className={`block w-full border-b border-white/10 p-4 text-left transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-inset focus:ring-amber-300/10 ${active?.id === conversation.id ? "bg-amber-300/10 ring-1 ring-inset ring-amber-300/20" : ""}`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-slate-950 text-sm font-semibold text-amber-200">
@@ -580,6 +588,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
               />
               <div className="mt-3 flex flex-wrap gap-2">
                   <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-sky-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-300/20"><MessageSquare className="h-4 w-4" /> {active.messages.length === 0 ? "Envoyer un message" : "Repondre"}</button>
+                  <button onClick={() => setMessageTarget(conversationToMessageTarget(active, "Inbox reception"))} className="inline-flex items-center gap-2 rounded-xl border border-sky-300/25 px-4 py-2.5 font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-300/10"><Send className="h-4 w-4" /> Message</button>
                   <button onClick={() => setProfileTarget({ guestId: active.lastMessage.guestId, stayId: active.lastMessage.stayId })} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10"><Eye className="h-4 w-4" /> Voir fiche</button>
                   <button onClick={() => void markConversationDone()} className="rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Marquer comme traite</button>
                 </div>
@@ -589,6 +598,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
         </div>
       </div>
       {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
+      {messageTarget ? <GuestMessageModal hotelId={hotelId} token={token} target={messageTarget} onClose={() => setMessageTarget(null)} onMessageSent={(message) => setMessages((current) => upsertById(current, message).sort(sortMessagesDesc))} /> : null}
     </div>
   );
 }
@@ -598,6 +608,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [requestFilter, setRequestFilter] = useState<"all" | "in_progress" | "urgent">("all");
   const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
+  const [messageTarget, setMessageTarget] = useState<GuestMessageTarget | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [error, setError] = useState("");
 
@@ -719,6 +730,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
                         <button onClick={() => setSelectedRequest(item)} className="rounded-lg border border-sky-300/25 px-2.5 py-1.5 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10">Detail</button>
+                        <button onClick={() => setMessageTarget(operationalItemToMessageTarget(item, "Demande reception"))} disabled={!item.guestId} className="rounded-lg border border-sky-300/25 px-2.5 py-1.5 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10 disabled:cursor-not-allowed disabled:opacity-50">Message</button>
                         <button onClick={() => setProfileTarget({ guestId: item.guestId, stayId: item.stayId })} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">Fiche</button>
                         <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
                         <button onClick={() => void updateStatus(item, "completed")} className="rounded-lg border border-emerald-300/25 px-2.5 py-1.5 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/10 focus:outline-none focus:ring-4 focus:ring-emerald-400/10">Traite</button>
@@ -743,6 +755,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
         />
       ) : null}
       {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
+      {messageTarget ? <GuestMessageModal hotelId={hotelId} token={token} target={messageTarget} onClose={() => setMessageTarget(null)} /> : null}
     </div>
   );
 }
@@ -982,6 +995,7 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
   const [statusFilter, setStatusFilter] = useState("all");
   const [metricFilter, setMetricFilter] = useState<"all" | "messages" | "requests" | "consent">("all");
   const [selectedStay, setSelectedStay] = useState<any | null>(null);
+  const [messageTarget, setMessageTarget] = useState<GuestMessageTarget | null>(null);
   const [editingStay, setEditingStay] = useState<any | null>(null);
   const [error, setError] = useState("");
 
@@ -1088,16 +1102,18 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
         rows={filtered}
         weakReviews={weakReviews}
         onView={(stay) => setSelectedStay(stay)}
+        onMessage={(row) => setMessageTarget(stayRowToMessageTarget(row, mode === "active" ? "Client present" : "Historique client"))}
         onEdit={(stay) => setEditingStay(stay)}
         onCheckout={(stay) => void checkout(stay)}
       />
       {selectedStay && <GuestProfilePanel hotelId={hotelId} token={token} target={{ guestId: selectedStay.guestId, stayId: selectedStay.id }} onClose={() => setSelectedStay(null)} onStayUpdated={() => void loadReceptionData()} />}
+      {messageTarget ? <GuestMessageModal hotelId={hotelId} token={token} target={messageTarget} onClose={() => setMessageTarget(null)} onMessageSent={(message) => setMessages((current) => upsertById(current, message).sort(sortOperationalDesc))} /> : null}
       {editingStay && <StayEditPanel stay={editingStay} onClose={() => setEditingStay(null)} onSave={(payload) => void saveStay(payload)} />}
     </div>
   );
 }
 
-function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }: { mode: "active" | "archived"; rows: any[]; weakReviews: number; onView: (stay: any) => void; onEdit: (stay: any) => void; onCheckout: (stay: any) => void }) {
+function ReceptionTable({ mode, rows, weakReviews, onView, onMessage, onEdit, onCheckout }: { mode: "active" | "archived"; rows: any[]; weakReviews: number; onView: (stay: any) => void; onMessage: (row: any) => void; onEdit: (stay: any) => void; onCheckout: (stay: any) => void }) {
   if (rows.length === 0) return null;
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-black/20">
@@ -1113,7 +1129,7 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }:
           </thead>
           <tbody className="divide-y divide-white/10">
             {rows.map((row) => (
-              <tr key={row.stay.id} className="transition hover:bg-white/[0.03]">
+              <tr key={row.stay.id} onClick={() => onMessage(row)} className="cursor-pointer transition hover:bg-white/[0.03]">
                 {mode === "active" ? (
                   <>
                     <td className="px-4 py-4 font-semibold text-amber-100">{row.room}</td>
@@ -1130,7 +1146,7 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }:
                     <td className="px-4 py-4 text-slate-200">{row.openMessages}</td>
                     <td className="px-4 py-4 text-slate-200">{row.openRequests}</td>
                     <td className="px-4 py-4">{row.rating ? <RatingBadge rating={row.rating} /> : <span className="text-slate-500">-</span>}</td>
-                    <td className="px-4 py-4"><RowActions row={row} active onView={onView} onEdit={onEdit} onCheckout={onCheckout} /></td>
+                    <td className="px-4 py-4"><RowActions row={row} active onView={onView} onMessage={onMessage} onEdit={onEdit} onCheckout={onCheckout} /></td>
                   </>
                 ) : (
                   <>
@@ -1148,7 +1164,7 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }:
                     <td className="px-4 py-4 text-slate-200">{row.messageCount}</td>
                     <td className="px-4 py-4 text-slate-200">{row.requestCount}</td>
                     <td className="px-4 py-4 text-slate-300">{formatTime(row.lastContact)}</td>
-                    <td className="px-4 py-4"><RowActions row={row} onView={onView} onEdit={onEdit} onCheckout={onCheckout} /></td>
+                    <td className="px-4 py-4"><RowActions row={row} onView={onView} onMessage={onMessage} onEdit={onEdit} onCheckout={onCheckout} /></td>
                   </>
                 )}
               </tr>
@@ -1161,13 +1177,160 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onEdit, onCheckout }:
   );
 }
 
-function RowActions({ row, active = false, onView, onEdit, onCheckout }: { row: any; active?: boolean; onView: (stay: any) => void; onEdit: (stay: any) => void; onCheckout: (stay: any) => void }) {
+function RowActions({ row, active = false, onView, onMessage, onEdit, onCheckout }: { row: any; active?: boolean; onView: (stay: any) => void; onMessage: (row: any) => void; onEdit: (stay: any) => void; onCheckout: (stay: any) => void }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <button onClick={() => onView(row.stay)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/5"><Eye className="h-3.5 w-3.5" /> Voir</button>
-      <button onClick={() => onEdit(row.stay)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/5"><Edit3 className="h-3.5 w-3.5" /> Editer</button>
-      {active && <button onClick={() => onCheckout(row.stay)} className="inline-flex items-center gap-1 rounded-lg border border-red-400/30 px-2.5 py-1.5 text-xs font-medium text-red-200 transition hover:bg-red-500/10"><Archive className="h-3.5 w-3.5" /> Check-out</button>}
-      {active && <a href="/inbox" className="inline-flex items-center gap-1 rounded-lg border border-amber-300/30 px-2.5 py-1.5 text-xs font-medium text-amber-100 transition hover:bg-amber-300/10"><Send className="h-3.5 w-3.5" /> Contacter</a>}
+      <button onClick={(event) => { event.stopPropagation(); onView(row.stay); }} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/5"><Eye className="h-3.5 w-3.5" /> Voir</button>
+      <button onClick={(event) => { event.stopPropagation(); onMessage(row); }} className="inline-flex items-center gap-1 rounded-lg border border-amber-300/30 px-2.5 py-1.5 text-xs font-medium text-amber-100 transition hover:bg-amber-300/10"><Send className="h-3.5 w-3.5" /> Message</button>
+      <button onClick={(event) => { event.stopPropagation(); onEdit(row.stay); }} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/5"><Edit3 className="h-3.5 w-3.5" /> Editer</button>
+      {active && <button onClick={(event) => { event.stopPropagation(); onCheckout(row.stay); }} className="inline-flex items-center gap-1 rounded-lg border border-red-400/30 px-2.5 py-1.5 text-xs font-medium text-red-200 transition hover:bg-red-500/10"><Archive className="h-3.5 w-3.5" /> Check-out</button>}
+    </div>
+  );
+}
+
+type GuestMessageTarget = {
+  guestId: string;
+  stayId?: string;
+  guestName: string;
+  roomNumber?: string;
+  context?: string;
+};
+
+function GuestMessageModal({
+  hotelId,
+  token,
+  target,
+  onClose,
+  onMessageSent,
+}: {
+  hotelId: string;
+  token: string;
+  target: GuestMessageTarget;
+  onClose: () => void;
+  onMessageSent?: (message: MessageItem) => void;
+}) {
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [draft, setDraft] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    setDraft("");
+    api.hotelMessages(hotelId, token)
+      .then((allMessages) => {
+        if (!mounted) return;
+        setMessages(
+          allMessages
+            .filter((message) => messageBelongsToTarget(message, target))
+            .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime())
+        );
+      })
+      .catch((err) => {
+        if (mounted) setError(err instanceof Error ? err.message : "Impossible de charger la conversation");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [hotelId, token, target.guestId, target.stayId]);
+
+  async function sendMessage() {
+    const content = draft.trim();
+    if (!content || sending) return;
+    setSending(true);
+    setError("");
+    setSuccess("");
+    try {
+      const created = await api.sendHotelMessage(
+        hotelId,
+        { guestId: target.guestId, stayId: target.stayId, content, priority: "medium" },
+        token
+      );
+      setMessages((current) => upsertById(current, created).sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()));
+      onMessageSent?.(created);
+      setDraft("");
+      setSuccess("Message envoye au client");
+    } catch {
+      setError("Impossible d'envoyer le message pour le moment");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="guest-message-title">
+      <section className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Messagerie client</p>
+            <h2 id="guest-message-title" className="mt-1 text-2xl font-semibold tracking-tight text-white">{target.guestName}</h2>
+            <p className="mt-2 text-sm text-slate-500">
+              {target.roomNumber ? `Chambre ${target.roomNumber}` : "Sejour client"}
+              {target.context ? ` - ${target.context}` : ""}
+            </p>
+          </div>
+          <button onClick={onClose} aria-label="Fermer" className="rounded-xl border border-white/10 p-2 text-slate-300 transition hover:bg-white/5"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto bg-slate-950/40 p-5">
+          {loading ? <LoadingPanel /> : null}
+          {error ? <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p> : null}
+          {!loading && !error ? (
+            <div className="space-y-3">
+              {messages.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-white/10 bg-slate-900/60 p-4 text-sm leading-6 text-slate-400">
+                  Aucune conversation pour ce client. Vous pouvez envoyer un premier message sans attendre une demande entrante.
+                </p>
+              ) : null}
+              {messages.map((message) => (
+                <div key={message.id} className={`flex ${message.senderType === "reception" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm shadow-sm ${message.senderType === "reception" ? "rounded-br-md bg-sky-300 text-slate-950" : "rounded-bl-md border border-white/10 bg-slate-800 text-slate-100"}`}>
+                    <div className="mb-1 flex items-center justify-between gap-4 text-xs opacity-70">
+                      <span>{message.senderType === "reception" ? "Reception" : "Client"}</span>
+                      <span>{formatTime(message.createdAt)}</span>
+                    </div>
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <div className="border-t border-white/10 bg-slate-900/95 p-5">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Message au client</span>
+            <textarea
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setSuccess("");
+                setError("");
+              }}
+              onKeyDown={(event) => {
+                if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void sendMessage();
+              }}
+              placeholder="Bonjour, la reception revient vers vous..."
+              className="mt-2 min-h-28 w-full rounded-xl border border-white/10 bg-slate-950/80 p-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-300/50 focus:ring-4 focus:ring-sky-300/10"
+            />
+          </label>
+          {success ? <p className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm text-emerald-100">{success}</p> : null}
+          {error && !loading ? <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</p> : null}
+          <div className="mt-4 flex justify-end gap-2">
+            <button onClick={onClose} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">Fermer</button>
+            <button onClick={() => void sendMessage()} disabled={!draft.trim() || sending} className="inline-flex items-center gap-2 rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:cursor-not-allowed disabled:opacity-50">
+              <Send className="h-4 w-4" />
+              {sending ? "Envoi..." : "Envoyer le message"}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
@@ -1178,6 +1341,7 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [reply, setReply] = useState("");
+  const [messageTarget, setMessageTarget] = useState<GuestMessageTarget | null>(null);
   const [editingStay, setEditingStay] = useState<any | null>(null);
   const [editingCrm, setEditingCrm] = useState(false);
   const [crmDraft, setCrmDraft] = useState({ relationshipStatus: "normal", crmTags: "", preferences: "{\n}", internalNotes: "" });
@@ -1331,6 +1495,7 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
                       <p className="mt-1 text-sm text-slate-500">Profil client, statut du sejour et actions reception.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      <button onClick={() => setMessageTarget(stayRowToMessageTarget(row, "Fiche client"))} className="rounded-xl border border-sky-300/25 px-3 py-2 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10">Message client</button>
                       <button onClick={() => setEditingStay(primaryStay)} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5">Modifier sejour</button>
                       {isActiveStay && <button onClick={() => void checkoutStay()} className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-medium text-red-200 transition hover:bg-red-500/10">Check-out</button>}
                     </div>
@@ -1416,6 +1581,7 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
           ) : null}
         </div>
       </aside>
+      {messageTarget ? <GuestMessageModal hotelId={hotelId} token={token} target={messageTarget} onClose={() => setMessageTarget(null)} onMessageSent={(message) => setMessages((current) => upsertById(current, message).sort(sortOperationalDesc))} /> : null}
       {editingStay && <StayEditPanel stay={editingStay} onClose={() => setEditingStay(null)} onSave={(payload) => void saveStay(payload)} />}
     </div>
   );
@@ -1661,6 +1827,45 @@ function buildConversations(messages: MessageItem[], activeStays: any[] = []): C
       status: normalizeStatus(lastMessage.status, lastMessage.priority, lastMessage.senderType)
     };
   }).sort((left, right) => new Date(right.lastMessage.createdAt).getTime() - new Date(left.lastMessage.createdAt).getTime());
+}
+
+function conversationToMessageTarget(conversation: Conversation, context: string): GuestMessageTarget | null {
+  const guestId = conversation.lastMessage.guestId ?? conversation.lastGuestMessage.guestId;
+  if (!guestId) return null;
+  return {
+    guestId,
+    stayId: conversation.lastMessage.stayId ?? conversation.lastGuestMessage.stayId,
+    guestName: conversation.guestName,
+    roomNumber: conversation.roomNumber,
+    context
+  };
+}
+
+function operationalItemToMessageTarget(item: any, context: string): GuestMessageTarget | null {
+  if (!item?.guestId) return null;
+  const guestName = [item.guest?.firstName, item.guest?.lastName].filter(Boolean).join(" ") || item.guest?.email || "Client";
+  return {
+    guestId: item.guestId,
+    stayId: item.stayId,
+    guestName,
+    roomNumber: item.stay?.roomNumber,
+    context
+  };
+}
+
+function stayRowToMessageTarget(row: any, context: string): GuestMessageTarget {
+  return {
+    guestId: row.guestId,
+    stayId: row.stay?.id,
+    guestName: row.client || "Client",
+    roomNumber: row.room,
+    context
+  };
+}
+
+function messageBelongsToTarget(message: any, target: GuestMessageTarget) {
+  if (message.guestId !== target.guestId) return false;
+  return target.stayId ? message.stayId === target.stayId : true;
 }
 
 function buildGuestTimeline(stay: any, messages: any[], requests: any[], reviews: any[]) {
