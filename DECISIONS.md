@@ -1,5 +1,16 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
+## 2026-06-03
+Decision : cadrer la Phase 10 produit autour de cinq petites PR ordonnees.
+
+Motif : la messagerie Reception / Client est stabilisee et les prochaines demandes doivent rester decoupees : services client, tags de demandes, tri clients presents, supervision Admin Hotel, historique client.
+
+Impact : utiliser `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md` comme reference avant d'ouvrir une PR technique Phase 10. Chaque evolution doit rester multi-hotel, sans valeur demo codee en dur, et ne pas lancer de migration sans validation explicite.
+
+Statut : adopte.
+
+---
+
 ## 2026-06-02
 Decision : rendre obligatoire une checklist de validation staging controle avant tout seed, migration ou deploiement hors local.
 

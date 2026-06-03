@@ -54,6 +54,8 @@ Information non verifiee dans cette passe : configuration Cloudflare exacte, reg
 ## 8. Modules existants
 Existants et fonctionnels selon etat connu : onboarding hotel/client, messagerie, demandes, avis et validation, CRM, clients presents/historique, fiche client/sejour, QR code, Super Admin, Generator, Hotel Admin, exports CRM, media hotel, monitoring/backups documentes.
 
+Phase 10 documentee : `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md` cadre les prochaines evolutions services client, tags demandes, tri clients presents, supervision Admin Hotel et historique client. Le premier niveau peut rester frontend/API existante ; toute migration doit etre validee avant implementation.
+
 ## 9. Modules absents ou incomplets
 A ne pas construire sans ticket explicite : integrations PMS type Opera/Mews, paiement integre, application native, AI concierge avancee, Google Maps actif, RATP actif, marketplace complet de templates, workflows Palace complexes.
 

@@ -38,6 +38,7 @@
 - Clarification de l'environnement public/staging pour `demo-paris-local` avant toute action hors local.
 - Formalisation des preuves staging obligatoires avant seed, migration ou deploy hors local.
 - Consolidation UX produit avant commercialisation.
+- Cadrage Phase 10 : services client, tags de demandes, supervision Admin Hotel, tri clients presents et historique client.
 - Refactorisation progressive des gros fichiers frontend, uniquement par phases validees.
 - Distinction audit UI local / staging / production apres les observations du 2026-06-02.
 
@@ -47,6 +48,11 @@
 - Appliquer la checklist `Validation staging controle avant seed hors local` de `DEPLOIEMENT.md`.
 - Relancer l'audit Playwright sur un environnement representatif uniquement apres clarification staging.
 - Enrichir les formulaires de demandes service.
+- Phase 10A : reorganiser les services client et categories.
+- Phase 10B : afficher les tags visibles des demandes cote Reception.
+- Phase 10C : ajouter les controles de tri clients presents.
+- Phase 10D : ajouter une supervision demandes cote Admin Hotel.
+- Phase 10E : clarifier historique client et archivage apres depart.
 - Finaliser la gestion recommandations avancee si besoin.
 - Nettoyer les pages orphelines apps/web/src/pages.
 - Renforcer le typage frontend API.
@@ -75,4 +81,4 @@ Statut public actuel : la Guest App publique `https://demo-paris-local.welcomepa
 Statut local post-login : pret RDV local. Super Admin reste une surface interne uniquement et ne doit pas etre montre au prospect.
 
 ## Priorite suivante
-Apres clarification staging : proteger les URLs demo si elles restent publiques, valider un environnement staging dedie, puis corriger les irritants UX identifies, prioriser les modules P2 selon retours prospects, continuer la refactorisation frontend sans modifier la logique metier.
+Apres clarification staging : proteger les URLs demo si elles restent publiques, valider un environnement staging dedie, puis lancer les petites PR Phase 10 dans l'ordre recommande par `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md` : services/categories, tags demandes, tri clients presents, supervision Admin Hotel, historique client.

@@ -50,6 +50,13 @@ Gravite : haute.
 
 Mitigation : appliquer la checklist `Validation staging controle avant seed hors local` dans `DEPLOIEMENT.md` avant toute action ; stopper si une preuve manque.
 
+### Phase 10 trop large
+Risque : melanger services client, tags demandes, tri, supervision Admin Hotel et historique dans une seule PR technique.
+
+Gravite : moyenne.
+
+Mitigation : suivre l'ordre Phase 10A a 10E documente dans `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md`, garder des PR petites, et stopper si une migration devient necessaire sans validation explicite.
+
 ## 2. Risques securite
 ### Exposition de donnees CRM publiques
 Risque : notes internes, tags, preferences ou coordonnees clients exposees dans la Guest App.
@@ -79,6 +86,13 @@ Risque : la reception perd en vitesse operationnelle.
 Gravite : moyenne.
 
 Mitigation : tables claires, filtres, badges, KPI lisibles, actions visibles.
+
+### Tags demandes ambigus
+Risque : afficher des tags incoherents si les libelles sont derives de `type` et `details` sans dictionnaire commun.
+
+Gravite : moyenne.
+
+Mitigation : commencer par un mapping frontend simple, documenter les libelles, puis evaluer une configuration par hotel seulement si le besoin est confirme.
 
 ### Guest App trop SaaS/admin
 Risque : l'experience client ne parait pas premium.
@@ -136,6 +150,13 @@ Risque : demo trop vide, peu credible.
 Gravite : moyenne.
 
 Mitigation : scenario demo riche avec clients, demandes, avis, CRM, recommandations.
+
+### Historique client mal cadre
+Risque : garder les clients partis dans les listes operationnelles ou perdre le contexte complet du sejour.
+
+Gravite : moyenne.
+
+Mitigation : separer clients presents et historique, conserver les liens `guestId` et `stayId`, et cadrer toute evolution de retention avec prudence RGPD.
 
 ### Cible trop large
 Risque : construire pour palaces et petits hotels simultanement.
