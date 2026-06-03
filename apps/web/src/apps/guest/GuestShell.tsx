@@ -354,8 +354,9 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
           </div>
           <div>
             <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Bienvenue a {hotel?.name}</p>
-            <h2 className={`mt-1 text-2xl font-semibold ${theme.classes.title}`}>Activez votre concierge</h2>
-            <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Quelques secondes suffisent pour personnaliser votre sejour et joindre la réception sans attente.</p>
+            <h2 className={`mt-1 text-2xl font-semibold ${theme.classes.title}`}>Votre concierge de séjour</h2>
+            <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Complétez ces informations pour accéder à votre guide de séjour, contacter la réception et retrouver les services de l’hôtel en quelques secondes.</p>
+            <p className={`mt-2 text-xs leading-5 ${theme.classes.muted}`}>Vos informations sont utilisées uniquement pour faciliter votre séjour et répondre à vos demandes.</p>
           </div>
         </div>
       </div>
@@ -376,11 +377,11 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
         </div>
         <label className={`flex gap-3 rounded-2xl p-3 text-sm ${theme.classes.subtleCard}`}>
           <input type="checkbox" className={`mt-1 h-4 w-4 rounded ${theme.classes.checkbox}`} checked={form.gdprConsent} onChange={(event) => setForm({ ...form, gdprConsent: event.target.checked })} />
-          J'accepte le traitement de mes donnees pour le suivi de mon sejour.
+          <span>J’accepte que l’hôtel utilise ces informations pour gérer mon séjour et répondre à mes demandes (séjour, services, messagerie).</span>
         </label>
         <label className={`flex gap-3 rounded-2xl p-3 text-sm ${theme.classes.subtleCard}`}>
           <input type="checkbox" className={`mt-1 h-4 w-4 rounded ${theme.classes.checkbox}`} checked={form.marketingConsent} onChange={(event) => setForm({ ...form, marketingConsent: event.target.checked })} />
-          J'accepte de recevoir les communications de l'hotel.
+          <span>J’accepte de recevoir les communications de l’hôtel (offres, événements). Vous pouvez vous désabonner à tout moment.</span>
         </label>
         {error && <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <button disabled={loading} className={`flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-semibold transition focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${theme.classes.primaryButton}`}>
