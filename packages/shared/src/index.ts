@@ -169,4 +169,5 @@ export type HotelCreateInput = z.infer<typeof hotelCreateSchema>;
 
 export * from "./guestCards.js";
 export * from "./hotelPlans.js";
+export * from "./hotelServices.js";
 export * from "./serviceCatalog.js";
