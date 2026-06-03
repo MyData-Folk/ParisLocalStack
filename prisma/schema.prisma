@@ -55,6 +55,7 @@ model Hotel {
   primaryColor     String             @default("#c9a84c") @map("primary_color")
   secondaryColor   String             @default("#0f172a") @map("secondary_color")
   status           HotelStatus        @default(draft)
+  commercialPackage String             @default("boutique")
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
   users            HotelUser[]
@@ -235,6 +236,7 @@ model HotelSettings {
   guestTheme       String   @default("parisian_boutique") @map("guest_theme")
   languages        Json     @default("[\"fr\",\"en\"]")
   modules          Json     @default("{}")
+  guestCards       Json     @default("[]")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
   hotel            Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
