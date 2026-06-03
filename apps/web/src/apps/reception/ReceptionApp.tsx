@@ -23,7 +23,7 @@ export function ReceptionApp({ basePath = "" }: { basePath?: string }) {
     : "reception@demo-paris-local.test";
 
   return (
-    <AuthGate title="Connexion rÃ©ception" subtitle="Acces securise au dashboard hotel" defaultEmail={defaultEmail} allowedRoles={["super_admin", "hotel_admin", "receptionist"]}>
+    <AuthGate title="Connexion réception" subtitle="Accès sécurisé au dashboard hôtel" defaultEmail={defaultEmail} allowedRoles={["super_admin", "hotel_admin", "receptionist"]}>
       <ReceptionDashboard basePath={basePath} />
     </AuthGate>
   );
@@ -70,7 +70,7 @@ function TenantContextError({ message: _message, tenantSlug: _tenantSlug }: { me
     <section className="rounded-2xl border border-red-400/30 bg-red-500/10 p-6 shadow-lg shadow-black/20">
       <AlertTriangle className="h-7 w-7 text-red-200" />
       <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white">Contexte hotel indisponible</h1>
-      <p className="mt-2 text-sm leading-6 text-red-100/80">Nous n'avons pas pu ouvrir l'espace rÃ©ception de cet hÃ´tel. VÃ©rifiez votre lien d'accÃ¨s ou contactez le support Paris Local.</p>
+      <p className="mt-2 text-sm leading-6 text-red-100/80">Nous n'avons pas pu ouvrir l'espace réception de cet hôtel. Vérifiez votre lien d'accès ou contactez le support Paris Local.</p>
     </section>
   );
 }
@@ -108,7 +108,7 @@ function ReceptionHome({ hotelId, token, basePath }: { hotelId: string; token: s
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="RÃ©ception" title="Dashboard operationnel" description="Vue live des sejours, demandes et alertes du jour" live />
+      <PageHeader eyebrow="Réception" title="Dashboard opérationnel" description="Vue live des séjours, demandes et alertes du jour" live />
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Link to={path("/guests")} className="focus:outline-none focus:ring-4 focus:ring-sky-400/15"><MetricCard icon={<BedDouble className="h-4 w-4" />} label="Clients presents" value={stays.length} tone="blue" /></Link>
@@ -118,7 +118,7 @@ function ReceptionHome({ hotelId, token, basePath }: { hotelId: string; token: s
       </div>
       <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
-          <h2 className="text-lg font-semibold tracking-tight text-white">Priorites rÃ©ception</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-white">Priorités réception</h2>
           <div className="mt-4 space-y-3">
             <ActionRow to={path("/inbox")} icon={<Inbox className="h-4 w-4" />} title="Traiter la messagerie" meta={`${openMessages} message(s) ouvert(s)`} />
             <ActionRow to={path("/requests")} icon={<ListChecks className="h-4 w-4" />} title="Suivre les demandes" meta={`${openRequests} demande(s) en cours`} />
@@ -128,7 +128,7 @@ function ReceptionHome({ hotelId, token, basePath }: { hotelId: string; token: s
         <div className="rounded-2xl border border-sky-400/15 bg-sky-400/10 p-5 shadow-lg shadow-black/20">
           <Radio className="h-6 w-6 text-sky-300" />
           <h2 className="mt-4 text-lg font-semibold tracking-tight text-white">Centre live</h2>
-          <p className="mt-2 text-sm leading-6 text-sky-50/75">Le dashboard rÃ©ception reste synchronise avec les messages, demandes, avis et statuts actifs.</p>
+          <p className="mt-2 text-sm leading-6 text-sky-50/75">Le dashboard réception reste synchronisé avec les messages, demandes, avis et statuts actifs.</p>
         </div>
       </section>
     </div>
@@ -150,7 +150,7 @@ function ReceptionQrView({ hotelId, token }: { hotelId: string; token: string })
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="QR client" title="QR code hotel" description="Lien unique pour onboarding client, pre-check-in et impression rÃ©ception" />
+      <PageHeader eyebrow="QR client" title="QR code hôtel" description="Lien unique pour onboarding client, pré-check-in et impression réception" />
       {error ? <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p> : null}
       <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
@@ -162,7 +162,7 @@ function ReceptionQrView({ hotelId, token }: { hotelId: string; token: string })
         <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-5 shadow-lg shadow-black/20">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-300">URL canonique client</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">{hotel?.name ?? "Hotel"}</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-400">Le QR code ouvre l'app client de l'hotel. Sans session existante, le client arrive directement sur l'enregistrement : identite, coordonnees, chambre et dates de sejour.</p>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">Le QR code ouvre l'app client de l'hôtel. Sans session existante, le client arrive directement sur l'enregistrement : identité, coordonnées, chambre et dates de séjour.</p>
           <div className="mt-5 rounded-2xl border border-white/[0.07] bg-[#09090b] p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Lien a partager</p>
             <div className="mt-2 flex items-center gap-2">
@@ -178,7 +178,7 @@ function ReceptionQrView({ hotelId, token }: { hotelId: string; token: string })
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             <InfoPill icon={<QrCode className="h-4 w-4" />} label="Usage" value="Print / Email" />
             <InfoPill icon={<Users className="h-4 w-4" />} label="Scan" value="Onboarding" />
-            <InfoPill icon={<BedDouble className="h-4 w-4" />} label="RÃ©ception" value="Sejour editable" />
+            <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Réception" value="Séjour éditable" />
           </div>
         </div>
       </section>
@@ -515,7 +515,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
               key={conversation.id}
               onClick={() => {
                 setActiveId(conversation.id);
-                setMessageTarget(conversationToMessageTarget(conversation, "Inbox rÃ©ception"));
+                setMessageTarget(conversationToMessageTarget(conversation, "Inbox réception"));
               }}
               className={`block w-full border-b border-white/10 p-4 text-left transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-inset focus:ring-amber-300/10 ${active?.id === conversation.id ? "bg-amber-300/10 ring-1 ring-inset ring-amber-300/20" : ""}`}
             >
@@ -535,7 +535,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                 </div>
               </div>
               <p className="mt-3 truncate text-sm text-slate-300">
-                <span className="text-slate-500">{conversation.lastMessage.senderType === "reception" ? "RÃ©ception: " : "Client: "}</span>
+                <span className="text-slate-500">{conversation.lastMessage.senderType === "reception" ? "Réception: " : "Client: "}</span>
                 {conversation.lastMessage.content}
               </p>
             </button>
@@ -568,7 +568,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                   <div key={item.id} className={`flex ${item.senderType === "reception" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm ${item.senderType === "reception" ? "rounded-br-md bg-amber-300 text-slate-950" : "rounded-bl-md border border-white/10 bg-slate-800 text-slate-100"}`}>
                       <div className="mb-1 flex items-center justify-between gap-4 text-xs opacity-70">
-                        <span>{item.senderType === "reception" ? "RÃ©ception" : "Client"}</span>
+                        <span>{item.senderType === "reception" ? "Réception" : "Client"}</span>
                         <span>{formatTime(item.createdAt)}</span>
                       </div>
                       <p>{item.content}</p>
@@ -584,11 +584,11 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                 onKeyDown={(event) => {
                   if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void sendReply();
                 }}
-                placeholder="RÃ©ponse rÃ©ception"
+                placeholder="Réponse réception"
               />
               <div className="mt-3 flex flex-wrap gap-2">
                   <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-sky-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-300/20"><MessageSquare className="h-4 w-4" /> {active.messages.length === 0 ? "Envoyer un message" : "Repondre"}</button>
-                  <button onClick={() => setMessageTarget(conversationToMessageTarget(active, "Inbox rÃ©ception"))} className="inline-flex items-center gap-2 rounded-xl border border-sky-300/25 px-4 py-2.5 font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-300/10"><Send className="h-4 w-4" /> Message</button>
+                  <button onClick={() => setMessageTarget(conversationToMessageTarget(active, "Inbox réception"))} className="inline-flex items-center gap-2 rounded-xl border border-sky-300/25 px-4 py-2.5 font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-300/10"><Send className="h-4 w-4" /> Message</button>
                   <button onClick={() => setProfileTarget({ guestId: active.lastMessage.guestId, stayId: active.lastMessage.stayId })} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10"><Eye className="h-4 w-4" /> Voir fiche</button>
                   <button onClick={() => void markConversationDone()} className="rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Marquer comme traite</button>
                 </div>
@@ -689,7 +689,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
     <div className="space-y-5">
       <PageHeader
         eyebrow="File operationnelle"
-        title="Demandes rÃ©ception"
+        title="Demandes réception"
         description={`${items.length} element${items.length > 1 ? "s" : ""} operationnel${items.length > 1 ? "s" : ""}`}
         live
       />
@@ -731,7 +731,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
                         <button onClick={() => setSelectedRequest(item)} className="rounded-lg border border-sky-300/25 px-2.5 py-1.5 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10">Detail</button>
-                        <button onClick={() => setMessageTarget(operationalItemToMessageTarget(item, "Demande rÃ©ception"))} disabled={!item.guestId} className="rounded-lg border border-sky-300/25 px-2.5 py-1.5 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10 disabled:cursor-not-allowed disabled:opacity-50">Message</button>
+                        <button onClick={() => setMessageTarget(operationalItemToMessageTarget(item, "Demande réception"))} disabled={!item.guestId} className="rounded-lg border border-sky-300/25 px-2.5 py-1.5 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10 disabled:cursor-not-allowed disabled:opacity-50">Message</button>
                         <button onClick={() => setProfileTarget({ guestId: item.guestId, stayId: item.stayId })} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">Fiche</button>
                         <button onClick={() => void updateStatus(item, "in_progress")} className="rounded-lg border border-white/[0.07] px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-white/10">En cours</button>
                         <button onClick={() => void updateStatus(item, "completed")} className="rounded-lg border border-emerald-300/25 px-2.5 py-1.5 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/10 focus:outline-none focus:ring-4 focus:ring-emerald-400/10">Traite</button>
@@ -976,7 +976,7 @@ function ReviewsView({ hotelId, token }: { hotelId: string; token: string }) {
       </div>
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
       {items.length === 0 && <EmptyState icon={<Star className="h-6 w-6" />} title="Aucun avis client" description="Les avis et alertes satisfaction apparaitront ici." />}
-      <ReviewSection title="Avis sejours en cours" reviews={visibleActiveReviews} onResolve={resolveReview} onModerate={updateReviewModeration} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} />
+      <ReviewSection title="Avis séjours en cours" reviews={visibleActiveReviews} onResolve={resolveReview} onModerate={updateReviewModeration} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} />
       <ReviewSection title="Avis historiques" reviews={visibleHistoricReviews} onResolve={resolveReview} onModerate={updateReviewModeration} onViewProfile={(review) => setProfileTarget({ guestId: review.guestId, stayId: review.stayId })} muted />
       {profileTarget ? <GuestProfilePanel hotelId={hotelId} token={token} target={profileTarget} onClose={() => setProfileTarget(null)} /> : null}
     </div>
@@ -1086,7 +1086,7 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
       <section className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-lg shadow-black/20">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-white">{mode === "active" ? "Tableau des sejours actifs" : "Tableau historique client"}</h2>
+            <h2 className="text-base font-semibold tracking-tight text-white">{mode === "active" ? "Tableau des séjours actifs" : "Tableau historique client"}</h2>
             <p className="mt-1 text-sm text-slate-500">{mode === "active" ? "Les clients partis sont exclus des operations courantes." : "Historique conserve sans suppression de donnees."} Export du filtre courant : {filtered.length} ligne{filtered.length > 1 ? "s" : ""}.</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
@@ -1147,7 +1147,7 @@ function ReceptionTable({ mode, rows, weakReviews, onView, onMessage, onEdit, on
             <tr>
               {(mode === "active"
                 ? ["Chambre", "Client", "Relation", "Tags", "Email", "Telephone", "Arrivee", "Depart", "Langue", "CRM", "Statut", "Messages", "Demandes", "Avis", "Actions"]
-                : ["Client", "Relation", "Tags", "Email", "Telephone", "Chambre", "Arrivee", "Depart", "Duree", "Marketing", "Note", "Messages", "Demandes", "Dernier contact", "Actions"]
+                : ["Client", "Relation", "Tags", "Email", "Téléphone", "Chambre", "Arrivée", "Départ", "Durée", "Marketing", "Note", "Messages", "Demandes", "Dernier contact", "Actions"]
               ).map((header) => <th key={header} className="px-4 py-3 font-semibold">{header}</th>)}
             </tr>
           </thead>
@@ -1317,7 +1317,7 @@ function GuestMessageModal({
                 <div key={message.id} className={`flex ${message.senderType === "reception" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm shadow-sm ${message.senderType === "reception" ? "rounded-br-md bg-sky-300 text-slate-950" : "rounded-bl-md border border-white/10 bg-slate-800 text-slate-100"}`}>
                     <div className="mb-1 flex items-center justify-between gap-4 text-xs opacity-70">
-                      <span>{message.senderType === "reception" ? "RÃ©ception" : "Client"}</span>
+                      <span>{message.senderType === "reception" ? "Réception" : "Client"}</span>
                       <span>{formatTime(message.createdAt)}</span>
                     </div>
                     <p className="whitespace-pre-wrap">{message.content}</p>
@@ -1340,7 +1340,7 @@ function GuestMessageModal({
               onKeyDown={(event) => {
                 if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void sendMessage();
               }}
-              placeholder="Bonjour, la rÃ©ception revient vers vous..."
+              placeholder="Bonjour, la réception revient vers vous..."
               className="mt-2 min-h-28 w-full rounded-xl border border-white/10 bg-slate-950/80 p-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-300/50 focus:ring-4 focus:ring-sky-300/10"
             />
           </label>
@@ -1516,7 +1516,7 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="font-semibold text-white">Identite et sejour</h3>
-                      <p className="mt-1 text-sm text-slate-500">Profil client, statut du sejour et actions rÃ©ception.</p>
+                      <p className="mt-1 text-sm text-slate-500">Profil client, statut du séjour et actions réception.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button onClick={() => setMessageTarget(stayRowToMessageTarget(row, "Fiche client"))} className="rounded-xl border border-sky-300/25 px-3 py-2 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10">Message client</button>
@@ -1529,14 +1529,14 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
                     <InfoPill icon={<Phone className="h-4 w-4" />} label="Telephone" value={row.phone || "Non renseigne"} />
                     <InfoPill icon={<Languages className="h-4 w-4" />} label="Langue" value={row.language.toUpperCase()} />
                     <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Chambre" value={row.room} />
-                    <InfoPill icon={<Clock className="h-4 w-4" />} label="Duree" value={`${row.nights} nuit${row.nights > 1 ? "s" : ""}`} />
+                    <InfoPill icon={<Clock className="h-4 w-4" />} label="Durée" value={`${row.nights} nuit${row.nights > 1 ? "s" : ""}`} />
                     <InfoPill icon={<CheckCircle className="h-4 w-4" />} label="Consentement CRM" value={row.marketingConsent ? "Oui" : "Non"} />
                   </div>
                 </section>
                 <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-white">CRM rÃ©ception</h3>
+                      <h3 className="font-semibold text-white">CRM réception</h3>
                       <p className="mt-1 text-sm text-slate-500">Informations internes non visibles par le client.</p>
                     </div>
                     <button onClick={() => setEditingCrm((value) => !value)} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/5">
@@ -1578,7 +1578,7 @@ function GuestProfilePanel({ hotelId, token, target, onClose, onStayUpdated }: {
                           <textarea value={crmDraft.preferences} onChange={(event) => setCrmDraft((draft) => ({ ...draft, preferences: event.target.value }))} className={`${fieldClassName} min-h-28 font-mono`} />
                         </Field>
                         <Field label="Notes internes">
-                          <textarea value={crmDraft.internalNotes} onChange={(event) => setCrmDraft((draft) => ({ ...draft, internalNotes: event.target.value }))} placeholder="Notes visibles uniquement par la rÃ©ception." className={`${fieldClassName} min-h-28`} />
+                          <textarea value={crmDraft.internalNotes} onChange={(event) => setCrmDraft((draft) => ({ ...draft, internalNotes: event.target.value }))} placeholder="Notes visibles uniquement par la réception." className={`${fieldClassName} min-h-28`} />
                         </Field>
                       </div>
                       {crmError && <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{crmError}</p>}
@@ -1678,7 +1678,7 @@ function ConversationPanel({ messages, reply, onReplyChange, onSendReply }: { me
       <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
         {[...messages].sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()).map((message) => (
           <div key={message.id} className={`rounded-2xl px-3 py-2 text-sm ${message.senderType === "reception" ? "ml-8 bg-amber-300 text-slate-950" : "mr-8 border border-white/10 bg-slate-950 text-slate-100"}`}>
-            <p className="text-xs opacity-70">{message.senderType === "reception" ? "RÃ©ception" : "Client"} - {formatTime(message.createdAt)}</p>
+            <p className="text-xs opacity-70">{message.senderType === "reception" ? "Réception" : "Client"} - {formatTime(message.createdAt)}</p>
             <p className="mt-1">{message.content}</p>
           </div>
         ))}
@@ -1906,7 +1906,7 @@ function buildGuestTimeline(stay: any, messages: any[], requests: any[], reviews
     ...messages.map((message) => ({
       id: `message:${message.id}`,
       type: message.senderType === "reception" ? "message_reception" : "message_client",
-      title: message.senderType === "reception" ? "RÃ©ponse rÃ©ception" : "Message client",
+      title: message.senderType === "reception" ? "Réponse réception" : "Message client",
       description: message.content,
       status: message.status,
       actor: message.senderType === "reception" ? "reception" : "client",
@@ -2451,12 +2451,12 @@ const GUEST_THEMES: { value: GuestTheme; label: string; description: string; acc
 ];
 
 const DEFAULT_MODULES: { key: string; label: string; description: string }[] = [
-  { key: "messages", label: "Messagerie client", description: "Le client peut envoyer des messages a la rÃ©ception" },
+  { key: "messages", label: "Messagerie client", description: "Le client peut envoyer des messages à la réception" },
   { key: "service_requests", label: "Demandes de service", description: "Taxi, room service, linge, assistance..." },
   { key: "reviews", label: "Avis clients", description: "Collecte de satisfaction apres le sejour" },
   { key: "recommendations", label: "Recommandations locales", description: "Restaurants, musees, transports a proximite" },
   { key: "wifi", label: "Affichage Wi-Fi", description: "Code Wi-Fi visible dans l'app client" },
-  { key: "breakfast", label: "Horaires petit-dÃ©jeuner", description: "Affichage des horaires dans l'app client" },
+  { key: "breakfast", label: "Horaires petit-déjeuner", description: "Affichage des horaires dans l'app client" },
 ];
 
 function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
@@ -2557,11 +2557,11 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
           <div className="grid gap-5 md:grid-cols-2">
             <FieldDark label="Nom du reseau Wi-Fi" value={wifiName} onChange={setWifiName} placeholder="ex: Hotel-Guest" />
             <FieldDark label="Mot de passe Wi-Fi" value={wifiPassword} onChange={setWifiPassword} placeholder="ex: Paris2026!" />
-            <FieldDark label="Horaires petit-dÃ©jeuner" value={breakfastHours} onChange={setBreakfastHours} placeholder="ex: 07:00 - 10:30" />
+            <FieldDark label="Horaires petit-déjeuner" value={breakfastHours} onChange={setBreakfastHours} placeholder="ex: 07:00 - 10:30" />
             <FieldDark label="Heure d'arrivee (Check-in)" value={checkinTime} onChange={setCheckinTime} placeholder="ex: 15:00" />
             <FieldDark label="Heure de depart (Check-out)" value={checkoutTime} onChange={setCheckoutTime} placeholder="ex: 12:00" />
-            <FieldDark label="Horaires du service dâ€™Ã©tage" value={roomServiceHours} onChange={setRoomServiceHours} placeholder="ex: 07:00 - 23:00" />
-            <FieldDark label="Telephone de la rÃ©ception" value={receptionPhone} onChange={setReceptionPhone} placeholder="ex: +33 1 00 00 00 00" />
+            <FieldDark label="Horaires du service d'étage" value={roomServiceHours} onChange={setRoomServiceHours} placeholder="ex: 07:00 - 23:00" />
+            <FieldDark label="Téléphone de la réception" value={receptionPhone} onChange={setReceptionPhone} placeholder="ex: +33 1 00 00 00 00" />
             <FieldDark label="Numero WhatsApp" value={whatsappNumber} onChange={setWhatsappNumber} placeholder="ex: +33 6 00 00 00 00" />
           </div>
         </section>
