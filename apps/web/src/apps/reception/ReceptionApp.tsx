@@ -587,7 +587,7 @@ function InboxView({ hotelId, token }: { hotelId: string; token: string }) {
                 placeholder="Réponse réception"
               />
               <div className="mt-3 flex flex-wrap gap-2">
-                  <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-sky-400 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-300/20"><MessageSquare className="h-4 w-4" /> {active.messages.length === 0 ? "Envoyer un message" : "Repondre"}</button>
+                  <button onClick={() => void sendReply()} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20"><MessageSquare className="h-4 w-4" /> {active.messages.length === 0 ? "Envoyer un message" : "Repondre"}</button>
                   <button onClick={() => setMessageTarget(conversationToMessageTarget(active, "Inbox réception"))} className="inline-flex items-center gap-2 rounded-xl border border-sky-300/25 px-4 py-2.5 font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-300/10"><Send className="h-4 w-4" /> Message</button>
                   <button onClick={() => setProfileTarget({ guestId: active.lastMessage.guestId, stayId: active.lastMessage.stayId })} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10"><Eye className="h-4 w-4" /> Voir fiche</button>
                   <button onClick={() => void markConversationDone()} className="rounded-xl border border-white/10 px-4 py-2.5 font-medium text-slate-200 transition hover:bg-white/5 focus:outline-none focus:ring-4 focus:ring-white/10">Marquer comme traite</button>
@@ -875,7 +875,7 @@ function RequestDetailPanel({ request, hotelId, token, onClose, onUpdate, onOpen
                 type="button"
                 onClick={() => void sendRequestMessage()}
                 disabled={!message.trim() || sendingMessage || !request.guestId}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
                 {sendingMessage ? "Envoi..." : "Envoyer le message"}
@@ -1315,7 +1315,7 @@ function GuestMessageModal({
               ) : null}
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.senderType === "reception" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm shadow-sm ${message.senderType === "reception" ? "rounded-br-md bg-sky-300 text-slate-950" : "rounded-bl-md border border-white/10 bg-slate-800 text-slate-100"}`}>
+                  <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm shadow-sm ${message.senderType === "reception" ? "rounded-br-md bg-amber-300 text-slate-950" : "rounded-bl-md border border-white/10 bg-slate-800 text-slate-100"}`}>
                     <div className="mb-1 flex items-center justify-between gap-4 text-xs opacity-70">
                       <span>{message.senderType === "reception" ? "Réception" : "Client"}</span>
                       <span>{formatTime(message.createdAt)}</span>
@@ -1348,7 +1348,7 @@ function GuestMessageModal({
           {error && !loading ? <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</p> : null}
           <div className="mt-4 flex justify-end gap-2">
             <button onClick={onClose} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">Fermer</button>
-            <button onClick={() => void sendMessage()} disabled={!draft.trim() || sending} className="inline-flex items-center gap-2 rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:cursor-not-allowed disabled:opacity-50">
+            <button onClick={() => void sendMessage()} disabled={!draft.trim() || sending} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20 disabled:cursor-not-allowed disabled:opacity-50">
               <Send className="h-4 w-4" />
               {sending ? "Envoi..." : "Envoyer le message"}
             </button>
@@ -2629,7 +2629,7 @@ function SettingsView({ hotelId, token }: { hotelId: string; token: string }) {
           </div>
         </section>
 
-        <button disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:opacity-60">
+        <button disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20 disabled:opacity-60">
           {saving ? "Enregistrement..." : "Enregistrer les parametres"}
         </button>
       </form>
