@@ -227,11 +227,7 @@ export function AdminUsersPage() {
                   <option value="inactive">Desactive</option>
                 </select>
               </label>
-              <Field type="text" label="Nouveau mot de passe" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} placeholder="Laisser vide pour ne pas changer" helper="Minimum 8 caracteres. Communiquez-le ensuite a la reception." />
-              <button type="button" onClick={() => setForm((current) => ({ ...current, password: "ChangeMe123!" }))} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-sky-300/10 px-4 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-300/15 focus:outline-none focus:ring-4 focus:ring-sky-300/10">
-                <KeyRound className="h-4 w-4" />
-                Pre-remplir mot de passe temporaire
-              </button>
+              <Field type="text" label="Nouveau mot de passe" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} placeholder="Laisser vide pour ne pas changer" helper="Minimum 8 caracteres. Utilisez un mot de passe unique, fort et temporaire, puis communiquez-le de maniere securisee a l'utilisateur." />
               {message ? <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{message}</p> : null}
               <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
