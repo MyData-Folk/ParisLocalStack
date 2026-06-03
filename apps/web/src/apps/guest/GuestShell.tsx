@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import {
   Bell,
@@ -31,6 +31,10 @@ import {
 import { API_URL, api } from "../../lib/api";
 import { resolveTenantFromHostname, routeHotelSlug } from "../../lib/tenant";
 import { resolveGuestTheme, type GuestTheme } from "../../themes";
+import type { GuestCardConfig } from "@paris-local/shared";
+import { useGuestCards } from "./hooks/useGuestCards";
+import { GuestHeroCard } from "./components/GuestHeroCard";
+import { GuestShortcutCard } from "./components/GuestShortcutCard";
 
 type Session = { guestId: string; stayId: string; roomNumber: string; firstName?: string; lastName?: string };
 type GuestSection = "welcome" | "home" | "guide" | "services" | "messages" | "review";
@@ -82,6 +86,24 @@ export function GuestShell() {
   const [toast, setToast] = useState("");
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [activeService, setActiveService] = useState<ServiceTemplate | null>(null);
+  const guestCardsData = useGuestCards(settings as any);
+  const navigate = useNavigate();
+
+  const handleGuestCardAction = (card: GuestCardConfig) => {
+    const target = card.actionTarget;
+    if (!target) return;
+    if (card.actionType === "section") {
+      const path = basePath ? `${basePath}/${target.replace(/^\/+/, "")}` : `/${target.replace(/^\/+/, "")}`;
+      navigate(path);
+      return;
+    }
+    if (card.actionType === "service_request") {
+      const template = serviceTemplates.find(
+        (t) => t.id === target || t.type === target
+      );
+      if (template) setActiveService(template);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -193,6 +215,10 @@ export function GuestShell() {
                 session={session}
                 requests={requests}
                 onServiceRequest={setActiveService}
+                guestCards={guestCardsData.heroCards}
+                shortcutCards={guestCardsData.shortcutCards}
+                allowExternalLinks={guestCardsData.limits?.allowExternalLinks ?? false}
+                onGuestCardAction={handleGuestCardAction}
               />
             )}
             {activeSection === "services" && session && (
@@ -394,13 +420,15 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
   );
 }
 
-function HomeSection({ hotel, settings, session, requests, onServiceRequest }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void }) {
+function HomeSection({ hotel, settings, session, requests, onServiceRequest, guestCards = [], shortcutCards = [], allowExternalLinks = false, onGuestCardAction = () => {} }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void; guestCards?: GuestCardConfig[]; shortcutCards?: GuestCardConfig[]; allowExternalLinks?: boolean; onGuestCardAction?: (card: GuestCardConfig) => void }) {
   const theme = useGuestTheme();
   const recentRequests = requests.slice(0, 3);
   const quickServices = serviceTemplates.filter((service) => service.group === "hotel").slice(0, 4);
   const fullGuestName = [session.firstName, session.lastName].filter(Boolean).join(" ");
   const greetingName = fullGuestName || "Bienvenue";
   const roomLabel = session.roomNumber ? `Chambre ${session.roomNumber}` : null;
+  const showShortcutCards = shortcutCards.length > 0;
+  const showHeroCards = guestCards.length > 0;
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
@@ -416,26 +444,49 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
         <StayCard icon={<Phone className="h-5 w-5" />} label="Réception" title={settings?.receptionPhone || "24/7"} detail="Assistance sejour" />
       </div>
 
-      <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Actions rapides</p>
-            <h3 className={`text-lg font-semibold ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
+      {showShortcutCards ? (
+        <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Actions rapides</p>
+              <h3 className={`text-lg font-semibold ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
+            </div>
+            <ConciergeBell className="h-5 w-5 text-stone-400" />
           </div>
-          <ConciergeBell className="h-5 w-5 text-stone-400" />
+          <div className="grid grid-cols-2 gap-3">
+            {shortcutCards.map((card) => (
+              <GuestShortcutCard
+                key={card.id}
+                card={card}
+                theme={theme}
+                onAction={onGuestCardAction}
+                allowExternalLinks={allowExternalLinks}
+              />
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {quickServices.map((service) => (
-            <button key={service.id} onClick={() => onServiceRequest(service)} className={`group rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
-              <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm ${theme.classes.iconSoft}`}>
-                {service.icon}
-              </div>
-              <p className="font-semibold">{service.title}</p>
-              <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>{service.description}</p>
-            </button>
-          ))}
+      ) : (
+        <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Actions rapides</p>
+              <h3 className={`text-lg font-semibold ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
+            </div>
+            <ConciergeBell className="h-5 w-5 text-stone-400" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {quickServices.map((service) => (
+              <button key={service.id} onClick={() => onServiceRequest(service)} className={`group rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
+                <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm ${theme.classes.iconSoft}`}>
+                  {service.icon}
+                </div>
+                <p className="font-semibold">{service.title}</p>
+                <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>{service.description}</p>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
         <div className="flex items-center justify-between">
@@ -452,17 +503,31 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest }: {
         </div>
       </div>
 
-      <div className={`overflow-hidden rounded-3xl shadow-lg ${theme.classes.header}`}>
-        <img src={heroImage} alt="" className="h-32 w-full object-cover opacity-80" />
-        <div className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Guide local</p>
-          <h3 className="mt-1 text-xl font-semibold tracking-tight">Paris autour de {hotel?.name}</h3>
-          <p className="mt-2 text-sm leading-6 opacity-75">Restaurants, cafes, pharmacies et lieux utiles selectionnes pour votre sejour.</p>
-          <Link to="guide" className={`mt-4 inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold ${theme.classes.primaryButton}`}>
-            Explorer le quartier <ChevronRight className="h-4 w-4" />
-          </Link>
+      {showHeroCards ? (
+        <div className="space-y-4">
+          {guestCards.map((card) => (
+            <GuestHeroCard
+              key={card.id}
+              card={card}
+              theme={theme}
+              onAction={onGuestCardAction}
+              allowExternalLinks={allowExternalLinks}
+            />
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className={`overflow-hidden rounded-3xl shadow-lg ${theme.classes.header}`}>
+          <img src={heroImage} alt="" className="h-32 w-full object-cover opacity-80" />
+          <div className="p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Guide local</p>
+            <h3 className="mt-1 text-xl font-semibold tracking-tight">Paris autour de {hotel?.name}</h3>
+            <p className="mt-2 text-sm leading-6 opacity-75">Restaurants, cafes, pharmacies et lieux utiles selectionnes pour votre sejour.</p>
+            <Link to="guide" className={`mt-4 inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold ${theme.classes.primaryButton}`}>
+              Explorer le quartier <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
