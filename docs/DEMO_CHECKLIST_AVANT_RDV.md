@@ -87,11 +87,18 @@ Etat Vague 5 :
 - PR #85 : API privee guest-cards integree.
 - PR #86 : Hotel Admin peut editer les cartes Guest App.
 
+Vague 5F finalisee (PR #87, #88, #89) :
+- L'API publique settings expose `guestCards` actifs, tries par `slot` puis `slotIndex`, tronques par les limites du forfait.
+- Les composants `GuestHeroCard` et `GuestShortcutCard` sont isoles et gerent le rendu, les actions (`none` / `section` / `service_request` / `external_url`) et la securite des liens externes (`target="_blank"`, `rel="noopener noreferrer"`, validation stricte `http`/`https`).
+- `GuestShell` est branche avec un hook `useGuestCards(settings)` et un fallback legacy strict : si `guestCards` est absent, vide, invalide ou totalement desactive, le rendu historique (StayCard + actions rapides hardcodees + Guide local) est preserve tel quel.
+
 Dans Admin Hotel, les champs configurables sont : image, titre, description, action, cible, ordre et actif/inactif. Super Admin reste maitre du forfait ; Hotel Admin reste limite par son forfait.
 
-Important demo : `GuestShell` n'est pas encore branche sur `guestCards`. Les cartes sauvegardees dans Admin Hotel ne seront visibles dans la Guest App qu'en Vague 5F. Ne pas presenter cette personnalisation comme visible cote client avant 5F.
+Demo : la personnalisation configuree dans Admin Hotel est visible cote Guest App si au moins une carte `enabled === true` est sauvegardee. Si la liste est vide, le rendu legacy reste visible. Ne pas promettre de comportement different en staging/production sans validation prealable.
 
-Aucune exposition publique des `guestCards` et aucune action staging/production ne sont validees a ce stade.
+Voir `docs/GUEST_CARDS_DISPLAY.md` pour le detail (sources de verite, fallback, actions, securite).
+
+Validation locale 5F : audit UI 6/6 (Playwright), typecheck/build OK, health/ready OK, aucun secret expose. Staging et production non encore valides.
 
 ## 5. Scenario a jouer
 - Scanner ou ouvrir QR demo.

@@ -33,6 +33,7 @@
 - Phase 9E locale : tenant `demo-paris-local` / Hôtel Lumière Demo Paris valide localement, donnees fictives, Guest App OK, Reception OK, Admin Hotel OK.
 - Phase 9E post-login locale : Super Admin, Reception demo et Admin Hotel demo valides localement ; Vendome absent du parcours demo Reception/Admin Hotel.
 - Vague 5 Guest App cards : PR #81 modele `guestCards` + `commercialPackage`, PR #82 API plan commercial, PR #84 UI Super Admin plan + Hotel Admin lecture seule, PR #85 API dediee guest-cards, PR #86 editeur Hotel Admin des cartes Guest App.
+- Vague 5F finalisee : PR #87 API publique expose `guestCards` actifs tries et tronques par plan, PR #88 composants isoles `GuestHeroCard` / `GuestShortcutCard` avec support securise `external_url`, PR #89 branchement `GuestShell` avec fallback legacy strict vers le rendu historique. Audit UI local 6/6, typecheck/build OK, aucun secret expose.
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.
