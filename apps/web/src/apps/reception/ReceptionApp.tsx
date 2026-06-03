@@ -735,6 +735,8 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
       {selectedRequest ? (
         <RequestDetailPanel
           request={selectedRequest}
+          hotelId={hotelId}
+          token={token}
           onClose={() => setSelectedRequest(null)}
           onUpdate={(status) => void updateStatus(selectedRequest, status)}
           onOpenProfile={() => setProfileTarget({ guestId: selectedRequest.guestId, stayId: selectedRequest.stayId })}
@@ -745,15 +747,43 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   );
 }
 
-function RequestDetailPanel({ request, onClose, onUpdate, onOpenProfile }: { request: any; onClose: () => void; onUpdate: (status: string) => void; onOpenProfile: () => void }) {
+function RequestDetailPanel({ request, hotelId, token, onClose, onUpdate, onOpenProfile }: { request: any; hotelId: string; token: string; onClose: () => void; onUpdate: (status: string) => void; onOpenProfile: () => void }) {
   const details = requestDetailsEntries(request);
   const status = normalizeStatus(request.status, request.priority, request.senderType);
   const clientName = [request.guest?.firstName, request.guest?.lastName].filter(Boolean).join(" ") || "Client";
   const roomNumber = request.stay?.roomNumber ?? "-";
+  const [message, setMessage] = useState("");
+  const [messageSuccess, setMessageSuccess] = useState("");
+  const [messageError, setMessageError] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  useEffect(() => {
+    setMessage("");
+    setMessageSuccess("");
+    setMessageError("");
+  }, [request.id, request.source]);
+
+  async function sendRequestMessage() {
+    const content = message.trim();
+    if (!request.guestId || !content) return;
+
+    setSendingMessage(true);
+    setMessageSuccess("");
+    setMessageError("");
+    try {
+      await api.sendHotelMessage(hotelId, { guestId: request.guestId, stayId: request.stayId, content, priority: "medium" }, token);
+      setMessage("");
+      setMessageSuccess("Message envoye au client");
+    } catch {
+      setMessageError("Impossible d'envoyer le message pour le moment");
+    } finally {
+      setSendingMessage(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="request-detail-title">
-      <section className="flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+      <section className="flex max-h-[calc(100vh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200/80">Detail de la demande</p>
@@ -763,34 +793,76 @@ function RequestDetailPanel({ request, onClose, onUpdate, onOpenProfile }: { req
           <button onClick={onClose} aria-label="Fermer" className="rounded-xl border border-white/10 p-2 text-slate-300 transition hover:bg-white/5"><X className="h-4 w-4" /></button>
         </div>
         <div className="overflow-y-auto p-5">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <InfoPill icon={<Users className="h-4 w-4" />} label="Client" value={clientName} />
-            <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Chambre" value={roomNumber} />
-            <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Statut</p>
-              <div className="mt-2"><StatusBadge status={status} /></div>
-            </div>
-            <InfoPill icon={<AlertTriangle className="h-4 w-4" />} label="Priorite" value={request.priority ?? "-"} />
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Message du client</p>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-100">{request.description || "Aucun message detaille."}</p>
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Details</p>
-            <p className="mt-2 text-sm text-slate-300">{requestPrimaryDetail(request)}</p>
-            {details.length > 0 ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {details.map(([label, value]) => (
-                  <div key={label} className="rounded-xl border border-white/10 bg-slate-950/55 px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{value}</p>
-                  </div>
-                ))}
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="space-y-5">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <InfoPill icon={<Users className="h-4 w-4" />} label="Client" value={clientName} />
+                <InfoPill icon={<BedDouble className="h-4 w-4" />} label="Chambre" value={roomNumber} />
+                <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Statut</p>
+                  <div className="mt-2"><StatusBadge status={status} /></div>
+                </div>
+                <InfoPill icon={<AlertTriangle className="h-4 w-4" />} label="Priorite" value={request.priority ?? "-"} />
               </div>
-            ) : null}
+
+              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Message du client</p>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-100">{request.description || "Aucun message detaille."}</p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Details</p>
+                <p className="mt-2 text-sm text-slate-300">{requestPrimaryDetail(request)}</p>
+                {details.length > 0 ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {details.map(([label, value]) => (
+                      <div key={label} className="rounded-xl border border-white/10 bg-slate-950/55 px-3 py-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <aside className="rounded-2xl border border-sky-300/20 bg-sky-300/5 p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-300/15 text-sky-200">
+                  <MessageSquare className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="font-semibold text-white">Repondre au client</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                    {clientName} - chambre {roomNumber}
+                  </p>
+                </div>
+              </div>
+              <label className="mt-5 block">
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Message au client</span>
+                <textarea
+                  value={message}
+                  onChange={(event) => {
+                    setMessage(event.target.value);
+                    setMessageSuccess("");
+                    setMessageError("");
+                  }}
+                  placeholder="Bonjour, nous avons contacte le restaurant demande..."
+                  className="mt-2 min-h-40 w-full rounded-xl border border-white/10 bg-slate-950/80 p-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-300/50 focus:ring-4 focus:ring-sky-300/10"
+                />
+              </label>
+              {messageSuccess ? <p className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm text-emerald-100">{messageSuccess}</p> : null}
+              {messageError ? <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{messageError}</p> : null}
+              <button
+                type="button"
+                onClick={() => void sendRequestMessage()}
+                disabled={!message.trim() || sendingMessage || !request.guestId}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-300/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+                {sendingMessage ? "Envoi..." : "Envoyer le message"}
+              </button>
+            </aside>
           </div>
         </div>
         <div className="flex flex-wrap justify-end gap-2 border-t border-white/10 p-5">
