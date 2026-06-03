@@ -133,9 +133,16 @@ La personnalisation des cartes Guest App est en cours de construction par couche
 - PR #85 : API privee guest-cards.
 - PR #86 : editeur Hotel Admin des cartes Guest App.
 
+Vague 5F finalisee (PR #87, #88, #89) :
+- PR #87 : l'API publique settings expose `guestCards` actifs, filtres, tries par `slot` puis `slotIndex` et tronques par les limites du forfait. Aucun champ sensible expose (`wifiPassword` et `whatsappNumber` toujours exclus).
+- PR #88 : composants isoles `GuestHeroCard` et `GuestShortcutCard` avec gestion des actions (`none` / `section` / `service_request` / `external_url`). Les liens externes sont valides strictement en `http`/`https` et rends avec `target="_blank" rel="noopener noreferrer"`, gater par `allowExternalLinks` (defaut securise `false`).
+- PR #89 : `GuestShell` est branche via le hook `useGuestCards(settings)`. Le rendu legacy (StayCard Wi-Fi / petit-dejeuner / check-out / reception + actions rapides hardcodees + Guide local + Suivi reception) est preserve si `guestCards` est absent, vide, invalide ou totalement desactive.
+
 Hotel Admin peut configurer image, titre, description, action, cible, ordre et actif/inactif, dans les limites de son forfait. Super Admin reste responsable du forfait.
 
-Limite importante pour le scenario : ces cartes sauvegardees ne sont pas encore affichees dans la Guest App locale ou publique. `GuestShell` sera branche plus tard en Vague 5F, apres validation des donnees publiques autorisees.
+Scenario demo local : si au moins une carte `enabled === true` est sauvegardee, elle remplace la section "Actions rapides" (shortcut) ou la carte "Guide local" (hero). Sinon, le rendu legacy reste visible. Aucune presentation de comportement different en staging ou production sans validation prealable.
+
+Validation locale 5F : audit UI 6/6 (Playwright + axe), typecheck/build OK, health/ready OK, aucun secret expose. Staging et production non encore valides.
 
 ## Regle importante
 Aucune donnee reelle. Aucune capture infrastructure. Aucune exposition de configuration sensible.

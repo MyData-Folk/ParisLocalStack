@@ -43,6 +43,11 @@ Gravite : haute.
 
 Mitigation : ne lancer aucun seed, migration, deploy ou db push tant que web/API/DB dedies ne sont pas verifies ; confirmer une protection d'acces et un rollback staging ; ne pas utiliser production comme staging.
 
+### Cartes Guest configurables exposees publiquement
+Risque : une route publique expose par erreur un champ sensible, une carte desactivee, ou une image non validee.
+
+Statut Vague 5F (PR #87, #88, #89) : risque ferme en local. La route publique filtre `enabled === true`, trie par `slot` puis `slotIndex`, tronque par les limites du plan, exclut `wifiPassword` et `whatsappNumber`, et les liens externes sont valides strictement en `http`/`https` avec `target="_blank" rel="noopener noreferrer"`. Le rendu legacy reste conserve si `guestCards` est absent, vide, invalide ou totalement desactive. Validation : audit UI 6/6, typecheck/build/diff OK, aucun secret expose. Staging et production non encore valides.
+
 ### Checklist staging ignoree
 Risque : lancer une operation hors local sans avoir reuni les preuves minimales de staging controle.
 

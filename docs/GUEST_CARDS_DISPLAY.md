@@ -1,6 +1,6 @@
 # Guest Cards Display (Vague 5F)
 
-Statut : 5F-a (API publique), 5F-b (composants), 5F-c (branchement) integrees.
+Statut : Vague 5F finalisee et validee en local (PR #87, #88, #89 mergees dans `main`). Staging et production non encore valides.
 
 ## Ce que fait la Guest App
 
@@ -63,3 +63,21 @@ Les liens externes ne s'ouvrent que si le plan autorise
 * `npm run build --workspaces --if-present`
 * `npm run audit:ui` (avec dev server local actif)
 * `git diff --check`
+
+## Validation finale 5F (2026-06-03)
+
+* Audit UI Playwright : 6/6 OK (desktop + mobile sur guest-demo, reception, hotel-admin)
+* `npm run typecheck --workspaces --if-present` OK
+* `npm run build --workspaces --if-present` OK
+* `git diff --check` OK
+* `GET http://localhost:4000/health` -> `{"status":"ok"}`
+* `GET http://localhost:4000/ready` -> `{"status":"ready","database":"ok"}`
+* `GET http://localhost:5173` -> 200
+* Aucun secret, mot de passe, token, hash ou valeur d'environnement expose
+* Staging et production non encore valides (action hors locale bloquee tant que la checklist `DEPLOIEMENT.md` n'est pas completee)
+
+## Risques residuels apres 5F
+
+* Aucune URL de cartes n'est crawlee ou auditee automatiquement a ce stade. Les images casseees tombent sur le fallback icone mais aucun rapport de sante n'est expose cote staff.
+* La migration des hotels existants du rendu hardcode vers le rendu dynamique n'est pas faite : les cartes "Actions rapides" et "Guide local" actuelles restent affichees tant qu'aucune carte `enabled === true` n'est sauvegardee.
+* Le seed Vendome n'a pas ete enrichi en 5G : la couche seed est une phase distincte non couverte par 5F.

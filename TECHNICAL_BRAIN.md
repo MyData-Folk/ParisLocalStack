@@ -23,6 +23,8 @@ Surfaces frontend : Guest App, Reception App, Super Admin, Generator, Hotel Admi
 
 Points frontend critiques : tenant parsing hostname, routes canonical vers sous-domaines hotel, auth reelle via API et JWT, session a controler pour eviter un contexte hotel obsolete, grands fichiers historiques a refactoriser avec prudence.
 
+Vague 5F : la Guest App lit les cartes dynamiques via le hook `useGuestCards(settings)` (filtre defensif `enabled === true`, tri par `slotIndex`, troncature par `limits.maxHeroCards` / `limits.maxShortcutCards`) et dispatche vers `GuestHeroCard` (slot hero) ou `GuestShortcutCard` (slot shortcut). Les actions sont gerees par `resolveGuestCardAction` qui distingue `none` / `section` / `service_request` / `external_url` avec validation stricte `http`/`https`, `target="_blank" rel="noopener noreferrer"` et `allowExternalLinks` pilote par le plan. Fallback strict vers le rendu legacy si la liste est vide, invalide ou totalement desactivee.
+
 ## 4. Backend
 Stack : Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, JWT, bcryptjs, Zod, Socket.IO, Helmet, CORS, rate limiting, logs, Multer/storage local ou compatible objet selon configuration.
 

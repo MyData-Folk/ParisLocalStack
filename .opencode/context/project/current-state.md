@@ -33,6 +33,7 @@ The project has working foundations for:
 - Shared export helpers (apps/web/src/lib/export.ts)
 - Docker/Coolify deployment
 - API readiness + requestId tracing (Phase 8b)
+- Configurable Guest App cards (Vague 5): model, API plan, Super Admin plan UI, Hotel Admin guest-cards editor, public settings exposure, isolated display components, GuestShell wiring with strict legacy fallback (PR #81 → PR #89)
 - PostgreSQL backup/restore scripts with R2 upload and staging/test restore validated (Phase 8c complete)
 - Docker Compose restart: always policy (Phase 8d)
 - Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)

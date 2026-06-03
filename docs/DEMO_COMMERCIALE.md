@@ -124,7 +124,7 @@ Expliquer :
 - Montrer CRM : filtres segmentation, export Excel/JSON.
 - Insister sur RGPD, consentement et CRM propre.
 
-Note Vague 5 : l'editeur Hotel Admin des cartes Guest App permet de sauvegarder image, titre, description, action, cible, ordre et actif/inactif selon le forfait. Super Admin reste maitre du forfait. Les cartes sauvegardees ne sont pas encore visibles cote Guest App avant la Vague 5F ; ne pas les presenter comme deja affichees au client.
+Note Vague 5 : l'editeur Hotel Admin des cartes Guest App permet de sauvegarder image, titre, description, action, cible, ordre et actif/inactif selon le forfait. Super Admin reste maitre du forfait. Vague 5F finalisee : les cartes sauvegardees sont maintenant visibles cote Guest App (PR #87 API publique, PR #88 composants isoles avec liens externes securises, PR #89 branchement avec fallback legacy). Si aucune carte active n'est sauvegardee, le rendu historique reste visible.
 
 ### Etape 5 - Closing, 2 min
 
@@ -203,7 +203,7 @@ Une premiere demo peut etre preparee rapidement. Le demarrage commercial doit en
 - [ ] Aucun onglet Generator ouvert.
 - [ ] Aucun onglet GitHub / Coolify / R2 / Prisma ouvert.
 - [ ] Aucun secret visible.
-- [ ] Si l'editeur cartes Guest App est montre, preciser que l'affichage client arrive en Vague 5F.
+- [ ] Si l'editeur cartes Guest App est montre, preciser que l'affichage client est desormais actif en Vague 5F (PR #87, #88, #89) et que le rendu legacy reste visible si aucune carte active n'est sauvegardee.
 - [ ] Notifications desktop activees si demonstration live.
 - [ ] QR code pret si besoin.
 - [ ] Scenario client simple prepare.
@@ -261,6 +261,6 @@ Prochaines ameliorations possibles :
 - preparer une page vitrine claire ;
 - preparer une offre commerciale ;
 - preparer la Phase 10 Design System / Templates.
-- Vague 5F : brancher la Guest App sur les cartes sauvegardees apres validation de l'exposition publique.
+- Vague 5F terminee : PR #87, #88, #89 integrees et validees en local (audit UI 6/6, typecheck/build OK, health/ready OK). Prochaine priorite : validation staging controlee avant toute action publique.
 
 Voir aussi : `docs/PRODUCT_STRATEGY.md` pour le cadrage produit, les packages et la roadmap.

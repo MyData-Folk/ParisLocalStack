@@ -1,6 +1,15 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-03
+Decision : cloturer la Vague 5F en trois PR dediees (API publique, composants isoles, branchement avec fallback) avant toute evolution metier plus lourde.
+
+Motif : la Vague 5F devait rendre les cartes Guest App configurables tout en gardant un fallback strict vers le rendu legacy. Decouper en trois PR limite la surface de chaque review, isole la couche API de la couche UI et permet de tester independamment le rendu, la securite des liens externes et le branchement final.
+
+Impact : PR #87 expose publiquement `guestCards` actifs tries et tronques par plan ; PR #88 livre les composants isoles avec `target="_blank" rel="noopener noreferrer"` et validation stricte `http`/`https` ; PR #89 branche `GuestShell` avec `useGuestCards`, remplace uniquement les sections "Actions rapides" et "Guide local" par les cartes dynamiques, preserve les StayCard et le suivi des demandes, et conserve le rendu legacy si `guestCards` est absent, vide, invalide ou totalement desactive. Voir `docs/GUEST_CARDS_DISPLAY.md` pour le detail.
+
+Statut : adopte, valide en local (audit UI 6/6, typecheck/build/diff OK, health/ready OK, aucun secret expose). Staging et production non valides.
+
+---
 Decision : decouper la personnalisation des cartes Guest App en couches successives.
 
 Motif : eviter de melanger modele, API, plan commercial, editeur Hotel Admin et affichage public dans une seule PR.

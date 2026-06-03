@@ -34,6 +34,8 @@ Packages cibles : Starter, Boutique, Premium et Palace.
 
 Starter couvre le QR concierge et les informations pratiques. Boutique couvre messagerie, demandes structurees, avis, CRM, recommandations et branding. Premium ajoute themes avances, analytics, exports et automatisations. Palace reste reserve aux integrations avancees et workflows concierge VIP futurs.
 
+Vague 5F (PR #87, #88, #89) : les cartes Guest App (hero et shortcut) sont desormais configurables par hotel, avec un forfait commercial qui en plafonne le nombre, les kinds autorises, l'usage d'images personnalisees et l'ouverture de liens externes. Hotel Admin peut editer image, titre, description, action, ordre et etat actif/inactif via `PATCH /api/hotels/:id/guest-cards` ; Super Admin pilote le forfait via `PATCH /api/hotels/:id/plan`. La route publique settings ne retourne que les cartes `enabled === true` triees et tronquees, et la Guest App preserve le rendu legacy si la liste est absente, vide, invalide ou totalement desactivee.
+
 ## 6. Etat actuel du projet
 Etat connu au 2026-06-02 :
 - Monorepo GitHub MyData-Folk/ParisLocalStack.
