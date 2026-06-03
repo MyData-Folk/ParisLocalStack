@@ -308,7 +308,7 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
     // Email au format simple
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (form.email && !emailPattern.test(form.email)) {
-      setError("Veuillez saisir une adresse email valide.");
+      setError("Veuillez saisir une adresse e-mail valide.");
       return;
     }
     // Telephone : formats internationaux simples, longueur raisonnable
