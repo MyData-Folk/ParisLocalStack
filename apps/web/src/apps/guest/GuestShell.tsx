@@ -304,6 +304,26 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
       return;
     }
 
+    // === Validations locales avant envoi ===
+    // Email au format simple
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (form.email && !emailPattern.test(form.email)) {
+      setError("Veuillez saisir une adresse email valide.");
+      return;
+    }
+    // Telephone : formats internationaux simples, longueur raisonnable
+    const phonePattern = /^\+?[\d\s().-]{8,}$/;
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    if (form.phone && (!phonePattern.test(form.phone) || phoneDigits.length < 8)) {
+      setError("Veuillez saisir un numéro de téléphone valide.");
+      return;
+    }
+    // Date de depart strictement apres date d'arrivee
+    if (form.checkinDate && form.checkoutDate && form.checkoutDate <= form.checkinDate) {
+      setError("La date de départ doit être après la date d'arrivée.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
