@@ -2,20 +2,30 @@ import { ChevronRight } from "lucide-react";
 import type { GuestCardConfig } from "@paris-local/shared";
 import type { GuestTheme } from "../../../themes";
 import { GuestCardImage } from "./GuestCardImage";
-import { guestCardHasAction, resolveGuestCardIcon } from "../utils/guestCardIcons";
+import { resolveGuestCardIcon } from "../utils/guestCardIcons";
+import { resolveGuestCardAction } from "../utils/guestCardActions";
 
 type GuestHeroCardProps = {
   card: GuestCardConfig;
   theme: GuestTheme;
   onAction: (card: GuestCardConfig) => void;
+  allowExternalLinks?: boolean;
 };
 
-export function GuestHeroCard({ card, theme, onAction }: GuestHeroCardProps) {
+export function GuestHeroCard({ card, theme, onAction, allowExternalLinks = false }: GuestHeroCardProps) {
   const Icon = resolveGuestCardIcon(card);
-  const clickable = guestCardHasAction(card);
-  const ariaLabel = clickable ? `${card.title} — ${card.actionLabel ?? "Ouvrir"}` : card.title;
+  const action = resolveGuestCardAction(card, { onAction, allowExternalLinks });
+  const interactive = action.mode !== "none";
+  const ariaLabel = interactive ? `${card.title} — ${action.label}` : card.title;
 
-  const content = (
+  const cta = (
+    <span className={`mt-4 inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold ${theme.classes.primaryButton}`}>
+      {action.label}
+      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+    </span>
+  );
+
+  const inner = (
     <>
       <div className="relative">
         <GuestCardImage
@@ -35,32 +45,41 @@ export function GuestHeroCard({ card, theme, onAction }: GuestHeroCardProps) {
         {card.description ? (
           <p className={`mt-2 line-clamp-2 text-sm leading-6 ${theme.classes.muted}`}>{card.description}</p>
         ) : null}
-        {clickable ? (
-          <span className={`mt-4 inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold ${theme.classes.primaryButton}`}>
-            {card.actionLabel ?? "Voir"}
-            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </span>
-        ) : null}
+        {interactive ? cta : null}
       </div>
     </>
   );
 
-  const containerClass = `block overflow-hidden rounded-3xl shadow-lg ${theme.classes.elevatedCard} ${clickable ? "transition focus:outline-none focus:ring-4 focus:ring-[#b8973a]/30" : ""}`.trim();
+  const containerClass = `block overflow-hidden rounded-3xl shadow-lg ${theme.classes.elevatedCard} ${interactive ? "transition focus:outline-none focus:ring-4 focus:ring-[#b8973a]/30" : ""}`.trim();
 
-  if (clickable) {
+  if (action.mode === "external" && action.href) {
+    return (
+      <a
+        href={action.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={ariaLabel}
+        className={`${containerClass} no-underline`}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  if (action.mode === "internal" || action.mode === "service") {
     return (
       <button
         type="button"
-        onClick={() => onAction(card)}
+        onClick={action.onClick}
         aria-label={ariaLabel}
         className={`${containerClass} w-full text-left`}
       >
-        {content}
+        {inner}
       </button>
     );
   }
 
-  return <div className={containerClass}>{content}</div>;
+  return <div className={containerClass}>{inner}</div>;
 }
 
 function kindLabel(kind: GuestCardConfig["kind"]): string {

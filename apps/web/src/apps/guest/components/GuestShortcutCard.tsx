@@ -1,17 +1,20 @@
 import type { GuestCardConfig } from "@paris-local/shared";
 import type { GuestTheme } from "../../../themes";
-import { guestCardHasAction, resolveGuestCardIcon } from "../utils/guestCardIcons";
+import { resolveGuestCardIcon } from "../utils/guestCardIcons";
+import { resolveGuestCardAction } from "../utils/guestCardActions";
 
 type GuestShortcutCardProps = {
   card: GuestCardConfig;
   theme: GuestTheme;
   onAction: (card: GuestCardConfig) => void;
+  allowExternalLinks?: boolean;
 };
 
-export function GuestShortcutCard({ card, theme, onAction }: GuestShortcutCardProps) {
+export function GuestShortcutCard({ card, theme, onAction, allowExternalLinks = false }: GuestShortcutCardProps) {
   const Icon = resolveGuestCardIcon(card);
-  const clickable = guestCardHasAction(card);
-  const ariaLabel = clickable ? `${card.title} — ${card.actionLabel ?? "Ouvrir"}` : card.title;
+  const action = resolveGuestCardAction(card, { onAction, allowExternalLinks });
+  const interactive = action.mode !== "none";
+  const ariaLabel = interactive ? `${card.title} — ${action.label}` : card.title;
 
   const inner = (
     <>
@@ -25,13 +28,27 @@ export function GuestShortcutCard({ card, theme, onAction }: GuestShortcutCardPr
     </>
   );
 
-  const containerClass = `group block w-full rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${clickable ? `${theme.classes.secondaryButton} cursor-pointer` : `${theme.classes.card}`}`.trim();
+  const containerClass = `group block w-full rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${interactive ? `${theme.classes.secondaryButton} cursor-pointer` : `${theme.classes.card}`}`.trim();
 
-  if (clickable) {
+  if (action.mode === "external" && action.href) {
+    return (
+      <a
+        href={action.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={ariaLabel}
+        className={`${containerClass} no-underline`}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  if (action.mode === "internal" || action.mode === "service") {
     return (
       <button
         type="button"
-        onClick={() => onAction(card)}
+        onClick={action.onClick}
         aria-label={ariaLabel}
         className={containerClass}
       >
