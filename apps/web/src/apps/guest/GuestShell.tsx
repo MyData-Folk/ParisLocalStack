@@ -22,6 +22,7 @@ import {
   Star,
   TicketCheck,
   Utensils,
+  WashingMachine,
   Waves,
   Wifi,
   Wrench,
@@ -775,6 +776,8 @@ type ServiceTemplate = {
 
 const serviceTemplates: ServiceTemplate[] = [
   { id: "service-etage", type: "towels", title: "Service d’étage", description: "Linge, chambre ou besoin a faire suivre a l'equipe.", priority: "medium", icon: <Waves className="h-5 w-5" />, group: "hotel", requestTitle: "Demande service d’étage", detailsPreset: { itemType: "linge", quantity: 1 } },
+  { id: "blanchisserie", type: "towels", title: "Blanchisserie", description: "Linge a laver ou sechage a demander.", priority: "medium", icon: <WashingMachine className="h-5 w-5" />, group: "hotel", requestTitle: "Demande blanchisserie", detailsPreset: { itemType: "blanchisserie", quantity: 1 } },
+  { id: "pressing", type: "towels", title: "Pressing", description: "Chemise, costume ou vetement a repasser.", priority: "medium", icon: <Sparkles className="h-5 w-5" />, group: "hotel", requestTitle: "Demande pressing", detailsPreset: { itemType: "pressing", quantity: 1 } },
   { id: "room-service", type: "room_service", title: "Room service", description: "Commande ou demande en chambre.", priority: "medium", icon: <ShoppingBag className="h-5 w-5" />, group: "hotel" },
   { id: "petit-dejeuner", type: "room_service", title: "Petit-déjeuner", description: "Demander un petit-déjeuner ou une adaptation.", priority: "medium", icon: <Coffee className="h-5 w-5" />, group: "hotel", requestTitle: "Demande petit-déjeuner", detailsPreset: { category: "Petit-déjeuner" } },
   { id: "maintenance", type: "maintenance", title: "Maintenance", description: "Signaler un probleme dans la chambre.", priority: "medium", icon: <Wrench className="h-5 w-5" />, group: "hotel" },
@@ -911,7 +914,7 @@ function RoomServiceFields({ form, update }: { form: RequestDetails; update: (fi
 function LinenFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
   return (
     <>
-      <GuestSelect label="Besoin" value={String(form.itemType ?? "linge")} onChange={(value) => update("itemType", value)} options={[["linge", "Linge supplementaire"], ["serviettes", "Serviettes"], ["oreillers", "Oreillers"], ["couvertures", "Couvertures"], ["autre", "Autre"]]} />
+      <GuestSelect label="Besoin" value={String(form.itemType ?? "linge")} onChange={(value) => update("itemType", value)} options={[["linge", "Linge supplementaire"], ["blanchisserie", "Blanchisserie"], ["pressing", "Pressing"], ["serviettes", "Serviettes"], ["oreillers", "Oreillers"], ["couvertures", "Couvertures"], ["autre", "Autre"]]} />
       <GuestInput label="Quantite" type="number" value={String(form.quantity ?? 1)} onChange={(value) => update("quantity", Number(value))} required />
       <label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={Boolean(form.urgent)} onChange={(event) => update("urgent", event.target.checked)} /> Urgent</label>
       <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
