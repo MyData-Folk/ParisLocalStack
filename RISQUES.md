@@ -101,6 +101,20 @@ Gravite : moyenne.
 
 Mitigation : themes hoteliers, mobile-first, visuels, navigation simple, ton concierge.
 
+### Cartes Guest App configurees mais non visibles
+Risque : un Hotel Admin sauvegarde des cartes Guest App dans l'editeur PR #86 et s'attend a les voir immediatement cote client, alors que `GuestShell` n'est pas encore branche.
+
+Gravite : moyenne.
+
+Mitigation : documenter clairement que les cartes sauvegardees ne seront visibles dans la Guest App qu'en Vague 5F ; ne pas presenter cette personnalisation comme visible client avant la PR d'affichage public.
+
+### Exposition publique prematuree des guestCards
+Risque : exposer des cartes configurees par hotel avant d'avoir valide le DTO public et les donnees autorisees.
+
+Gravite : haute.
+
+Mitigation : garder l'API guest-cards privee jusqu'a 5F ; ne pas modifier la route publique ni `GuestShell` sans validation explicite ; verifier que les cartes ne contiennent pas de donnees privees avant exposition.
+
 ### Demo commerciale confuse
 Risque : trop de surfaces techniques affichees au prospect.
 
@@ -183,3 +197,4 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 - Les captures Playwright locales peuvent etre non representatives d'un environnement public/staging non prepare.
 - Vendome reste une reference historique/production/monitoring possible, mais ne doit pas remplacer le tenant neutre commercial.
 - Le seed demo neutre doit rester separe du seed Vendome et ne doit jamais supprimer de donnees hors `hotel_id` demo.
+- Vague 5 cartes Guest App : editeur Hotel Admin disponible, mais affichage Guest App non branche avant 5F ; ne pas montrer cette personnalisation comme visible client tant que `GuestShell` n'est pas modifie.

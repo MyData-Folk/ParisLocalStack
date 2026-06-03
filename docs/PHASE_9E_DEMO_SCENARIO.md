@@ -125,5 +125,17 @@ Statut local valide au 2026-06-02 :
 
 Super Admin est une surface interne uniquement. Il peut contenir Vendome localement car le seed principal a ete execute pour creer le compte super admin ; cette presence est attendue et ne doit pas apparaitre dans le parcours de demonstration client.
 
+## Note Vague 5 - Cartes Guest App
+La personnalisation des cartes Guest App est en cours de construction par couches :
+- PR #81 : modele `guestCards` et `commercialPackage`.
+- PR #82 : API plan commercial.
+- PR #84 : modification du forfait par Super Admin et lecture seule par Hotel Admin.
+- PR #85 : API privee guest-cards.
+- PR #86 : editeur Hotel Admin des cartes Guest App.
+
+Hotel Admin peut configurer image, titre, description, action, cible, ordre et actif/inactif, dans les limites de son forfait. Super Admin reste responsable du forfait.
+
+Limite importante pour le scenario : ces cartes sauvegardees ne sont pas encore affichees dans la Guest App locale ou publique. `GuestShell` sera branche plus tard en Vague 5F, apres validation des donnees publiques autorisees.
+
 ## Regle importante
 Aucune donnee reelle. Aucune capture infrastructure. Aucune exposition de configuration sensible.

@@ -119,9 +119,12 @@ Expliquer :
 - Montrer QR code hotel.
 - Montrer recommandations locales.
 - Montrer modules & offre.
+- Montrer si utile l'editeur interne des cartes Guest App, uniquement comme capacite de configuration en preparation.
 - Montrer analytics.
 - Montrer CRM : filtres segmentation, export Excel/JSON.
 - Insister sur RGPD, consentement et CRM propre.
+
+Note Vague 5 : l'editeur Hotel Admin des cartes Guest App permet de sauvegarder image, titre, description, action, cible, ordre et actif/inactif selon le forfait. Super Admin reste maitre du forfait. Les cartes sauvegardees ne sont pas encore visibles cote Guest App avant la Vague 5F ; ne pas les presenter comme deja affichees au client.
 
 ### Etape 5 - Closing, 2 min
 
@@ -200,6 +203,7 @@ Une premiere demo peut etre preparee rapidement. Le demarrage commercial doit en
 - [ ] Aucun onglet Generator ouvert.
 - [ ] Aucun onglet GitHub / Coolify / R2 / Prisma ouvert.
 - [ ] Aucun secret visible.
+- [ ] Si l'editeur cartes Guest App est montre, preciser que l'affichage client arrive en Vague 5F.
 - [ ] Notifications desktop activees si demonstration live.
 - [ ] QR code pret si besoin.
 - [ ] Scenario client simple prepare.
@@ -257,5 +261,6 @@ Prochaines ameliorations possibles :
 - preparer une page vitrine claire ;
 - preparer une offre commerciale ;
 - preparer la Phase 10 Design System / Templates.
+- Vague 5F : brancher la Guest App sur les cartes sauvegardees apres validation de l'exposition publique.
 
 Voir aussi : `docs/PRODUCT_STRATEGY.md` pour le cadrage produit, les packages et la roadmap.
