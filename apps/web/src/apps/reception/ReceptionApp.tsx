@@ -991,12 +991,15 @@ function HistoryView({ hotelId, token }: { hotelId: string; token: string }) {
   return <StaysTableView hotelId={hotelId} token={token} mode="archived" />;
 }
 
+type StaySortKey = "room" | "name" | "checkout" | "activity" | "urgency";
+
 function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: string; mode: "active" | "archived" }) {
   const [stays, setStays] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<StaySortKey>("room");
   const [statusFilter, setStatusFilter] = useState("all");
   const [metricFilter, setMetricFilter] = useState<"all" | "messages" | "requests" | "consent">("all");
   const [selectedStay, setSelectedStay] = useState<any | null>(null);
@@ -1057,6 +1060,10 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
       return matchesQuery && matchesStatus && matchesMetric;
     });
   }, [rows, search, statusFilter, metricFilter]);
+  const visibleRows = useMemo(() => {
+    if (mode !== "active") return filtered;
+    return [...filtered].sort((left, right) => compareStayRows(left, right, sortKey));
+  }, [filtered, mode, sortKey]);
 
   const weakReviews = rows.filter((row) => row.rating > 0 && row.rating <= 3).length;
   const consentCount = rows.filter((row) => row.marketingConsent).length;
@@ -1087,24 +1094,36 @@ function StaysTableView({ hotelId, token, mode }: { hotelId: string; token: stri
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nom, email, chambre..." aria-label="Rechercher un sejour" className="w-full rounded-xl border border-white/10 bg-slate-950/70 py-2.5 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10" />
             </label>
+            {mode === "active" ? (
+              <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-300">
+                <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Trier par</span>
+                <select value={sortKey} onChange={(event) => setSortKey(event.target.value as StaySortKey)} className="min-w-36 bg-transparent text-white outline-none">
+                  <option value="room">Chambre</option>
+                  <option value="name">Nom</option>
+                  <option value="checkout">Départ</option>
+                  <option value="activity">Activité récente</option>
+                  <option value="urgency">Urgence</option>
+                </select>
+              </label>
+            ) : null}
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-white outline-none transition focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10">
               <option value="all">Tous statuts</option>
               {Array.from(new Set(rows.map((row) => row.status))).map((status) => <option key={status} value={status}>{status}</option>)}
             </select>
-            <button type="button" onClick={() => exportRowsAsExcel(filtered, exportName)} disabled={filtered.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300/25 bg-emerald-300/10 px-3 py-2.5 text-sm font-medium text-emerald-100 transition hover:bg-emerald-300/15 focus:outline-none focus:ring-4 focus:ring-emerald-300/10 disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="button" onClick={() => exportRowsAsExcel(visibleRows, exportName)} disabled={visibleRows.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300/25 bg-emerald-300/10 px-3 py-2.5 text-sm font-medium text-emerald-100 transition hover:bg-emerald-300/15 focus:outline-none focus:ring-4 focus:ring-emerald-300/10 disabled:cursor-not-allowed disabled:opacity-50">
               <Download className="h-4 w-4" /> Excel
             </button>
-            <button type="button" onClick={() => exportRowsAsJson(filtered, exportName)} disabled={filtered.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300/25 bg-sky-300/10 px-3 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-300/15 focus:outline-none focus:ring-4 focus:ring-sky-300/10 disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="button" onClick={() => exportRowsAsJson(visibleRows, exportName)} disabled={visibleRows.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300/25 bg-sky-300/10 px-3 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-300/15 focus:outline-none focus:ring-4 focus:ring-sky-300/10 disabled:cursor-not-allowed disabled:opacity-50">
               <FileJson className="h-4 w-4" /> JSON
             </button>
           </div>
         </div>
       </section>
       {error && <p className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
-      {!error && filtered.length === 0 && <EmptyState icon={mode === "active" ? <Users className="h-6 w-6" /> : <Archive className="h-6 w-6" />} title="Aucune ligne" description="Aucun sejour ne correspond aux filtres actuels." />}
+      {!error && visibleRows.length === 0 && <EmptyState icon={mode === "active" ? <Users className="h-6 w-6" /> : <Archive className="h-6 w-6" />} title="Aucune ligne" description="Aucun sejour ne correspond aux filtres actuels." />}
       <ReceptionTable
         mode={mode}
-        rows={filtered}
+        rows={visibleRows}
         weakReviews={weakReviews}
         onView={(stay) => setSelectedStay(stay)}
         onMessage={(row) => setMessageTarget(stayRowToMessageTarget(row, mode === "active" ? "Client present" : "Historique client"))}
@@ -1979,6 +1998,7 @@ function TagList({ tags }: { tags: string[] }) {
 
 const openStatuses = new Set(["new", "in_progress", "urgent", "sent"]);
 const fieldClassName = "w-full rounded-xl border border-white/10 bg-slate-900/90 px-3 py-2.5 text-sm text-white outline-none transition focus:border-amber-300/40 focus:ring-4 focus:ring-amber-300/10";
+const roomNumberCollator = new Intl.Collator("fr", { numeric: true, sensitivity: "base" });
 
 function buildStayRow(stay: any, messages: any[], requests: any[], reviews: any[]) {
   const stayMessages = messages.filter((item) => item.stayId === stay.id);
@@ -2008,6 +2028,8 @@ function buildStayRow(stay: any, messages: any[], requests: any[], reviews: any[
     status: stay.status ?? "active",
     checkinDate: stay.checkinDate,
     checkoutDate: stay.checkoutDate,
+    createdAt: stay.createdAt,
+    updatedAt: stay.updatedAt,
     nights: stayNights(stay.checkinDate, stay.checkoutDate),
     openMessages: stayMessages.filter((item) => openStatuses.has(item.status)).length,
     openRequests: stayRequests.filter((item) => openStatuses.has(item.status)).length,
@@ -2016,6 +2038,57 @@ function buildStayRow(stay: any, messages: any[], requests: any[], reviews: any[
     rating: latestReview?.rating ?? 0,
     lastContact
   };
+}
+
+function compareStayRows(left: any, right: any, sortKey: StaySortKey) {
+  if (sortKey === "name") return compareStayNames(left, right) || compareStayRooms(left, right);
+  if (sortKey === "checkout") return compareOptionalDates(left.checkoutDate, right.checkoutDate, "asc") || compareStayRooms(left, right);
+  if (sortKey === "activity") return compareOptionalDates(lastActivityDate(right), lastActivityDate(left), "asc") || compareStayRooms(left, right);
+  if (sortKey === "urgency") return urgencyScore(right) - urgencyScore(left) || compareOptionalDates(lastActivityDate(right), lastActivityDate(left), "asc") || compareStayRooms(left, right);
+  return compareStayRooms(left, right) || compareStayNames(left, right);
+}
+
+function compareStayRooms(left: any, right: any) {
+  const leftRoom = normalizedRoom(left.room);
+  const rightRoom = normalizedRoom(right.room);
+  if (!leftRoom && !rightRoom) return 0;
+  if (!leftRoom) return 1;
+  if (!rightRoom) return -1;
+  return roomNumberCollator.compare(leftRoom, rightRoom);
+}
+
+function compareStayNames(left: any, right: any) {
+  return roomNumberCollator.compare(stayNameKey(left), stayNameKey(right));
+}
+
+function compareOptionalDates(left?: string, right?: string, direction: "asc" | "desc" = "asc") {
+  const leftTime = left ? new Date(left).getTime() : Number.NaN;
+  const rightTime = right ? new Date(right).getTime() : Number.NaN;
+  const leftValid = Number.isFinite(leftTime);
+  const rightValid = Number.isFinite(rightTime);
+  if (!leftValid && !rightValid) return 0;
+  if (!leftValid) return 1;
+  if (!rightValid) return -1;
+  return direction === "asc" ? leftTime - rightTime : rightTime - leftTime;
+}
+
+function lastActivityDate(row: any) {
+  return row.lastContact || row.updatedAt || row.createdAt;
+}
+
+function urgencyScore(row: any) {
+  const messages = row.stay?.messages ?? [];
+  const requests = row.stay?.requests ?? [];
+  return [...messages, ...requests].filter((item) => item.status === "urgent" || item.priority === "urgent").length;
+}
+
+function normalizedRoom(room: string) {
+  const value = String(room ?? "").trim();
+  return value && value !== "-" ? value : "";
+}
+
+function stayNameKey(row: any) {
+  return String(row.client || row.email || row.guestId || "").trim().toLowerCase();
 }
 
 function parseTags(value: string) {
