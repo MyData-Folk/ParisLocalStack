@@ -33,6 +33,26 @@ export type SettingsPayload = {
   modules?: Record<string, boolean>;
 };
 
+export type CommercialPackageValue = "starter" | "boutique" | "premium" | "palace";
+
+export type GuestCardPlanLimits = {
+  plan: CommercialPackageValue;
+  maxHeroCards: number;
+  maxShortcutCards: number;
+  allowedKinds: string[];
+  allowCustomImages: boolean;
+  allowExternalLinks: boolean;
+  maxImageMb: number;
+};
+
+export type HotelPlanResponse = {
+  hotelId: string;
+  name: string;
+  slug: string;
+  commercialPackage: CommercialPackageValue;
+  limits: GuestCardPlanLimits;
+};
+
 export type RecommendationPayload = {
   category: string;
   name: string;
@@ -119,6 +139,12 @@ export const api = {
   hotelReviews: (hotelId: string, token: string) => request<any[]>(`/api/hotels/${hotelId}/reviews`, { token }),
   hotels: (token: string) => request<any[]>("/api/hotels", { token }),
   hotel: (hotelId: string, token: string) => request<any>(`/api/hotels/${hotelId}`, { token }),
+  getHotelPlan: (hotelId: string, token: string) => request<HotelPlanResponse>(`/api/hotels/${hotelId}/plan`, { token }),
+  updateHotelPlan: (hotelId: string, commercialPackage: CommercialPackageValue, token: string) => request<HotelPlanResponse>(`/api/hotels/${hotelId}/plan`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ commercialPackage })
+  }),
   createHotel: (body: HotelPayload, token: string) => request<any>("/api/hotels", {
     method: "POST",
     token,

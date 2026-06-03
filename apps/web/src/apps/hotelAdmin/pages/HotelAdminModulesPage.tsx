@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, BadgeCheck, Crown, Gem, Mail, Sparkles, Star, Zap } from "lucide-react";
 import {
   COMMERCIAL_PACKAGES,
@@ -8,8 +8,7 @@ import {
   type ServiceCatalogItem,
   type CommercialPackageDef
 } from "@paris-local/shared";
-
-const CURRENT_PACKAGE_ID: CommercialPackage = "boutique";
+import { api, type HotelPlanResponse } from "../../../lib/api";
 
 const HIGHLIGHT_SERVICE_IDS = new Set([
   "taxi",
@@ -34,21 +33,32 @@ const CATEGORY_LABELS: Record<string, string> = {
   partner: "Partenaires"
 };
 
-export function HotelAdminModulesPage({ hotel, hotelId: _hotelId }: { hotel: any; hotelId: string }) {
+export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; hotelId: string; token: string }) {
   const [upgradeMessage, setUpgradeMessage] = useState("");
+  const [hotelPlan, setHotelPlan] = useState<HotelPlanResponse | null>(null);
+  const [planError, setPlanError] = useState("");
 
-  const currentPackage = COMMERCIAL_PACKAGES.find((p) => p.id === CURRENT_PACKAGE_ID);
-  const boutiqueServices = getServicesByPackage("boutique");
+  useEffect(() => {
+    if (!hotelId || !token) return;
+    setPlanError("");
+    api.getHotelPlan(hotelId, token)
+      .then(setHotelPlan)
+      .catch(() => setPlanError("Impossible de charger votre offre actuelle."));
+  }, [hotelId, token]);
+
+  const currentPackageId = (hotelPlan?.commercialPackage ?? hotel?.commercialPackage ?? "boutique") as CommercialPackage;
+  const currentPackage = COMMERCIAL_PACKAGES.find((p) => p.id === currentPackageId);
+  const includedServices = getServicesByPackage(currentPackageId);
   const premiumServices = getServicesByPackage("premium");
-  const boutiqueIds = new Set(boutiqueServices.map((s) => s.id));
-  const premiumOnly = premiumServices.filter((s) => !boutiqueIds.has(s.id));
+  const includedIds = new Set(includedServices.map((s) => s.id));
+  const premiumOnly = premiumServices.filter((s) => !includedIds.has(s.id));
   const partnerServices = getPartnerMonetizableServices();
 
   const hotelName = hotel?.name ?? "Votre hotel";
   const hotelCity = hotel?.city ?? "";
 
   function handleUpgradeRequest() {
-    setUpgradeMessage("Contactez ParisLocalStack pour modifier votre offre.");
+    setUpgradeMessage("Pour modifier l'offre, contactez l'administrateur Paris Local.");
     setTimeout(() => setUpgradeMessage(""), 4000);
   }
 
@@ -100,6 +110,17 @@ export function HotelAdminModulesPage({ hotel, hotelId: _hotelId }: { hotel: any
                   Les prix affiches sont indicatifs. Votre offre reelle peut dependre de votre contrat et des options activees.
                 </p>
               </div>
+              {hotelPlan?.limits ? (
+                <div className="grid gap-3 pt-2 sm:grid-cols-2">
+                  <PlanLimit label="Cartes principales" value={String(hotelPlan.limits.maxHeroCards)} />
+                  <PlanLimit label="Raccourcis" value={String(hotelPlan.limits.maxShortcutCards)} />
+                  <PlanLimit label="Images personnalisees" value={hotelPlan.limits.allowCustomImages ? "Oui" : "Non"} />
+                  <PlanLimit label="Liens externes" value={hotelPlan.limits.allowExternalLinks ? "Oui" : "Non"} />
+                </div>
+              ) : null}
+              {planError ? (
+                <p className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{planError}</p>
+              ) : null}
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <span className="text-2xl font-semibold tracking-tight text-amber-200">
@@ -129,7 +150,7 @@ export function HotelAdminModulesPage({ hotel, hotelId: _hotelId }: { hotel: any
             <PackageCard
               key={pkg.id}
               pkg={pkg}
-              isCurrent={pkg.id === CURRENT_PACKAGE_ID}
+              isCurrent={pkg.id === currentPackageId}
               onUpgrade={handleUpgradeRequest}
             />
           ))}
@@ -140,12 +161,12 @@ export function HotelAdminModulesPage({ hotel, hotelId: _hotelId }: { hotel: any
       <section className="space-y-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Services inclus dans votre offre</h2>
-          <p className="mt-1 text-sm text-zinc-400">Modules disponibles avec l'offre Boutique.</p>
+          <p className="mt-1 text-sm text-zinc-400">Modules disponibles avec l'offre {currentPackage?.labelFr ?? "actuelle"}.</p>
         </div>
 
         <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {boutiqueServices.map((svc) => (
+            {includedServices.map((svc) => (
               <ServiceCard key={svc.id} svc={svc} highlighted={HIGHLIGHT_SERVICE_IDS.has(svc.id)} />
             ))}
           </div>
@@ -336,6 +357,15 @@ function PackageCard({
           <ArrowUpRight className="h-3.5 w-3.5" />
         </button>
       ) : null}
+    </div>
+  );
+}
+
+function PlanLimit({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-white">{value}</p>
     </div>
   );
 }

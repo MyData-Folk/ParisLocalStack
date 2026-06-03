@@ -2,7 +2,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Palette, Trash2, Upload, Users, X } from "lucide-react";
-import { api } from "../../../lib/api";
+import { api, type CommercialPackageValue, type HotelPlanResponse } from "../../../lib/api";
 import { useAppStore } from "../../../stores/appStore";
 import { resolveGuestTheme, type GuestThemeId } from "../../../themes";
 import { AdminShell } from "../AdminShell";
@@ -19,6 +19,10 @@ export function AdminHotelDetailPage() {
   const [hotel, setHotel] = useState<HotelRecord | null>(null);
   const [guestTheme, setGuestTheme] = useState<GuestThemeId>("parisian_boutique");
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [hotelPlan, setHotelPlan] = useState<HotelPlanResponse | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<CommercialPackageValue>("boutique");
+  const [planSaving, setPlanSaving] = useState(false);
+  const [planMessage, setPlanMessage] = useState("");
   const [recommendationForm, setRecommendationForm] = useState<RecommendationFormState>(emptyRecommendationForm);
   const [editingRecommendationId, setEditingRecommendationId] = useState<string | null>(null);
   const [recommendationMessage, setRecommendationMessage] = useState("");
@@ -33,11 +37,13 @@ export function AdminHotelDetailPage() {
   useEffect(() => {
     if (!token || !hotelId) return;
     setLoading(true);
-    Promise.all([api.hotel(hotelId, token), api.hotelRecommendations(hotelId, token)])
-      .then(([loaded, loadedRecommendations]) => {
+    Promise.all([api.hotel(hotelId, token), api.hotelRecommendations(hotelId, token), api.getHotelPlan(hotelId, token)])
+      .then(([loaded, loadedRecommendations, loadedPlan]) => {
         setHotel(loaded);
         setGuestTheme(resolveGuestTheme(loaded.settings?.guestTheme).id);
         setRecommendations(loadedRecommendations);
+        setHotelPlan(loadedPlan);
+        setSelectedPlan(loadedPlan.commercialPackage);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Hotel introuvable"))
       .finally(() => setLoading(false));
@@ -55,6 +61,22 @@ export function AdminHotelDetailPage() {
       setThemeMessage(err instanceof Error ? err.message : "Enregistrement impossible");
     } finally {
       setThemeSaving(false);
+    }
+  }
+
+  async function savePlan() {
+    if (!token || !hotel) return;
+    setPlanSaving(true);
+    setPlanMessage("");
+    try {
+      const updatedPlan = await api.updateHotelPlan(hotel.id, selectedPlan, token);
+      setHotelPlan(updatedPlan);
+      setSelectedPlan(updatedPlan.commercialPackage);
+      setPlanMessage("Plan mis a jour.");
+    } catch (err) {
+      setPlanMessage(err instanceof Error ? err.message : "Impossible de mettre a jour le plan");
+    } finally {
+      setPlanSaving(false);
     }
   }
 
@@ -160,6 +182,14 @@ export function AdminHotelDetailPage() {
               <ThemePicker value={guestTheme} onChange={setGuestTheme} />
               {themeMessage ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{themeMessage}</p> : null}
             </div>
+            <HotelPlanCard
+              plan={hotelPlan}
+              selectedPlan={selectedPlan}
+              saving={planSaving}
+              message={planMessage}
+              onPlanChange={setSelectedPlan}
+              onSave={() => void savePlan()}
+            />
             <ReceptionAccessCard hotel={hotel} access={receptionAccess} message={receptionAccessMessage} saving={receptionAccessSaving} onCreate={() => void createReceptionAccess()} />
             <RecommendationManager
               hotelId={hotel.id}
@@ -182,6 +212,88 @@ export function AdminHotelDetailPage() {
         </div>
       ) : null}
     </AdminShell>
+  );
+}
+
+const PLAN_OPTIONS: Array<{ value: CommercialPackageValue; label: string }> = [
+  { value: "starter", label: "Starter" },
+  { value: "boutique", label: "Boutique" },
+  { value: "premium", label: "Premium" },
+  { value: "palace", label: "Palace" }
+];
+
+const CARD_KIND_LABELS: Record<string, string> = {
+  info: "Information",
+  service: "Service",
+  guide: "Guide",
+  promo: "Promotion",
+  custom: "Personnalisee"
+};
+
+function formatPlanLabel(plan?: CommercialPackageValue) {
+  return PLAN_OPTIONS.find((option) => option.value === plan)?.label ?? "Non renseigne";
+}
+
+function formatYesNo(value?: boolean) {
+  return value ? "Oui" : "Non";
+}
+
+function HotelPlanCard({
+  plan,
+  selectedPlan,
+  saving,
+  message,
+  onPlanChange,
+  onSave
+}: {
+  plan: HotelPlanResponse | null;
+  selectedPlan: CommercialPackageValue;
+  saving: boolean;
+  message: string;
+  onPlanChange: (plan: CommercialPackageValue) => void;
+  onSave: () => void;
+}) {
+  const limits = plan?.limits;
+
+  return (
+    <div className="mt-7 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-200/90">Plan commercial Guest App</p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">Offre actuelle : {formatPlanLabel(plan?.commercialPackage)}</h2>
+          <p className="mt-2 text-sm leading-6 text-amber-50/75">Pilotez l'offre commerciale et les limites des cartes visibles dans l'app client.</p>
+        </div>
+        <div className="grid gap-3 sm:min-w-[260px]">
+          <label className="grid gap-2 text-sm font-medium text-slate-200">
+            Modifier l'offre
+            <select
+              value={selectedPlan}
+              onChange={(event) => onPlanChange(event.target.value as CommercialPackageValue)}
+              className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/50 focus:ring-4 focus:ring-amber-300/10"
+            >
+              {PLAN_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <button type="button" onClick={onSave} disabled={saving || selectedPlan === plan?.commercialPackage} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20 disabled:opacity-60">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Enregistrer
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <InfoBlock label="Cartes principales" value={limits ? String(limits.maxHeroCards) : "Chargement"} />
+        <InfoBlock label="Raccourcis" value={limits ? String(limits.maxShortcutCards) : "Chargement"} />
+        <InfoBlock label="Images personnalisees" value={limits ? formatYesNo(limits.allowCustomImages) : "Chargement"} />
+        <InfoBlock label="Liens externes" value={limits ? formatYesNo(limits.allowExternalLinks) : "Chargement"} />
+        <InfoBlock label="Taille image max" value={limits?.maxImageMb ? `${limits.maxImageMb} Mo` : "Non inclus"} />
+        <InfoBlock label="Types de cartes" value={limits ? limits.allowedKinds.map((kind) => CARD_KIND_LABELS[kind] ?? kind).join(", ") : "Chargement"} />
+      </div>
+
+      {message ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-amber-50">{message}</p> : null}
+    </div>
   );
 }
 
