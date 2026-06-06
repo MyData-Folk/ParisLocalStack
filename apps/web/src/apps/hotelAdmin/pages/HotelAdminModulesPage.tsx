@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, BadgeCheck, Crown, Gem, Mail, Plus, Save, Sparkles, Star, Trash2, Zap } from "lucide-react";
 import {
   COMMERCIAL_PACKAGES,
+  SERVICE_CATALOG,
   getServicesByPackage,
   getPartnerMonetizableServices,
   type CommercialPackage,
   type ServiceCatalogItem,
   type CommercialPackageDef
 } from "@paris-local/shared";
-import { api, type GuestCardConfig, type GuestCardPlanLimits, type HotelGuestCardsResponse, type HotelPlanResponse } from "../../../lib/api";
+import { api, type GuestCardConfig, type GuestCardPlanLimits, type HotelGuestCardsResponse, type HotelPlanResponse, type HotelServiceConfig, type HotelServicePlanLimits, type HotelServicesResponse } from "../../../lib/api";
 
 const HIGHLIGHT_SERVICE_IDS = new Set([
   "taxi",
@@ -49,6 +50,15 @@ const ACTION_TYPE_LABELS: Record<GuestCardConfig["actionType"], string> = {
 };
 
 const ACTION_TYPES: GuestCardConfig["actionType"][] = ["none", "section", "service_request", "external_url"];
+
+const SERVICE_LIMIT_CATEGORY_LABELS: Record<string, string> = {
+  info: "Informations",
+  service: "Services",
+  hotel: "Hotel",
+  transport: "Transport",
+  wellness: "Bien-etre",
+  custom: "Sur mesure"
+};
 
 export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; hotelId: string; token: string }) {
   const [upgradeMessage, setUpgradeMessage] = useState("");
@@ -150,6 +160,8 @@ export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; h
       ) : null}
 
       <GuestCardsEditor hotelId={hotelId} token={token} currentPackageLabel={currentPackage?.labelFr ?? currentPackageId} />
+
+      <HotelServicesEditor hotelId={hotelId} token={token} currentPackageLabel={currentPackage?.labelFr ?? currentPackageId} />
 
       {/* Section 2 — Packages disponibles */}
       <section className="space-y-4">
@@ -823,6 +835,370 @@ function validateGuestCards(cards: GuestCardConfig[], limits?: GuestCardPlanLimi
 function normalizeOptionalText(value?: string) {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function HotelServicesEditor({
+  hotelId,
+  token,
+  currentPackageLabel
+}: {
+  hotelId: string;
+  token: string;
+  currentPackageLabel: string;
+}) {
+  const [servicesConfig, setServicesConfig] = useState<HotelServicesResponse | null>(null);
+  const [servicesDraft, setServicesDraft] = useState<HotelServiceConfig[]>([]);
+  const [initialServices, setInitialServices] = useState<HotelServiceConfig[]>([]);
+  const [servicesDirty, setServicesDirty] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (!hotelId || !token) return;
+    setLoading(true);
+    setError("");
+    api.getHotelServices(hotelId, token)
+      .then((response) => {
+        const sorted = sortHotelServices(response.enabledServices);
+        setServicesConfig(response);
+        setServicesDraft(sorted);
+        setInitialServices(sorted);
+        setServicesDirty(false);
+      })
+      .catch(() => setError("Impossible de charger les services de l'hotel."))
+      .finally(() => setLoading(false));
+  }, [hotelId, token]);
+
+  const limits = servicesConfig?.limits;
+  const editableServices = useMemo(
+    () => servicesDraft.filter((service) => service.enabled && Boolean(getCatalogService(service.serviceCode))),
+    [servicesDraft]
+  );
+  const lockedServices = useMemo(
+    () => SERVICE_CATALOG.filter((service) => !editableServices.some((entry) => entry.serviceCode === service.id)),
+    [editableServices]
+  );
+  const validationErrors = useMemo(() => validateHotelServices(servicesDraft, limits), [servicesDraft, limits]);
+  const activeCount = editableServices.length;
+  const hasChanges = servicesDirty || JSON.stringify(sortHotelServices(servicesDraft)) !== JSON.stringify(sortHotelServices(initialServices));
+
+  function updateService(serviceCode: string, patch: Partial<HotelServiceConfig>) {
+    setServicesDraft((current) => sortHotelServices(current.map((entry) => {
+      if (entry.serviceCode !== serviceCode || !entry.enabled) return entry;
+      const next = { ...entry, ...patch };
+      if (patch.imageUrl !== undefined && !limits?.allowCustomImages) return { ...next, imageUrl: "" };
+      return next;
+    })));
+    setServicesDirty(true);
+    setSuccess("");
+  }
+
+  async function saveServices() {
+    if (!limits) return;
+    const errors = validateHotelServices(servicesDraft, limits);
+    if (errors.length > 0) {
+      setError(errors[0]);
+      setSuccess("");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const sanitized = sortHotelServices(servicesDraft).map((service) => sanitizeHotelService(service, limits));
+      const response = await api.updateHotelServices(hotelId, sanitized, token);
+      const sorted = sortHotelServices(response.enabledServices);
+      setServicesConfig(response);
+      setServicesDraft(sorted);
+      setInitialServices(sorted);
+      setServicesDirty(false);
+      setSuccess("Services de l'hotel enregistres.");
+    } catch {
+      setError("Impossible d'enregistrer les services de l'hotel.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-white">Services de l'hotel</h2>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-400">
+            Personnalisez uniquement les services autorises par Paris Local pour votre offre.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={saveServices}
+          disabled={saving || loading || validationErrors.length > 0 || !hasChanges}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? "Enregistrement..." : "Enregistrer"}
+        </button>
+      </div>
+
+      <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
+        {loading ? (
+          <p className="text-sm text-zinc-400">Chargement des services autorises...</p>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <PlanLimit label="Offre" value={servicesConfig?.commercialPackage ?? currentPackageLabel} />
+              <PlanLimit label="Services actifs" value={`${activeCount}/${limits?.maxActiveServices ?? 0}`} />
+              <PlanLimit label="Images personnalisees" value={limits?.allowCustomImages ? "Autorisees" : "Non incluses"} />
+              <PlanLimit label="Services custom" value={limits?.allowCustomServices ? "Autorises" : "Non inclus"} />
+            </div>
+
+            {limits ? (
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                <p className="text-xs text-zinc-400">
+                  Categories autorisees : {limits.allowedCategories.map((category) => SERVICE_LIMIT_CATEGORY_LABELS[category] ?? category).join(", ")}.
+                  {" "}Partenaires : {limits.allowPartnerServices ? "autorises" : "non inclus"}. Bien-etre : {limits.allowWellness ? "autorise" : "non inclus"}.
+                </p>
+              </div>
+            ) : null}
+
+            {validationErrors.length > 0 ? (
+              <div className="rounded-xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-200">
+                {validationErrors[0]}
+              </div>
+            ) : null}
+            {error ? (
+              <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>
+            ) : null}
+            {success ? (
+              <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{success}</div>
+            ) : null}
+
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-base font-semibold text-white">Services autorises</h3>
+                <p className="text-xs text-zinc-500">
+                  Ces services peuvent etre personnalises. L'ajout de nouveaux services reste reserve au Super Admin.
+                </p>
+              </div>
+              {editableServices.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-5 text-sm text-zinc-500">
+                  Aucun service autorise n'est configure pour cet hotel.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {editableServices.map((service) => {
+                    const catalogService = getCatalogService(service.serviceCode);
+                    if (!catalogService) return null;
+                    return (
+                      <HotelServiceForm
+                        key={service.serviceCode}
+                        service={service}
+                        catalogService={catalogService}
+                        limits={limits}
+                        onUpdate={(patch) => updateService(service.serviceCode, patch)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-base font-semibold text-white">Services non autorises</h3>
+                <p className="text-xs text-zinc-500">
+                  Lecture seule. Contactez Paris Local pour changer le forfait ou les services autorises.
+                </p>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {lockedServices.map((service) => (
+                  <div key={service.id} className="rounded-xl border border-white/5 bg-slate-950/30 p-3 opacity-60">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-zinc-200">{service.labelFr}</p>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-400">
+                        {CATEGORY_LABELS[service.category] ?? service.category}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500">{service.descriptionFr}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function HotelServiceForm({
+  service,
+  catalogService,
+  limits,
+  onUpdate
+}: {
+  service: HotelServiceConfig;
+  catalogService: ServiceCatalogItem;
+  limits?: HotelServicePlanLimits;
+  onUpdate: (patch: Partial<HotelServiceConfig>) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="text-sm font-semibold text-white">{catalogService.labelFr}</h4>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">
+              {CATEGORY_LABELS[catalogService.category] ?? catalogService.category}
+            </span>
+            {catalogService.isPartnerMonetizable ? (
+              <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
+                Partenaire
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">{catalogService.descriptionFr}</p>
+        </div>
+        <label className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-white">
+          <input
+            type="checkbox"
+            checked={service.visibleInGuestApp}
+            onChange={(event) => onUpdate({
+              visibleInGuestApp: event.target.checked,
+              visibleAsCard: event.target.checked ? service.visibleAsCard : false,
+              visibleInServicesPage: event.target.checked ? service.visibleInServicesPage : false
+            })}
+            className="h-4 w-4 rounded border-white/20 bg-zinc-900 text-amber-300 focus:ring-amber-300/30"
+          />
+          Visible client
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Titre personnalise">
+          <input
+            value={service.customTitle ?? ""}
+            maxLength={80}
+            onChange={(event) => onUpdate({ customTitle: event.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50"
+            placeholder={catalogService.labelFr}
+          />
+        </Field>
+        <Field label="Ordre">
+          <input
+            type="number"
+            min={0}
+            value={service.order}
+            onChange={(event) => onUpdate({ order: Math.max(0, Number(event.target.value) || 0) })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition focus:border-amber-300/50"
+          />
+        </Field>
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <Field label="Description personnalisee">
+          <textarea
+            value={service.customDescription ?? ""}
+            maxLength={280}
+            rows={3}
+            onChange={(event) => onUpdate({ customDescription: event.target.value })}
+            className="w-full resize-none rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50"
+            placeholder={catalogService.descriptionFr}
+          />
+        </Field>
+        <Field label="Image">
+          <input
+            value={service.imageUrl ?? ""}
+            disabled={!limits?.allowCustomImages}
+            onChange={(event) => onUpdate({ imageUrl: event.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50 disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder={limits?.allowCustomImages ? "https://..." : "Images non incluses dans cette offre"}
+          />
+          {!limits?.allowCustomImages ? (
+            <p className="mt-1 text-[11px] text-zinc-500">Les images personnalisees sont reservees aux offres superieures.</p>
+          ) : null}
+        </Field>
+        <Field label="Libelle d'action">
+          <input
+            value={service.actionLabel ?? ""}
+            maxLength={40}
+            onChange={(event) => onUpdate({ actionLabel: event.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-[#09090b] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-300/50"
+            placeholder="Ex. Demander ce service"
+          />
+        </Field>
+        <div className="grid gap-3 rounded-xl border border-white/10 bg-[#09090b] p-3">
+          <label className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-300">
+            <input
+              type="checkbox"
+              checked={service.visibleAsCard}
+              disabled={!service.visibleInGuestApp}
+              onChange={(event) => onUpdate({ visibleAsCard: event.target.checked })}
+              className="h-4 w-4 rounded border-white/20 bg-zinc-900 text-amber-300 focus:ring-amber-300/30 disabled:opacity-50"
+            />
+            Afficher comme carte
+          </label>
+          <label className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-300">
+            <input
+              type="checkbox"
+              checked={service.visibleInServicesPage}
+              disabled={!service.visibleInGuestApp}
+              onChange={(event) => onUpdate({ visibleInServicesPage: event.target.checked })}
+              className="h-4 w-4 rounded border-white/20 bg-zinc-900 text-amber-300 focus:ring-amber-300/30 disabled:opacity-50"
+            />
+            Afficher dans la page services
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getCatalogService(serviceCode: string) {
+  return SERVICE_CATALOG.find((service) => service.id === serviceCode);
+}
+
+function sortHotelServices(services: HotelServiceConfig[]) {
+  return [...services].sort((a, b) => a.order === b.order ? a.serviceCode.localeCompare(b.serviceCode) : a.order - b.order);
+}
+
+function sanitizeHotelService(service: HotelServiceConfig, limits: HotelServicePlanLimits): HotelServiceConfig {
+  return {
+    ...service,
+    order: Math.max(0, service.order),
+    customTitle: normalizeOptionalText(service.customTitle),
+    customDescription: normalizeOptionalText(service.customDescription),
+    imageUrl: limits.allowCustomImages ? normalizeOptionalText(service.imageUrl) : undefined,
+    actionLabel: normalizeOptionalText(service.actionLabel),
+    visibleAsCard: service.visibleInGuestApp ? service.visibleAsCard : false,
+    visibleInServicesPage: service.visibleInGuestApp ? service.visibleInServicesPage : false
+  };
+}
+
+function validateHotelServices(services: HotelServiceConfig[], limits?: HotelServicePlanLimits) {
+  if (!limits) return [];
+  const errors: string[] = [];
+  const active = services.filter((service) => service.enabled);
+  if (active.length > limits.maxActiveServices) {
+    errors.push(`Votre offre autorise ${limits.maxActiveServices} services actifs maximum.`);
+  }
+  active.forEach((service) => {
+    const catalogService = getCatalogService(service.serviceCode);
+    if (!catalogService) return;
+    if (service.imageUrl?.trim() && !limits.allowCustomImages) {
+      errors.push("Les images personnalisees ne sont pas incluses dans votre offre.");
+    }
+    if (!limits.allowedCategories.includes(catalogService.category as never)) {
+      errors.push(`La categorie ${CATEGORY_LABELS[catalogService.category] ?? catalogService.category} n'est pas incluse dans votre offre.`);
+    }
+    if (catalogService.isPartnerMonetizable && !limits.allowPartnerServices) {
+      errors.push("Les services partenaires ne sont pas inclus dans votre offre.");
+    }
+  });
+  return errors;
 }
 
 function ServiceCard({ svc, highlighted }: { svc: ServiceCatalogItem; highlighted: boolean }) {
