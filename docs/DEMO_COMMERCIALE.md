@@ -39,12 +39,12 @@ Surfaces recommandees :
 
 Statut public au 2026-06-02 : ces URLs ne sont pas encore validees pour une demonstration client. La Guest App publique repond HTTP 200 mais affiche `Hotel not found`; la Reception/Admin publique repond HTTP 200 avec login generique. La demonstration prete RDV est locale uniquement tant que l'environnement public/staging n'est pas clarifie.
 
-Statut au 2026-06-06 (COOLIFY-DEMO-1 + COOLIFY-DEMO-2 + COOLIFY-DEMO-3) : un **clone dedie** `paris-local-demo` est operationnel et seede :
+Statut au 2026-06-06 (COOLIFY-DEMO-1 + COOLIFY-DEMO-2 + COOLIFY-DEMO-3 + COOLIFY-DEMO-4) : un **clone dedie** `paris-local-demo` est operationnel et seede :
 - **URL officielle Guest : https://demo-paris-local.welcomeparis.hotelmanager.fr/** (slug `demo-paris-local` deduit du hostname, contexte Guest)
 - **URL officielle Reception : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr/** (contexte Reception deduit du prefixe `admin-`)
-- **URL fallback path-based : https://demo.hotelmanager.fr/h/demo-paris-local/welcome** (slug dans le path, fonctionne toujours)
 - API : https://api-demo.hotelmanager.fr (interne, ne pas montrer)
 - Le clone heberge uniquement l'hotel `demo-paris-local` (Hôtel Lumière Demo Paris, 100% fictif) et est isole de la prod (DB distincte, JWT_SECRET distinct, CORS/WEB_URL distincts, isolation prouvee par `clone /vendome=404` vs `prod /vendome=200`).
+- **NE PAS OUVRIR** `https://demo.hotelmanager.fr/` : cette racine a ete retirees du Web clone en COOLIFY-DEMO-4 car elle faisait deduire `slug=demo` (label non plateforme dans `tenant.ts:36`) et provoquait des 404 console navigateur sur les appels API. Si l'utilisateur l'ouvre par megarde, c'est qu'il utilise encore un ancien signet ; le rediriger vers `https://demo-paris-local.welcomeparis.hotelmanager.fr/`.
 - Documentation complete : `docs/COOLIFY_DEMO_ISOLATION.md`.
 - **Ne pas utiliser** `https://demo-vendome.welcomeparis.hotelmanager.fr` (FQDN retire du Web clone en COOLIFY-DEMO-3 car il ne correspondait pas au slug seede).
 - Les URLs historiques `demo-paris-local.welcomeparis.hotelmanager.fr` (prod) restent reservees au seed principal et ne doivent pas etre utilisees pour la demo commerciale (elles affichent `Hotel not found` car le tenant `demo-paris-local` n'existe qu'en DB demo, pas en prod).

@@ -25,12 +25,12 @@ Checklist commerciale avant demonstration ParisLocalStack.
   - Audit UI local : `npm run audit:ui`
 - URL Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
 - URL Reception demo : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr
-- **URLs clone dedie (COOLIFY-DEMO-1, nettoye COOLIFY-DEMO-3, FQDNs canoniques ajoutes) :**
+- **URLs clone dedie (COOLIFY-DEMO-1 + COOLIFY-DEMO-3 + COOLIFY-DEMO-4) :**
   - **URL officielle Guest : https://demo-paris-local.welcomeparis.hotelmanager.fr/** (slug deduit du hostname, contexte Guest)
   - **URL officielle Reception : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr/** (slug deduit du hostname, contexte Reception)
-  - **URL fallback path-based : https://demo.hotelmanager.fr/h/demo-paris-local/welcome** (slug dans le path, fonctionne toujours)
   - API (interne) : https://api-demo.hotelmanager.fr
-  - Les sous-domaines `demo-vendome.welcomeparis.hotelmanager.fr` et `demo-admin.vendome.welcomeparis.hotelmanager.fr` ont ete retires du Web clone (COOLIFY-DEMO-3) car ils ne correspondaient pas au slug seede et provoquaient des 404.
+  - **NE PAS OUVRIR** `https://demo.hotelmanager.fr/` (racine retirees du Web clone en COOLIFY-DEMO-4 car elle faisait deduire `slug=demo` et provoquait des 404 console)
+  - Les sous-domaines `demo-vendome.welcomeparis.hotelmanager.fr` et `demo-admin.vendome.welcomeparis.hotelmanager.fr` ont ete retires du Web clone (COOLIFY-DEMO-3).
 - URL Super Admin uniquement si necessaire.
 - QR code demo.
 

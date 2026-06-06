@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-06
+Decision : retirer la racine `https://demo.hotelmanager.fr/` du Web clone (COOLIFY-DEMO-4) pour eliminer le piege silencieux des 404 console navigateur.
+
+Motif : apres l'ajout des FQDNs canoniques en COOLIFY-DEMO-3 etape 2, l'utilisateur pouvait toujours ouvrir `https://demo.hotelmanager.fr/` par defaut. Or ce hostname fait deduire `slug=demo` par `tenant.ts:33-41` (label "demo" non present dans la liste d'exclusion plateforme), entrainant des 404 sur les appels API `/api/public/hotels/by-slug/demo`, `/api/public/demo/settings`, `/api/public/demo/recommendations`. Le `tenant.ts` ne peut pas etre modifie (regle explicite), et creer un mapping ad hoc `demo → demo-paris-local` est interdit. Retirer la racine du Web clone fait que `https://demo.hotelmanager.fr/` n'a plus de route Traefik, et l'utilisateur est force d'utiliser les URLs canoniques.
+
+Impact : `fqdn` final du Web clone = `https://demo-paris-local.welcomeparis.hotelmanager.fr,https://admin-demo-paris-local.welcomeparis.hotelmanager.fr`. Le fallback path-based `https://demo.hotelmanager.fr/h/demo-paris-local/welcome` n'est plus accessible (acceptable, les URLs canoniques le rendent redondant). La config Traefik est regeneree cote Coolify (plus de route `Host(demo.hotelmanager.fr)` visible dans les custom_labels). Le reverse-proxy Caddy du conteneur Web clone continue de repondre 200 sur la racine jusqu'au prochain redéploiement du Web clone (recommandé pour figer la suppression au runtime). Aucune modification de la prod, du code applicatif, de `tenant.ts`, ni de l'API clone.
+
+Statut : adopte, valide par tests HTTP. Documentation mise a jour dans `docs/COOLIFY_DEMO_ISOLATION.md` (section 12 simplifiee a 2 URLs canoniques), `current-state.md`, `DEMO_CHECKLIST_AVANT_RDV.md`, `DEMO_COMMERCIALE.md`.
+
+---
+
+## 2026-06-06
 Decision : ajouter les FQDNs canoniques `demo-paris-local.welcomeparis.hotelmanager.fr` (Guest) et `admin-demo-paris-local.welcomeparis.hotelmanager.fr` (Reception) au Web clone (COOLIFY-DEMO-3 etape 2).
 
 Motif : apres le nettoyage des FQDNs incoherents (`demo-vendome.*`), ouvrir la racine `https://demo.hotelmanager.fr/` faisait deduire `slug=demo` par `tenant.ts` (le label "demo" n'est pas dans la liste d'exclusion plateforme), entrainant des 404 sur les appels API. L'URL path-based `https://demo.hotelmanager.fr/h/demo-paris-local/welcome` marchait mais obligeait l'utilisateur a connaitre le slug a l'avance. L'ajout des FQDNs canoniques au pattern prod (`{slug}.welcomeparis.hotelmanager.fr` + `admin-{slug}.welcomeparis.hotelmanager.fr`) permet a `tenant.ts:21-30` de correctement extraire le slug `demo-paris-local` depuis le hostname, et a `tenant.ts:24-26` d'identifier le contexte `reception` depuis le prefixe `admin-`.
