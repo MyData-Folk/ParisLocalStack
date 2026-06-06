@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { commercialPackageSchema, guestCardsSchema, guestCardsUpdateSchema, settingsUpdateSchema, type CommercialPackage, type GuestCardConfig } from "@paris-local/shared";
+import { commercialPackageSchema, enabledServicesSchema, guestCardsSchema, guestCardsUpdateSchema, settingsUpdateSchema, type CommercialPackage, type GuestCardConfig, type HotelServiceConfig } from "@paris-local/shared";
 import { prisma } from "../../database/prisma.js";
 import { authenticate, requireHotelAccess, requireRole } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { enforceGuestCardPlanLimits } from "../../utils/guestCardLimits.js";
+import { categoryOfServiceCode, isPartnerServiceCode } from "../../utils/hotelServiceCatalog.js";
+import { enforceHotelServiceApiLimits } from "../../utils/hotelServiceLimits.js";
 import { HttpError } from "../../utils/http.js";
 import { sendOk } from "../../utils/http.js";
 
@@ -13,6 +15,14 @@ export const publicSettingsRouter = Router({ mergeParams: true });
 
 function parseStoredGuestCards(value: unknown): GuestCardConfig[] {
   return guestCardsSchema.parse(Array.isArray(value) ? value : []);
+}
+
+function parseStoredEnabledServices(value: unknown): HotelServiceConfig[] {
+  try {
+    return enabledServicesSchema.parse(Array.isArray(value) ? value : []);
+  } catch {
+    return [];
+  }
 }
 
 function guestCardsResponse(hotel: { id: string; commercialPackage: string; settings: { guestCards: unknown } | null }) {
@@ -51,6 +61,44 @@ function publicGuestCardsPayload(hotel: { id: string; commercialPackage: string;
   };
 }
 
+function publicServicesPayload(hotel: { id: string; commercialPackage: string; settings: { enabledServices: unknown } | null }) {
+  const commercialPackage = commercialPackageSchema.parse(hotel.commercialPackage) as CommercialPackage;
+  const storedServices = parseStoredEnabledServices(hotel.settings?.enabledServices);
+  const enabledServices = storedServices
+    .filter((service) => service.enabled && service.visibleInGuestApp)
+    .sort((a, b) => a.order - b.order || a.serviceCode.localeCompare(b.serviceCode));
+  const { limits } = enforceHotelServiceApiLimits(enabledServices, commercialPackage);
+  const seen = new Set<string>();
+  const publicServices: HotelServiceConfig[] = [];
+
+  for (const service of enabledServices) {
+    const category = categoryOfServiceCode(service.serviceCode);
+    if (seen.has(service.serviceCode)) continue;
+    if (!category || !limits.allowedCategories.includes(category)) continue;
+    if (category === "wellness" && !limits.allowWellness) continue;
+    if (category === "custom" && !limits.allowCustomServices) continue;
+    if (isPartnerServiceCode(service.serviceCode) && !limits.allowPartnerServices) continue;
+
+    const publicService = limits.allowCustomImages ? service : { ...service, imageUrl: undefined };
+    publicServices.push(publicService);
+    seen.add(service.serviceCode);
+    if (publicServices.length >= limits.maxActiveServices) break;
+  }
+
+  return {
+    hotelServiceLimits: limits,
+    enabledServices: publicServices,
+    _meta: {
+      services: {
+        totalEnabled: enabledServices.length,
+        visibleInGuestApp: publicServices.length,
+        visibleAsCard: publicServices.filter((service) => service.visibleAsCard).length,
+        visibleInServicesPage: publicServices.filter((service) => service.visibleInServicesPage).length
+      }
+    }
+  };
+}
+
 publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({
     where: { slug: req.params.hotelSlug },
@@ -74,6 +122,7 @@ publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
           languages: true,
           modules: true,
           guestCards: true,
+          enabledServices: true,
           createdAt: true,
           updatedAt: true
         }
@@ -86,7 +135,21 @@ publicSettingsRouter.get("/", asyncHandler(async (req, res) => {
     commercialPackage: hotel.commercialPackage,
     settings: hotel.settings
   });
-  return sendOk(res, { ...hotel.settings, ...payload });
+  const servicesPayload = publicServicesPayload({
+    id: hotel.id,
+    commercialPackage: hotel.commercialPackage,
+    settings: hotel.settings
+  });
+  return sendOk(res, {
+    ...hotel.settings,
+    ...payload,
+    hotelServiceLimits: servicesPayload.hotelServiceLimits,
+    enabledServices: servicesPayload.enabledServices,
+    _meta: {
+      ...payload._meta,
+      ...servicesPayload._meta
+    }
+  });
 }));
 
 settingsRouter.get("/hotels/:hotelId/settings", authenticate, requireHotelAccess("hotelId"), asyncHandler(async (req, res) => {
