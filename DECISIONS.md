@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-06
+Decision : ajouter les FQDNs canoniques `demo-paris-local.welcomeparis.hotelmanager.fr` (Guest) et `admin-demo-paris-local.welcomeparis.hotelmanager.fr` (Reception) au Web clone (COOLIFY-DEMO-3 etape 2).
+
+Motif : apres le nettoyage des FQDNs incoherents (`demo-vendome.*`), ouvrir la racine `https://demo.hotelmanager.fr/` faisait deduire `slug=demo` par `tenant.ts` (le label "demo" n'est pas dans la liste d'exclusion plateforme), entrainant des 404 sur les appels API. L'URL path-based `https://demo.hotelmanager.fr/h/demo-paris-local/welcome` marchait mais obligeait l'utilisateur a connaitre le slug a l'avance. L'ajout des FQDNs canoniques au pattern prod (`{slug}.welcomeparis.hotelmanager.fr` + `admin-{slug}.welcomeparis.hotelmanager.fr`) permet a `tenant.ts:21-30` de correctement extraire le slug `demo-paris-local` depuis le hostname, et a `tenant.ts:24-26` d'identifier le contexte `reception` depuis le prefixe `admin-`.
+
+Impact : Web clone fqdn final = `https://demo.hotelmanager.fr,https://demo-paris-local.welcomeparis.hotelmanager.fr,https://admin-demo-paris-local.welcomeparis.hotelmanager.fr`. Les 3 URLs servent maintenant la Guest App avec le bon contexte : racine (avec fallback path), Guest canonique (slug deduit du hostname), et Reception canonique (contexte admin). L'API clone a ete verifiee : `demo-paris-local`=200, `vendome`=404, isolation preservee. Aucun code applicatif modifie (`tenant.ts` inchange). Aucune modification de la prod.
+
+Statut : adopte, valide. Documentation mise a jour dans `docs/COOLIFY_DEMO_ISOLATION.md` (section 12 restructuree avec les 3 URLs officielles), `current-state.md`, `DEMO_CHECKLIST_AVANT_RDV.md`, `DEMO_COMMERCIALE.md`.
+
+---
+
+## 2026-06-06
 Decision : nettoyer les FQDNs du Web clone et les doublons `SEED_DEMO_*` de l'API clone (COOLIFY-DEMO-3).
 
 Motif : les FQDNs exposes `demo-vendome.welcomeparis.hotelmanager.fr` et `demo-admin.vendome.welcomeparis.hotelmanager.fr` avaient ete configures par mimetisme avec le pattern prod (`vendome`, `admin.vendome`) mais ne correspondaient pas au slug seede (`demo-paris-local`). Le frontend, via `tenant.ts`, en deduisait le slug `demo-vendome` depuis le hostname et faisait des appels API sur `/api/public/hotels/by-slug/demo-vendome` qui retournaient 404. Cote API clone, les env vars `SEED_DEMO_ENABLED` et `SEED_DEMO_SECRET` etaient dupliquees (2 paires), creant un risque de confusion et de consommation de doublons lors des futures verifications.

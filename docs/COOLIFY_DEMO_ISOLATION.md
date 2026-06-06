@@ -19,7 +19,7 @@ L'objectif est de pouvoir exécuter un seed démo, démontrer la Guest App et le
 | Ressource | UUID | FQDN / endpoint | Statut |
 |---|---|---|---|
 | API clone | `e1u5so7e1kx216d5e16cwtur` | `https://api-demo.hotelmanager.fr` | running:healthy |
-| Web clone | `qhibcwqshd484o90ufcchbg0` | `https://demo.hotelmanager.fr` (URL officielle) | running:healthy |
+| Web clone | `qhibcwqshd484o90ufcchbg0` | `https://demo.hotelmanager.fr` (racine)<br>`https://demo-paris-local.welcomeparis.hotelmanager.fr` (Guest canonique)<br>`https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` (Réception canonique) | running:healthy |
 | DB démo | `xa4milhem5vfe1s9bwnue9dx` | `paris-local-postgres-demo`, env=27 | running:healthy |
 | Projet Coolify | `n3l5wij5f3y3rjnpwyw9xk4c` | `paris-local-demo`, id=25 | — |
 | Environnement | `l7cac0yp8wd0hmqzemb5rsv3` | `production` (du projet clone), id=27 | — |
@@ -144,12 +144,14 @@ Le tool `coolify_get_database` du MCP `@masonator/coolify-mcp@2.12.0` retourne p
 
 ## 12. URL officielle de démo
 
-L'URL officielle pour la démo commerciale est :
+Trois URLs équivalentes pointent vers l'hôtel démo `demo-paris-local` (Hôtel Lumière Demo Paris) :
 
-```
-https://demo.hotelmanager.fr/h/demo-paris-local/welcome
-```
+| Usage | URL |
+|---|---|
+| **Guest App (canonique, recommandée)** | `https://demo-paris-local.welcomeparis.hotelmanager.fr/` |
+| **Réception / Admin (canonique)** | `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr/` |
+| **Fallback path-based (toujours fonctionnel)** | `https://demo.hotelmanager.fr/h/demo-paris-local/welcome` |
 
-Cette URL force le slug `demo-paris-local` dans le path, ce qui contourne toute déduction basée sur le hostname (`tenant.ts`). Elle fonctionne indépendamment des FQDNs exposés par le Web clone.
+Le pattern des FQDNs canoniques suit la prod : `{slug}.welcomeparis.hotelmanager.fr` pour la Guest App et `admin-{slug}.welcomeparis.hotelmanager.fr` pour la Réception (cf. `tenant.ts:24-26` qui reconnaît le préfixe `admin-`).
 
-⚠️ **Ne pas utiliser** `https://demo-vendome.welcomeparis.hotelmanager.fr` : ce FQDN a été retiré du Web clone (COOLIFY-DEMO-3) car il ne correspondait à aucun hôtel seedé.
+⚠️ **Ne pas utiliser** `https://demo-vendome.welcomeparis.hotelmanager.fr` : ce FQDN a été retiré du Web clone (COOLIFY-DEMO-3) car il ne correspondait à aucun hôtel seedé. Idem pour `https://demo-admin.vendome.welcomeparis.hotelmanager.fr`.

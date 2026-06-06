@@ -47,6 +47,8 @@ Statut : **ferme via COOLIFY-DEMO-3** (2026-06-06). Les FQDNs `demo-vendome.*` e
 
 Risque residuel : les anciens FQDNs peuvent encore repondre 200 tant que le Web clone n'est pas redéploye (la config Traefik n'est regeneree qu'au redéploiement). Un redéploiement Web clone via UI Coolify est necessaire pour appliquer la nouvelle config.
 
+**Mise a jour COOLIFY-DEMO-3 etape 2 (2026-06-06)** : les FQDNs canoniques `demo-paris-local.welcomeparis.hotelmanager.fr` (Guest) et `admin-demo-paris-local.welcomeparis.hotelmanager.fr` (Reception) ont ete ajoutes au Web clone via MCP `coolify_application.update`. Quand l'utilisateur ouvre l'une de ces URLs, `tenant.ts:21-30` deduit correctement le slug `demo-paris-local` du hostname (pattern `{slug}.welcomeparis.hotelmanager.fr` deja supporte) et `tenant.ts:24-26` identifie le contexte `reception` depuis le prefixe `admin-` (pattern `admin-{slug}` deja supporte). Plus de 404 console navigateur, plus besoin de connaitre le slug a l'avance. Le code `tenant.ts` reste inchange, conformement a la regle "Ne pas modifier tenant.ts / ne pas creer de mapping ad hoc".
+
 ### Staging public non identifie
 Risque : les URLs publiques demo repondent mais pointent vers un environnement non identifie, potentiellement production ou une base partagee.
 
