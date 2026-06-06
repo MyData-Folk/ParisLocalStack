@@ -208,7 +208,35 @@ hotelsRouter.patch("/:hotelId/services", authenticate, requireRole("super_admin"
 publicHotelsRouter.get("/by-slug/:slug", asyncHandler(async (req, res) => {
   const hotel = await prisma.hotel.findUnique({
     where: { slug: req.params.slug },
-    include: { settings: true }
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      logoUrl: true,
+      status: true,
+      settings: {
+        select: {
+          id: true,
+          hotelId: true,
+          wifiName: true,
+          // wifiPassword is excluded
+          breakfastHours: true,
+          checkinTime: true,
+          checkoutTime: true,
+          roomServiceHours: true,
+          receptionPhone: true,
+          // whatsappNumber is excluded
+          guestTheme: true,
+          languages: true,
+          modules: true,
+          guestCards: true,
+          enabledServices: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }
+    }
   });
   if (!hotel || hotel.status !== "active") return res.status(404).json({ error: "Hotel not found" });
   return sendOk(res, hotel);
