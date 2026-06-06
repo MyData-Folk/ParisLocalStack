@@ -100,6 +100,27 @@ Voir `docs/GUEST_CARDS_DISPLAY.md` pour le detail (sources de verite, fallback, 
 
 Validation locale 5F : audit UI 6/6 (Playwright), typecheck/build OK, health/ready OK, aucun secret expose. Staging et production non encore valides.
 
+## 4 quater. Services dynamiques Guest App / Hotel Admin
+Etat Vague 6 :
+- PR #91 : types/schemas services configurables integres.
+- PR #92 : stockage `enabledServices` et API privee services integres.
+- PR #93 : Super Admin attribue les services autorises par hotel.
+- PR #94 : Hotel Admin personnalise les services autorises.
+- PR #95 : API publique settings expose les services actifs et les limites safe.
+- PR #96 : hook `useEnabledServices` integre.
+- PR #97 : Guest App affiche les services dynamiques avec fallback legacy.
+
+Ce qui est validable en demo locale :
+- Super Admin voit la section Services autorises.
+- Hotel Admin voit la section Services de l'hotel et personnalise les services autorises par son forfait.
+- Guest App affiche uniquement les services actifs/visibles de l'hotel.
+- Taxi et Room service dynamiques ouvrent les formulaires existants.
+- Blanchisserie / Pressing restent relies au parcours linge existant si actives.
+- Un service desactive ou non visible n'apparait pas.
+- Si aucun service dynamique exploitable n'est actif, le rendu legacy reste visible.
+
+Validation locale 6F : health/ready/web OK, fallback legacy OK, Taxi dynamique OK, Room service dynamique OK, service desactive masque, mobile 375px OK, audit UI 6/6, typecheck/build OK, aucun secret expose. Staging et production non encore valides.
+
 ## 5. Scenario a jouer
 - Scanner ou ouvrir QR demo.
 - Creer un client demo.

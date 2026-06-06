@@ -144,5 +144,19 @@ Scenario demo local : si au moins une carte `enabled === true` est sauvegardee, 
 
 Validation locale 5F : audit UI 6/6 (Playwright + axe), typecheck/build OK, health/ready OK, aucun secret expose. Staging et production non encore valides.
 
+## Note Vague 6 - Services dynamiques Guest App
+La personnalisation des services hotel est finalisee localement par couches :
+- PR #91 : types/schemas services configurables.
+- PR #92 : stockage `enabledServices` et API privee services.
+- PR #93 : attribution Super Admin des services autorises.
+- PR #94 : personnalisation Hotel Admin des services autorises.
+- PR #95 : API publique settings expose les services actifs et les limites safe.
+- PR #96 : hook `useEnabledServices`.
+- PR #97 : `GuestShell` affiche les services dynamiques avec fallback legacy.
+
+Scenario demo local : si des services actifs et visibles sont configures pour `demo-paris-local`, la Guest App affiche ces services dans l'ordre configure. Taxi et Room service ouvrent les formulaires existants ; Blanchisserie / Pressing restent relies au parcours linge existant si actives. Si aucun service dynamique exploitable n'est actif, le rendu legacy reste visible.
+
+Validation locale 6F : API health OK, API ready OK, web local OK, fallback legacy OK, Taxi dynamique visible et formulaire conserve, Room service dynamique visible et formulaire conserve, service desactive masque, mobile 375px OK, audit UI 6/6, typecheck/build OK, aucun secret expose. Staging et production non encore valides.
+
 ## Regle importante
 Aucune donnee reelle. Aucune capture infrastructure. Aucune exposition de configuration sensible.
