@@ -34,6 +34,7 @@ The project has working foundations for:
 - Docker/Coolify deployment
 - API readiness + requestId tracing (Phase 8b)
 - Configurable Guest App cards (Vague 5): model, API plan, Super Admin plan UI, Hotel Admin guest-cards editor, public settings exposure, isolated display components, GuestShell wiring with strict legacy fallback (PR #81 → PR #89)
+- Configurable hotel services (Vague 6): shared service schemas, private services API, Super Admin attribution, Hotel Admin personalization, public settings exposure, `useEnabledServices`, and GuestShell dynamic rendering with strict legacy fallback (PR #91 → PR #97)
 - PostgreSQL backup/restore scripts with R2 upload and staging/test restore validated (Phase 8c complete)
 - Docker Compose restart: always policy (Phase 8d)
 - Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)
@@ -169,9 +170,10 @@ Next possible phase after decision:
 - Public demo URLs are not validated as staging: the Guest App URL returns HTTP 200 with `Hotel not found`, and the admin/reception URL returns HTTP 200 with a generic login. Dedicated staging DB/API/Web, access protection, and absence of real data remain unverified.
 - Next step is Coolify/environment clarification before any non-local seed, deploy, migration, reset, or db push.
 - `DEPLOIEMENT.md` now defines the mandatory staging validation checklist before any non-local demo seed, migration, or deploy.
-- Guest App card configuration is being delivered in layers: PR #81 added `guestCards` and `commercialPackage`; PR #82 added the commercial plan API; PR #84 added Super Admin plan editing and Hotel Admin read-only plan display; PR #85 added private guest-cards endpoints; PR #86 added the Hotel Admin guest cards editor.
+- Guest App card configuration is complete locally through Vague 5F: PR #81 added `guestCards` and `commercialPackage`; PR #82 added the commercial plan API; PR #84 added Super Admin plan editing and Hotel Admin read-only plan display; PR #85 added private guest-cards endpoints; PR #86 added the Hotel Admin guest cards editor; PR #87/#88/#89 exposed and rendered active cards with a strict legacy fallback.
 - Hotel Admin can configure card image, title, description, action, target, order, and enabled state within plan limits. Super Admin remains responsible for the commercial package.
-- GuestShell is not yet wired to `guestCards`; saved cards are not publicly visible in the Guest App until Vague 5F. No public guestCards exposure is validated yet.
+- Configurable hotel services are complete locally through Vague 6F: Super Admin attributes services, Hotel Admin customizes authorized services, public settings exposes active services safely, and GuestShell renders active services with fallback legacy. Local validation confirmed health/ready/web OK, fallback OK, Taxi and Room service dynamic services OK, disabled services hidden, mobile 375px OK, audit UI 6/6, typecheck/build/diff OK.
+- Public/staging validation is still missing for guest cards and configurable hotel services. Do not treat local validation as proof that the public demo URLs are isolated or ready.
 - Phase 10 — Design System / Templates.
 
 Safe approach going forward:

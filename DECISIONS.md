@@ -1,5 +1,16 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
+## 2026-06-06
+Decision : finaliser localement la chaine services configurables Vague 6B a 6F avant toute validation staging ou production.
+
+Motif : les services hotel doivent etre configurables par hotel sans casser le rendu historique de la Guest App. Le decoupage PR #91 a #97 garde une separation nette entre types partages, stockage/API privee, attribution Super Admin, personnalisation Hotel Admin, DTO public safe, hook frontend et rendu final.
+
+Impact : Super Admin attribue les services autorises, Hotel Admin personnalise uniquement les services de son forfait, l'API publique settings expose seulement les services actifs et publics, et la Guest App affiche les services dynamiques avec fallback legacy strict si la configuration est absente, vide, invalide ou totalement desactivee. Les formulaires existants Taxi, Room service, linge/Pressing/Blanchisserie et Reception restent preserves.
+
+Statut : adopte, valide localement (health/ready/web OK, fallback legacy OK, Taxi dynamique OK, Room service dynamique OK, service desactive masque, mobile 375px OK, audit UI 6/6, typecheck/build/diff OK, aucun secret expose). Staging et production non valides.
+
+---
+
 ## 2026-06-03
 Decision : cloturer la Vague 5F en trois PR dediees (API publique, composants isoles, branchement avec fallback) avant toute evolution metier plus lourde.
 

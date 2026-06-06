@@ -36,6 +36,8 @@ Starter couvre le QR concierge et les informations pratiques. Boutique couvre me
 
 Vague 5F (PR #87, #88, #89) : les cartes Guest App (hero et shortcut) sont desormais configurables par hotel, avec un forfait commercial qui en plafonne le nombre, les kinds autorises, l'usage d'images personnalisees et l'ouverture de liens externes. Hotel Admin peut editer image, titre, description, action, ordre et etat actif/inactif via `PATCH /api/hotels/:id/guest-cards` ; Super Admin pilote le forfait via `PATCH /api/hotels/:id/plan`. La route publique settings ne retourne que les cartes `enabled === true` triees et tronquees, et la Guest App preserve le rendu legacy si la liste est absente, vide, invalide ou totalement desactivee.
 
+Vague 6F (PR #91 a #97) : les services hotel sont configurables par hotel. Super Admin attribue les services autorises, Hotel Admin personnalise les services de son hotel, l'API publique settings expose uniquement les services actifs/visibles avec limites de forfait, et la Guest App affiche ces services via `useEnabledServices(settings)` avec fallback legacy strict. Les formulaires historiques Taxi, Room service, linge/Pressing/Blanchisserie et Reception restent preserves.
+
 ## 6. Etat actuel du projet
 Etat connu au 2026-06-02 :
 - Monorepo GitHub MyData-Folk/ParisLocalStack.
@@ -57,7 +59,8 @@ Etat connu au 2026-06-02 :
 - PR #48 terminee : l'etat d'erreur Guest App affiche un message hotelier au lieu de `Internal server error`.
 - Phase 9E locale validee : le tenant `demo-paris-local` / Hôtel Lumière Demo Paris existe en local, avec donnees 100 % fictives, Guest App OK, Reception post-auth OK et Admin Hotel post-auth OK.
 - Phase 9E staging/public non validee : `https://demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 mais affiche `Hotel not found`; `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` repond HTTP 200 avec login generique. DB/API/Web dedies, protection d'acces et separation staging/production non verifies.
-- Vague 5 cartes Guest App : PR #81 modele `guestCards` + `commercialPackage`, PR #82 API plan commercial, PR #84 Super Admin modifie le plan et Hotel Admin le voit en lecture seule, PR #85 API privee guest-cards, PR #86 editeur Hotel Admin des cartes Guest App. `GuestShell` n'est pas encore branche sur ces cartes ; affichage client prevu en Vague 5F.
+- Vague 5 cartes Guest App : PR #81 modele `guestCards` + `commercialPackage`, PR #82 API plan commercial, PR #84 Super Admin modifie le plan et Hotel Admin le voit en lecture seule, PR #85 API privee guest-cards, PR #86 editeur Hotel Admin, PR #87 API publique safe, PR #88 composants isoles, PR #89 branchement GuestShell avec fallback legacy.
+- Vague 6 services configurables : PR #91 types/schemas, PR #92 DB + API privee, PR #93 attribution Super Admin, PR #94 personnalisation Hotel Admin, PR #95 DTO public settings, PR #96 hook `useEnabledServices`, PR #97 rendu Guest App dynamique avec fallback legacy. Validation locale OK ; staging/production non valides.
 - Observations du 2026-06-02 sur captures partagees : Reception operationnelle complete visible, Guest App Vendome client QR fonctionnelle et premium, Super Admin fonctionnel avec hotels, QR et generator. Information non verifiee comme validation production-ready complete.
 
 Niveau de maturite estime dans les documents existants : MVP fonctionnel environ 93 a 96%, production-ready environ 70%, commercial-ready environ 65%.
@@ -99,7 +102,7 @@ Priorite suivante : obtenir la preuve d'un staging dedie et protege pour `demo-p
 - Continuer a enrichir la Guest App et les workflows reception sans casser le MVP.
 - Executer les futures PR Phase 10 dans un ordre simple : services, tags, tri, supervision Admin Hotel, historique.
 - Maintenir la securite multi-tenant comme priorite critique.
-- Finaliser la Vague 5F uniquement apres validation : exposer publiquement les cartes `guestCards` necessaires a la Guest App, puis les afficher dans `GuestShell` sans exposer de donnees privees.
+- Conserver les validations locales Vague 5F et Vague 6F comme preuves fonctionnelles, sans les confondre avec staging ou production tant que l'environnement public n'est pas clarifie.
 
 ## 11. Prochaine etape recommandee
 La demo locale est prete RDV avec `demo-paris-local` et Hôtel Lumière Demo Paris. La prochaine etape recommandee est la clarification Coolify/environnement des URLs publiques demo avant toute action staging : identifier web, API, DB, protection d'acces et rollback, sans seed ni migration tant que l'isolation n'est pas prouvee.

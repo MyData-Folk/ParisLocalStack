@@ -37,6 +37,8 @@
 - Vague 6B finalisee : PR #91 fondation types/schemas `HotelServiceConfig`, helpers `getHotelServicePlanLimits` et `enforceHotelServicePlanLimits` dans le package shared.
 - Vague 6C finalisee : PR #92 migration `HotelSettings.enabledServices Json` (`20260603120000_add_hotel_enabled_services`), routes `GET/PATCH /api/hotels/:hotelId/services` (super_admin ou hotel_admin, validation stricte du forfait), helpers web `getHotelServices` / `updateHotelServices`, casts Prisma nettoyes.
 - Vague 6D finalisee : section Super Admin "Services autorises" dans le detail hotel, lisant `SERVICE_CATALOG` et bloquant les services hors forfait selon le plan.
+- Vague 6E finalisee : Hotel Admin personnalise les services autorises pour son hotel, dans les limites du forfait attribue par Super Admin.
+- Vague 6F finalisee localement : PR #95 expose `enabledServices` dans les settings publics avec DTO safe, PR #96 ajoute `useEnabledServices`, PR #97 branche la Guest App sur les services actifs avec fallback legacy strict. Validation locale : health/ready/web OK, fallback legacy OK, Taxi et Room service dynamiques OK, service desactive masque, mobile 375px OK, audit UI 6/6, typecheck/build OK.
 
 ## En cours
 - Stabilisation de la documentation officielle de passation.
@@ -46,7 +48,6 @@
 - Cadrage Phase 10 : services client, tags de demandes, supervision Admin Hotel, tri clients presents et historique client.
 - Refactorisation progressive des gros fichiers frontend, uniquement par phases validees.
 - Distinction audit UI local / staging / production apres les observations du 2026-06-02.
-- Preparation Vague 5F : brancher la Guest App publique sur les cartes `guestCards` sauvegardees, sans exposer de donnees privees.
 
 ## A faire
 - Confirmer quel web/API/DB servent les domaines publics `demo-paris-local` et `admin-demo-paris-local`.
@@ -65,7 +66,6 @@
 - Continuer a decomposer les monofichiers frontend.
 - Ajouter tests automatises cibles si priorite commerciale.
 - Produire supports de vente et onboarding client.
-- Vague 5F : afficher dynamiquement les cartes sauvegardees dans GuestShell apres validation publique des donnees exposees.
 
 ## Bloque
 Aucun blocage documente dans cette passe.
@@ -97,7 +97,21 @@ La configuration produit des cartes Guest App est partiellement integree :
 
 Champs configurables par Hotel Admin : image, titre, description, action, cible, ordre et actif/inactif.
 
-Limites : Super Admin reste maitre du forfait. Hotel Admin reste limite par son forfait. `GuestShell` n'est pas encore branche sur `guestCards`; les cartes sauvegardees ne seront visibles dans la Guest App qu'en Vague 5F. Aucune exposition publique des `guestCards` avant 5F.
+Limites : Super Admin reste maitre du forfait. Hotel Admin reste limite par son forfait. Vague 5F est finalisee localement : `GuestShell` lit les cartes actives via l'API publique safe et conserve le rendu legacy si aucune carte exploitable n'est disponible. Staging et production ne sont pas encore valides.
+
+## Statut Vague 6 - Services configurables
+La configuration produit des services hotel est integree localement :
+- PR #91 : types/schemas `HotelServiceConfig` et catalogue partages.
+- PR #92 : stockage `HotelSettings.enabledServices`, API privee `GET/PATCH /api/hotels/:hotelId/services` et limites de forfait.
+- PR #93 : Super Admin attribue les services autorises par hotel.
+- PR #94 : Hotel Admin personnalise les services autorises et voit les limites.
+- PR #95 : API publique settings expose uniquement les services publics actifs et les limites safe.
+- PR #96 : hook frontend `useEnabledServices`.
+- PR #97 : Guest App affiche les services dynamiques actifs avec fallback legacy strict.
+
+Validation locale 6F : API health OK, API ready OK, web local OK, Guest App demo sans erreur, Taxi dynamique visible et formulaire conserve, Room service dynamique visible et formulaire conserve, service desactive masque, fallback legacy conserve si aucun service dynamique actif, mobile 375px OK, audit UI 6/6, typecheck/build OK. Les tests temporaires locaux ont restaure l'etat initial.
+
+Limites : Super Admin reste maitre des services attribues et du forfait ; Hotel Admin personnalise seulement les services autorises ; la Guest App n'affiche que les services actifs/visibles. Staging et production ne sont pas encore valides.
 
 ## Priorite suivante
 Apres clarification staging : proteger les URLs demo si elles restent publiques, valider un environnement staging dedie, puis lancer les petites PR Phase 10 dans l'ordre recommande par `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md` : services/categories, tags demandes, tri clients presents, supervision Admin Hotel, historique client.

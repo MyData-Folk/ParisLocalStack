@@ -126,6 +126,8 @@ Expliquer :
 
 Note Vague 5 : l'editeur Hotel Admin des cartes Guest App permet de sauvegarder image, titre, description, action, cible, ordre et actif/inactif selon le forfait. Super Admin reste maitre du forfait. Vague 5F finalisee : les cartes sauvegardees sont maintenant visibles cote Guest App (PR #87 API publique, PR #88 composants isoles avec liens externes securises, PR #89 branchement avec fallback legacy). Si aucune carte active n'est sauvegardee, le rendu historique reste visible.
 
+Note Vague 6 : les services hotel sont maintenant configurables localement par hotel. Super Admin attribue les services autorises, Hotel Admin personnalise les services de l'hotel, et la Guest App affiche les services actifs avec fallback legacy si aucune configuration exploitable n'est disponible. Taxi, Room service et Blanchisserie / Pressing conservent les formulaires existants. Staging et production ne sont pas encore valides.
+
 ### Etape 5 - Closing, 2 min
 
 Conclure sur :
@@ -204,6 +206,7 @@ Une premiere demo peut etre preparee rapidement. Le demarrage commercial doit en
 - [ ] Aucun onglet GitHub / Coolify / R2 / Prisma ouvert.
 - [ ] Aucun secret visible.
 - [ ] Si l'editeur cartes Guest App est montre, preciser que l'affichage client est desormais actif en Vague 5F (PR #87, #88, #89) et que le rendu legacy reste visible si aucune carte active n'est sauvegardee.
+- [ ] Si les services dynamiques sont montres, verifier que seuls les services actifs de l'hotel apparaissent cote Guest App et que le fallback legacy reste disponible si aucun service actif n'est configure.
 - [ ] Notifications desktop activees si demonstration live.
 - [ ] QR code pret si besoin.
 - [ ] Scenario client simple prepare.
@@ -262,5 +265,6 @@ Prochaines ameliorations possibles :
 - preparer une offre commerciale ;
 - preparer la Phase 10 Design System / Templates.
 - Vague 5F terminee : PR #87, #88, #89 integrees et validees en local (audit UI 6/6, typecheck/build OK, health/ready OK). Prochaine priorite : validation staging controlee avant toute action publique.
+- Vague 6F terminee localement : services configurables integres de Super Admin a Guest App (PR #91 a #97), fallback legacy conserve, audit UI 6/6, typecheck/build OK, health/ready OK. Prochaine priorite : validation staging controlee avant toute action publique.
 
 Voir aussi : `docs/PRODUCT_STRATEGY.md` pour le cadrage produit, les packages et la roadmap.

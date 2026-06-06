@@ -25,6 +25,8 @@ Points frontend critiques : tenant parsing hostname, routes canonical vers sous-
 
 Vague 5F : la Guest App lit les cartes dynamiques via le hook `useGuestCards(settings)` (filtre defensif `enabled === true`, tri par `slotIndex`, troncature par `limits.maxHeroCards` / `limits.maxShortcutCards`) et dispatche vers `GuestHeroCard` (slot hero) ou `GuestShortcutCard` (slot shortcut). Les actions sont gerees par `resolveGuestCardAction` qui distingue `none` / `section` / `service_request` / `external_url` avec validation stricte `http`/`https`, `target="_blank" rel="noopener noreferrer"` et `allowExternalLinks` pilote par le plan. Fallback strict vers le rendu legacy si la liste est vide, invalide ou totalement desactivee.
 
+Vague 6F : la Guest App lit les services dynamiques via le hook `useEnabledServices(settings)` (filtre `enabled === true`, `visibleInGuestApp === true`, tri par `order`, fallback strict si liste absente/vide/invalide/desactivee). Les services dynamiques conservent les champs personnalises `customTitle`, `customDescription`, `imageUrl`, `actionLabel`, `visibleAsCard` et `visibleInServicesPage`, puis mappent vers les formulaires legacy existants quand le type est pris en charge.
+
 ## 4. Backend
 Stack : Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, JWT, bcryptjs, Zod, Socket.IO, Helmet, CORS, rate limiting, logs, Multer/storage local ou compatible objet selon configuration.
 
@@ -65,7 +67,18 @@ Vague 5 cartes Guest App :
 
 Champs cartes pris en charge : image, titre, description, action, cible, ordre, actif/inactif. Les limites de forfait pilotent le nombre de cartes principales, les raccourcis, les types autorises, les images personnalisees et les liens externes.
 
-Limite actuelle : `GuestShell.tsx` n'est pas encore branche sur `guestCards`; la route publique ne doit pas exposer les cartes avant la Vague 5F. Super Admin reste maitre du forfait et Hotel Admin reste contraint par ce forfait.
+Statut : Vague 5F finalisee localement. `GuestShell.tsx` est branche sur `guestCards` via DTO public safe et garde le fallback legacy. Super Admin reste maitre du forfait et Hotel Admin reste contraint par ce forfait.
+
+Vague 6 services configurables :
+- PR #91 a ajoute les types/schemas `HotelServiceConfig` et le catalogue shared.
+- PR #92 a ajoute `HotelSettings.enabledServices`, l'API privee `GET/PATCH /api/hotels/:hotelId/services` et les limites de forfait.
+- PR #93 a ajoute l'attribution Super Admin des services autorises par hotel.
+- PR #94 a ajoute la personnalisation Hotel Admin des services autorises.
+- PR #95 a expose `enabledServices` et `hotelServiceLimits` dans les settings publics avec DTO safe.
+- PR #96 a ajoute le hook `useEnabledServices`.
+- PR #97 a branche `GuestShell` sur les services dynamiques avec fallback legacy.
+
+Contraintes Vague 6 : ne pas exposer de donnees sensibles dans les settings publics, ne pas afficher de services hors forfait ou desactives, conserver les formulaires legacy Taxi, Room service, linge/Pressing/Blanchisserie, Reception et Maintenance, et garder le rendu legacy si aucun service dynamique exploitable n'est disponible. Validation locale 6F : health/ready/web OK, fallback OK, Taxi et Room service dynamiques OK, service desactive masque, mobile 375px OK, audit UI 6/6, typecheck/build/diff OK.
 
 Phase 10 documentee : `docs/PRODUCT_ROADMAP_SERVICES_REQUESTS_HISTORY.md` cadre les prochaines evolutions services client, tags demandes, tri clients presents, supervision Admin Hotel et historique client. Le premier niveau peut rester frontend/API existante ; toute migration doit etre validee avant implementation.
 

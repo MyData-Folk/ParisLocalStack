@@ -48,6 +48,11 @@ Risque : une route publique expose par erreur un champ sensible, une carte desac
 
 Statut Vague 5F (PR #87, #88, #89) : risque ferme en local. La route publique filtre `enabled === true`, trie par `slot` puis `slotIndex`, tronque par les limites du plan, exclut `wifiPassword` et `whatsappNumber`, et les liens externes sont valides strictement en `http`/`https` avec `target="_blank" rel="noopener noreferrer"`. Le rendu legacy reste conserve si `guestCards` est absent, vide, invalide ou totalement desactive. Validation : audit UI 6/6, typecheck/build/diff OK, aucun secret expose. Staging et production non encore valides.
 
+### Services hotel configurables exposes publiquement
+Risque : la Guest App affiche un service desactive, hors forfait, non visible cote client ou expose un champ interne de configuration.
+
+Statut Vague 6F (PR #95, #96, #97) : risque ferme en local. La route publique settings retourne un DTO safe des services actifs, visibles, tries par `order` et limites defensivement par le forfait ; la Guest App filtre encore via `useEnabledServices` et conserve le rendu legacy si la configuration est absente, vide, invalide ou totalement desactivee. Les formulaires existants Taxi, Room service, linge/Pressing/Blanchisserie et Reception restent preserves. Validation locale : health/ready/web OK, fallback legacy OK, Taxi dynamique OK, Room service dynamique OK, service desactive masque, mobile 375px OK, audit UI 6/6, typecheck/build/diff OK, aucun secret expose. Staging et production non encore valides.
+
 ### Checklist staging ignoree
 Risque : lancer une operation hors local sans avoir reuni les preuves minimales de staging controle.
 
@@ -107,18 +112,18 @@ Gravite : moyenne.
 Mitigation : themes hoteliers, mobile-first, visuels, navigation simple, ton concierge.
 
 ### Cartes Guest App configurees mais non visibles
-Risque : un Hotel Admin sauvegarde des cartes Guest App dans l'editeur PR #86 et s'attend a les voir immediatement cote client, alors que `GuestShell` n'est pas encore branche.
+Risque historique : un Hotel Admin sauvegardait des cartes Guest App dans l'editeur PR #86 et s'attendait a les voir immediatement cote client, alors que `GuestShell` n'etait pas encore branche.
 
 Gravite : moyenne.
 
-Mitigation : documenter clairement que les cartes sauvegardees ne seront visibles dans la Guest App qu'en Vague 5F ; ne pas presenter cette personnalisation comme visible client avant la PR d'affichage public.
+Mitigation : Vague 5F finalisee localement. Les cartes actives sont visibles cote Guest App via le branchement public safe ; conserver la mention staging/production non valides et le fallback legacy.
 
 ### Exposition publique prematuree des guestCards
-Risque : exposer des cartes configurees par hotel avant d'avoir valide le DTO public et les donnees autorisees.
+Risque historique : exposer des cartes configurees par hotel avant d'avoir valide le DTO public et les donnees autorisees.
 
 Gravite : haute.
 
-Mitigation : garder l'API guest-cards privee jusqu'a 5F ; ne pas modifier la route publique ni `GuestShell` sans validation explicite ; verifier que les cartes ne contiennent pas de donnees privees avant exposition.
+Mitigation : Vague 5F finalisee localement avec DTO public safe, filtrage `enabled === true`, limites de plan, securite des liens externes et fallback legacy. Staging et production restent a valider avant annonce publique.
 
 ### Demo commerciale confuse
 Risque : trop de surfaces techniques affichees au prospect.
@@ -202,4 +207,5 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 - Les captures Playwright locales peuvent etre non representatives d'un environnement public/staging non prepare.
 - Vendome reste une reference historique/production/monitoring possible, mais ne doit pas remplacer le tenant neutre commercial.
 - Le seed demo neutre doit rester separe du seed Vendome et ne doit jamais supprimer de donnees hors `hotel_id` demo.
-- Vague 5 cartes Guest App : editeur Hotel Admin disponible, mais affichage Guest App non branche avant 5F ; ne pas montrer cette personnalisation comme visible client tant que `GuestShell` n'est pas modifie.
+- Vague 5 cartes Guest App : affichage Guest App branche localement en Vague 5F avec fallback legacy ; staging et production non encore valides.
+- Vague 6 services configurables : affichage Guest App branche localement en Vague 6F avec fallback legacy ; staging et production non encore valides.
