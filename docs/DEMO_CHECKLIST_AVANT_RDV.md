@@ -25,10 +25,16 @@ Checklist commerciale avant demonstration ParisLocalStack.
   - Audit UI local : `npm run audit:ui`
 - URL Guest App demo : https://demo-paris-local.welcomeparis.hotelmanager.fr
 - URL Reception demo : https://admin-demo-paris-local.welcomeparis.hotelmanager.fr
+- **URLs clone dedie (COOLIFY-DEMO-1) :**
+  - Guest App : https://demo.hotelmanager.fr
+  - API : https://api-demo.hotelmanager.fr
+  - Web clone : meme URL `demo.hotelmanager.fr` (build Vite inliné, SPA unique)
 - URL Super Admin uniquement si necessaire.
 - QR code demo.
 
 Statut au 2026-06-02 : ces URLs publiques repondent, mais ne sont pas validees pour RDV. La Guest App publique affiche `Hotel not found`; l'URL Reception/Admin publique affiche un login generique. La demo prete RDV est locale uniquement tant que l'environnement public/staging n'est pas clarifie.
+
+Statut au 2026-06-06 (COOLIFY-DEMO-1 + COOLIFY-DEMO-2) : le clone dedie `paris-local-demo` est operationnel, isole de la prod, et seede avec l'hotel `demo-paris-local` (Hôtel Lumière Demo Paris, 100% fictif). La Guest App publique du clone sert l'hotel demo. URLs pretes pour demo tablette en ligne. Voir `docs/COOLIFY_DEMO_ISOLATION.md` pour la preuve d'isolation et la procedure de re-seed.
 
 Tenant attendu : demo-paris-local.
 

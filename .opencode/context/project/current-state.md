@@ -40,6 +40,8 @@ The project has working foundations for:
 - Structured logs with Pino (Phase 8e — logger, HTTP middleware, LOG_LEVEL)
 - Monitoring and alerting validated with Better Stack, Healthchecks.io, and Coolify Scheduled Task (Phase 8f)
 - Commercial demo audit and runbook documented (Phase 9a/9b)
+- **Isolated Coolify demo clone (COOLIFY-DEMO-1)**: separate PostgreSQL database `paris-local-postgres-demo` (UUID `xa4milhem5vfe1s9bwnue9dx`), dedicated API clone `https://api-demo.hotelmanager.fr` and Web clone `https://demo.hotelmanager.fr`, distinct `JWT_SECRET`, `CORS_ORIGIN`, `WEB_URL`, `VITE_API_URL`. Isolation proved by `clone /vendome=404` vs `prod /vendome=200`. See `docs/COOLIFY_DEMO_ISOLATION.md`.
+- **Demo seed one-off endpoint (COOLIFY-DEMO-2, PR #100)**: `POST /api/admin/seed-demo` protected by `SEED_DEMO_ENABLED` flag + `X-Seed-Secret` header (timing-safe) + soft env check. Seed of `demo-paris-local` (Hôtel Lumière Demo Paris) executed only against the demo DB. Endpoint disabled (`SEED_DEMO_ENABLED=false`) and verified 403 after use. Cleanup PR to remove the endpoint is still pending.
 
 ## Critical Current Priorities
 

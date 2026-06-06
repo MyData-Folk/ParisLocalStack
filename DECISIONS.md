@@ -1,6 +1,28 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-06
+Decision : deployer un clone Coolify dedie `paris-local-demo` (COOLIFY-DEMO-1) avec DB PostgreSQL dediee, JWT_SECRET distinct, et endpoints sur `*.demo.hotelmanager.fr`, pour permettre des demos tablette en ligne sans `localhost`.
+
+Motif : la demo locale necessite un acces machine, pas compatible avec un RDV client tablette. Un clone complet de la stack isole de la prod evite tout risque de fuite vers la prod tout en donnant acces a un environnement realiste.
+
+Impact : nouvelle DB `paris-local-postgres-demo` (UUID `xa4milhem5vfe1s9bwnue9dx`, env=27) hebergeant uniquement des donnees 100% fictives (`.test` TLD, `demo-phone-*`, `demo-wifi-only`, etc.). API clone (UUID `e1u5so7e1kx216d5e16cwtur`) sur `https://api-demo.hotelmanager.fr`, Web clone (UUID `qhibcwqshd484o90ufcchbg0`) sur `https://demo.hotelmanager.fr`. Isolation prouvee par asymetrie `clone /vendome=404` vs `prod /vendome=200`. Aucun UUID prod touche (`m2rfu2ypdlq07jylh59e8oh6`, `gukenjn38rxuj9n7sn5g43ey`, `hl7aaurvn9xrmj5y3g6bw5ds`).
+
+Statut : adopte, valide par redéploiement manuel de l'API clone et du Web clone via UI Coolify (le token Coolify du MCP n'a pas la permission `deploy`). Documentation centralisee dans `docs/COOLIFY_DEMO_ISOLATION.md`.
+
+---
+
+## 2026-06-06
+Decision : ajouter un endpoint one-off `POST /api/admin/seed-demo` (COOLIFY-DEMO-2, PR #100) pour executer le seed demo via HTTP, sans shell dans le conteneur, avec triple garde-fou (feature flag + secret env + header timing-safe) + soft check `demo.hotelmanager.fr`.
+
+Motif : apres le redéploiement du clone, la DB demo est vide. La commande one-off via MCP etant impossible (pas d'exec dans le MCP, pas de `tsx` dans l'image finale), il fallait un point d'entree HTTP pour jouer `prisma/seed.demo.ts` sur la DB demo uniquement. L'endpoint est temporaire, desactive apres usage (`SEED_DEMO_ENABLED=false` + redéploiement), et un PR de cleanup est a planifier.
+
+Impact : nouvelle route `POST /api/admin/seed-demo` montee sur `/api/admin`, code duplique intentionnellement depuis `prisma/seed.demo.ts` (le fichier source n'est pas compile par le build API et le runtime n'a pas `tsx`). Endpoint protege par 4 couches, secret `SEED_DEMO_SECRET` genere aleatoirement (64 chars base64url) et jamais documente en clair. Apres redéploiement propre, l'endpoint retourne 403 sur toutes les combinaisons (avec/sans secret, bon/mauvais secret).
+
+Statut : adopte, valide (seed execute avec succes, hotel `demo-paris-local` accessible sur le clone, isolation preservee, cles sensibles absentes du select public clone, logins demo OK, endpoint desactive). Documentation dans `docs/COOLIFY_DEMO_ISOLATION.md`.
+
+---
+
+## 2026-06-06
 Decision : finaliser localement la chaine services configurables Vague 6B a 6F avant toute validation staging ou production.
 
 Motif : les services hotel doivent etre configurables par hotel sans casser le rendu historique de la Guest App. Le decoupage PR #91 a #97 garde une separation nette entre types partages, stockage/API privee, attribution Super Admin, personnalisation Hotel Admin, DTO public safe, hook frontend et rendu final.

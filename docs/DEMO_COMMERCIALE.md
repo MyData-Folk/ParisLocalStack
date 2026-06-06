@@ -39,6 +39,13 @@ Surfaces recommandees :
 
 Statut public au 2026-06-02 : ces URLs ne sont pas encore validees pour une demonstration client. La Guest App publique repond HTTP 200 mais affiche `Hotel not found`; la Reception/Admin publique repond HTTP 200 avec login generique. La demonstration prete RDV est locale uniquement tant que l'environnement public/staging n'est pas clarifie.
 
+Statut au 2026-06-06 (COOLIFY-DEMO-1 + COOLIFY-DEMO-2) : un **clone dedie** `paris-local-demo` est operationnel et seede :
+- Guest App : https://demo.hotelmanager.fr
+- API : https://api-demo.hotelmanager.fr (interne, ne pas montrer)
+- Le clone heberge uniquement l'hotel `demo-paris-local` (Hôtel Lumière Demo Paris, 100% fictif) et est isole de la prod (DB distincte, JWT_SECRET distinct, CORS/WEB_URL distincts, isolation prouvee par `clone /vendome=404` vs `prod /vendome=200`).
+- Documentation complete : `docs/COOLIFY_DEMO_ISOLATION.md`.
+- Les URLs historiques `demo-paris-local.welcomeparis.hotelmanager.fr` (prod) restent reservees au seed principal et ne doivent pas etre utilisees pour la demo commerciale (elles affichent `Hotel not found` car le tenant `demo-paris-local` n'existe qu'en DB demo, pas en prod).
+
 Tenant demo valide :
 
 - Tenant : demo-paris-local ;

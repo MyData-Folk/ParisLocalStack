@@ -36,12 +36,25 @@ Gravite : haute.
 
 Mitigation : garder le seed demo manuel, ne pas ajouter de script automatique, documenter la commande future sans l'executer, verifier l'environnement cible avant toute execution.
 
+Statut : **ferme pour le clone dedie** via COOLIFY-DEMO-1 + COOLIFY-DEMO-2 (PR #100). L'hotel `demo-paris-local` est maintenant execute uniquement contre la DB dediee `paris-local-postgres-demo` (UUID `xa4milhem5vfe1s9bwnue9dx`) via l'endpoint one-off `POST /api/admin/seed-demo` quadruple garde-fou. Isolation prouvée par `clone /vendome=404` vs `prod /vendome=200`. L'endpoint est desactive (`SEED_DEMO_ENABLED=false`) apres usage. Voir `docs/COOLIFY_DEMO_ISOLATION.md`.
+
+Risque residuel : l'endpoint one-off existe toujours dans le code (cleanup PR a planifier). `SEED_DEMO_SECRET` est conserve dans Coolify mais l'endpoint est inactif. Une rotation de `SEED_DEMO_SECRET` est recommandee avant suppression definitive.
+
 ### Staging public non identifie
 Risque : les URLs publiques demo repondent mais pointent vers un environnement non identifie, potentiellement production ou une base partagee.
 
 Gravite : haute.
 
 Mitigation : ne lancer aucun seed, migration, deploy ou db push tant que web/API/DB dedies ne sont pas verifies ; confirmer une protection d'acces et un rollback staging ; ne pas utiliser production comme staging.
+
+Statut : **ferme pour le clone demo** via COOLIFY-DEMO-1. Le clone pointe vers une DB dediee distincte, un JWT_SECRET distinct, des CORS/WEB_URL coherents avec `*.demo.hotelmanager.fr`. L'isolation est prouvee par l'asymetrie `clone /vendome=404` vs `prod /vendome=200`. Voir `docs/COOLIFY_DEMO_ISOLATION.md`.
+
+### Fuite de secret via tool MCP Coolify
+Risque : le tool `coolify_get_database` du MCP `@masonator/coolify-mcp@2.12.0` retourne par defaut en clair `postgres_password` et `internal_db_url` de la DB ciblee (prod comme demo). Le tool `coolify_env_vars` retourne egalement `real_value` en clair (meme pour les secrets comme `SEED_DEMO_SECRET`).
+
+Gravite : moyenne (le token n'est pas persiste par l'agent dans un fichier, log ou commit, mais apparait dans la transcription de conversation).
+
+Mitigation : ne JAMAIS copier la valeur d'un secret recu via MCP vers un fichier, log ou commit. Toujours reafficher la cible par son UUID ou son nom logique, jamais par sa valeur. Privilegier l'usage de `reveal: false` quand l'API MCP le supporte. Rotation recommandee des secrets exposes : mot de passe prod `ParisLocal_2026_ChangeMe_9xN4` (DB prod `hl7aaurvn9xrmj5y3g6bw5ds`), `SEED_DEMO_SECRET` (API clone) avant suppression definitive de l'endpoint one-off.
 
 ### Cartes Guest configurables exposees publiquement
 Risque : une route publique expose par erreur un champ sensible, une carte desactivee, ou une image non validee.
