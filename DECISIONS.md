@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-06
+Decision : supprimer les env vars `SEED_DEMO_ENABLED` et `SEED_DEMO_SECRET` de l'API clone Coolify (CLEANUP-DEMO-2) maintenant que l'endpoint one-off a ete supprime du code via PR #101 (commit `9f4875c`).
+
+Motif : apres la fin d'usage de l'endpoint one-off `/api/admin/seed-demo`, les env vars de protection (`SEED_DEMO_ENABLED=false`, `SEED_DEMO_SECRET=...`) sont devenus inutiles cote code. Les conserver dans Coolify creait un risque residuel : si un developpeur re-introduisait un handler de seed similaire dans le futur sans verifier la presence de ces vars, il pourrait etre re-active par erreur. En supprimant les vars, on garantit que meme un retour accidentel du code ne pourrait pas fonctionner sans la reconfiguration manuelle de Coolify. PR #101 a deja nettoye `apps/api/src/modules/admin/seedDemo.ts` et le wiring dans `app.ts`.
+
+Impact : `SEED_DEMO_ENABLED` (UUID `j3cmt07cruo6vn8bjn4ilm47`) et `SEED_DEMO_SECRET` (UUID `fem1d8mzxqhim402qyaw7ys6`) supprimes via MCP `coolify_env_vars` `action: delete`. 18 autres env vars de l'API clone intactes (NODE_ENV, DATABASE_URL, API_PORT, WEB_URL, CORS_ORIGIN, JWT_SECRET, UPLOAD_PROVIDER, UPLOAD_DIR, S3_*, BACKUP_*). Aucune modification de la prod, du Web clone, de la DB demo. Pas de redéploiement requis (les env vars ne sont plus referencees par le code). Aucune action sur la DB demo (l'hotel `demo-paris-local` seede reste intact).
+
+Statut : adopte, valide. Tests post-suppression : API clone `/health`=200, `/ready`=200, `/demo-paris-local`=200, `/vendome`=404, prod `/vendome`=200. Documentation mise a jour dans `docs/COOLIFY_DEMO_ISOLATION.md` (section 13 ajoutee), `current-state.md`, `RISQUES.md` (risque "seed demo lance sur le mauvais environnement" : risque residuel ferme completement).
+
+---
+
+## 2026-06-06
 Decision : retirer la racine `https://demo.hotelmanager.fr/` du Web clone (COOLIFY-DEMO-4) pour eliminer le piege silencieux des 404 console navigateur.
 
 Motif : apres l'ajout des FQDNs canoniques en COOLIFY-DEMO-3 etape 2, l'utilisateur pouvait toujours ouvrir `https://demo.hotelmanager.fr/` par defaut. Or ce hostname fait deduire `slug=demo` par `tenant.ts:33-41` (label "demo" non present dans la liste d'exclusion plateforme), entrainant des 404 sur les appels API `/api/public/hotels/by-slug/demo`, `/api/public/demo/settings`, `/api/public/demo/recommendations`. Le `tenant.ts` ne peut pas etre modifie (regle explicite), et creer un mapping ad hoc `demo → demo-paris-local` est interdit. Retirer la racine du Web clone fait que `https://demo.hotelmanager.fr/` n'a plus de route Traefik, et l'utilisateur est force d'utiliser les URLs canoniques.

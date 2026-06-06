@@ -38,7 +38,7 @@ Mitigation : garder le seed demo manuel, ne pas ajouter de script automatique, d
 
 Statut : **ferme pour le clone dedie** via COOLIFY-DEMO-1 + COOLIFY-DEMO-2 (PR #100). L'hotel `demo-paris-local` est maintenant execute uniquement contre la DB dediee `paris-local-postgres-demo` (UUID `xa4milhem5vfe1s9bwnue9dx`) via l'endpoint one-off `POST /api/admin/seed-demo` quadruple garde-fou. Isolation prouvée par `clone /vendome=404` vs `prod /vendome=200`. L'endpoint est desactive (`SEED_DEMO_ENABLED=false`) apres usage. Voir `docs/COOLIFY_DEMO_ISOLATION.md`.
 
-Risque residuel : l'endpoint one-off existe toujours dans le code (cleanup PR a planifier). `SEED_DEMO_SECRET` est conserve dans Coolify mais l'endpoint est inactif. Une rotation de `SEED_DEMO_SECRET` est recommandee avant suppression definitive.
+Risque residuel : **ferme completement** via CLEANUP-DEMO-2 (2026-06-06). L'endpoint one-off `apps/api/src/modules/admin/seedDemo.ts` a ete supprime du code source via PR #101 (commit `9f4875c`), le wiring de la route dans `app.ts` a ete retire, et les env vars `SEED_DEMO_*` ont ete supprimees de l'API clone via MCP `coolify_env_vars` `action: delete`. Aucun chemin d'execution residuel n'existe : la regle "ne jamais lancer seed-demo" reste vraie par defaut, et le code ne contient plus aucun handler de seed.
 
 ### FQDNs clone incoherents avec le slug seede
 Risque : les FQDNs exposes par le Web clone (ex. `demo-vendome.welcomeparis.hotelmanager.fr`) peuvent ne pas correspondre au slug cree par le seed demo (`demo-paris-local`). Le frontend, via `tenant.ts`, en deduit un slug inexistant et fait des appels API qui retournent 404.

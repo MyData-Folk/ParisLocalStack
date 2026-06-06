@@ -139,8 +139,21 @@ Le tool `coolify_get_database` du MCP `@masonator/coolify-mcp@2.12.0` retourne p
 | COOLIFY-DEMO-1 | 2026-06-04 → 2026-06-06 | Création DB démo, config env vars clone, redéploiement initial, preuves d'isolation | ✅ Validé |
 | COOLIFY-DEMO-2 | 2026-06-06 | Endpoint one-off `POST /api/admin/seed-demo` (PR #100), exécution seed, désactivation endpoint | ✅ Validé |
 | COOLIFY-DEMO-3 | 2026-06-06 | Nettoyage FQDNs Web clone (`demo-vendome.*` retiré) + nettoyage doublons `SEED_DEMO_*` (API clone) | ✅ Validé |
-| COOLIFY-DEMO-2 cleanup | À faire | PR de suppression de l'endpoint one-off | ⏳ À planifier |
-| COOLIFY-DEMO-3 cleanup | À faire | PR de suppression définitive de l'endpoint one-off + retrait des env vars `SEED_DEMO_*` | ⏳ À planifier |
+| COOLIFY-DEMO-4 | 2026-06-06 | Retrait de la racine `demo.hotelmanager.fr` du Web clone (FQDN canoniques uniquement) | ✅ Validé |
+| CLEANUP-DEMO-2 | 2026-06-06 | Suppression finale des env vars `SEED_DEMO_*` de l'API clone (PR #101 a retiré le code) | ✅ Validé |
+| CLEANUP-DEMO-2+ | À faire | Rotation recommandée des secrets exposés via MCP (mot de passe DB prod `ParisLocal_2026_ChangeMe_9xN4`, etc.) | ⏳ À planifier |
+
+## 13. Fin du cycle COOLIFY-DEMO
+
+Toutes les missions COOLIFY-DEMO sont terminées (1 + 2 + 3 + 4 + CLEANUP-2) :
+
+- Clone isolé, URLs canoniques, isolation DB prouvée
+- Seed démo exécuté, hôtel `demo-paris-local` accessible
+- FQDNs nettoyés (demo-vendome et racine retirés), démo sans 404 console
+- Code `seed-demo` endpoint supprimé via PR #101 (commit `9f4875c`)
+- Env vars `SEED_DEMO_*` retirées de l'API clone via CLEANUP-DEMO-2
+
+**Aucun secret, mot de passe, hash, cookie, token, JWT, DATABASE_URL, JWT_SECRET, SEED_DEMO_SECRET documenté en clair dans le repo ni dans ce fichier.**
 
 ## 12. URL officielle de démo
 
