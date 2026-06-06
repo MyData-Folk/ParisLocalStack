@@ -33,6 +33,7 @@ import { resolveTenantFromHostname, routeHotelSlug } from "../../lib/tenant";
 import { resolveGuestTheme, type GuestTheme } from "../../themes";
 import type { GuestCardConfig } from "@paris-local/shared";
 import { useGuestCards } from "./hooks/useGuestCards";
+import { useEnabledServices, type GuestEnabledService } from "./hooks/useEnabledServices";
 import { GuestHeroCard } from "./components/GuestHeroCard";
 import { GuestShortcutCard } from "./components/GuestShortcutCard";
 
@@ -87,6 +88,8 @@ export function GuestShell() {
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [activeService, setActiveService] = useState<ServiceTemplate | null>(null);
   const guestCardsData = useGuestCards(settings);
+  const enabledServicesData = useEnabledServices(settings);
+  const serviceTemplatesForGuest = resolveServiceTemplates(enabledServicesData.services, enabledServicesData.hasDynamicServices);
   const navigate = useNavigate();
 
   const handleGuestCardAction = (card: GuestCardConfig) => {
@@ -98,7 +101,7 @@ export function GuestShell() {
       return;
     }
     if (card.actionType === "service_request") {
-      const template = serviceTemplates.find(
+      const template = serviceTemplatesForGuest.find(
         (t) => t.id === target || t.type === target
       );
       if (template) setActiveService(template);
@@ -217,6 +220,7 @@ export function GuestShell() {
                 onServiceRequest={setActiveService}
                 guestCards={guestCardsData.heroCards}
                 shortcutCards={guestCardsData.shortcutCards}
+                services={serviceTemplatesForGuest}
                 allowExternalLinks={guestCardsData.limits?.allowExternalLinks ?? false}
                 onGuestCardAction={handleGuestCardAction}
               />
@@ -226,6 +230,7 @@ export function GuestShell() {
                 hotelSlug={hotelSlug}
                 session={session}
                 requests={requests}
+                services={serviceTemplatesForGuest}
                 onServiceRequest={setActiveService}
               />
             )}
@@ -420,10 +425,12 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
   );
 }
 
-function HomeSection({ hotel, settings, session, requests, onServiceRequest, guestCards = [], shortcutCards = [], allowExternalLinks = false, onGuestCardAction = () => {} }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void; guestCards?: GuestCardConfig[]; shortcutCards?: GuestCardConfig[]; allowExternalLinks?: boolean; onGuestCardAction?: (card: GuestCardConfig) => void }) {
+function HomeSection({ hotel, settings, session, requests, services, onServiceRequest, guestCards = [], shortcutCards = [], allowExternalLinks = false, onGuestCardAction = () => {} }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; services: ServiceTemplate[]; onServiceRequest: (service: ServiceTemplate) => void; guestCards?: GuestCardConfig[]; shortcutCards?: GuestCardConfig[]; allowExternalLinks?: boolean; onGuestCardAction?: (card: GuestCardConfig) => void }) {
   const theme = useGuestTheme();
   const recentRequests = requests.slice(0, 3);
-  const quickServices = serviceTemplates.filter((service) => service.group === "hotel").slice(0, 4);
+  const cardServices = services.filter((service) => service.visibleAsCard !== false);
+  const hotelCardServices = cardServices.filter((service) => service.group === "hotel").slice(0, 4);
+  const quickServices = hotelCardServices.length > 0 ? hotelCardServices : cardServices.slice(0, 4);
   const fullGuestName = [session.firstName, session.lastName].filter(Boolean).join(" ");
   const greetingName = fullGuestName || "Bienvenue";
   const roomLabel = session.roomNumber ? `Chambre ${session.roomNumber}` : null;
@@ -477,11 +484,10 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest, gue
           <div className="grid grid-cols-2 gap-3">
             {quickServices.map((service) => (
               <button key={service.id} onClick={() => onServiceRequest(service)} className={`group rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
-                <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm ${theme.classes.iconSoft}`}>
-                  {service.icon}
-                </div>
+                <ServiceIconTile service={service} className={`mb-3 h-10 w-10 ${theme.classes.iconSoft}`} />
                 <p className="font-semibold">{service.title}</p>
                 <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>{service.description}</p>
+                {service.actionLabel ? <p className="mt-3 text-xs font-semibold">{service.actionLabel}</p> : null}
               </button>
             ))}
           </div>
@@ -532,10 +538,10 @@ function HomeSection({ hotel, settings, session, requests, onServiceRequest, gue
   );
 }
 
-function ServicesSection({ session, requests, onServiceRequest }: { hotelSlug: string; session: Session; requests: RequestItem[]; onServiceRequest: (service: ServiceTemplate) => void }) {
+function ServicesSection({ session, requests, services, onServiceRequest }: { hotelSlug: string; session: Session; requests: RequestItem[]; services: ServiceTemplate[]; onServiceRequest: (service: ServiceTemplate) => void }) {
   const theme = useGuestTheme();
-  const hotelServices = serviceTemplates.filter((service) => service.group === "hotel");
-  const externalServices = serviceTemplates.filter((service) => service.group === "external");
+  const hotelServices = services.filter((service) => service.group === "hotel" && service.visibleInServicesPage !== false);
+  const externalServices = services.filter((service) => service.group === "external" && service.visibleInServicesPage !== false);
   return (
     <section className="space-y-5 px-5 py-6">
       <div>
@@ -543,8 +549,8 @@ function ServicesSection({ session, requests, onServiceRequest }: { hotelSlug: s
         <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Services de l'hôtel</h2>
         <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Choisissez une catégorie pour trouver rapidement le service adapté. La réception vous répond depuis son espace.</p>
       </div>
-      <ServiceGroup title="À l'hôtel" services={hotelServices} onServiceRequest={onServiceRequest} />
-      <ServiceGroup title="À l'extérieur" services={externalServices} onServiceRequest={onServiceRequest} />
+      {hotelServices.length > 0 ? <ServiceGroup title="À l'hôtel" services={hotelServices} onServiceRequest={onServiceRequest} /> : null}
+      {externalServices.length > 0 ? <ServiceGroup title="À l'extérieur" services={externalServices} onServiceRequest={onServiceRequest} /> : null}
       <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
         <h3 className="font-semibold tracking-tight">Suivi en temps réel</h3>
         <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>Vos demandes envoyées et leurs réponses de la réception.</p>
@@ -565,14 +571,15 @@ function ServiceGroup({ title, services, onServiceRequest }: { title: string; se
       <div className="grid gap-3">
         {services.map((service) => (
           <button key={service.id} onClick={() => onServiceRequest(service)} className={`flex items-center gap-4 rounded-3xl p-4 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 ${theme.classes.elevatedCard}`}>
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${theme.classes.iconTile}`}>
-              {service.icon}
-            </div>
+            <ServiceIconTile service={service} className={`h-12 w-12 shrink-0 ${theme.classes.iconTile}`} />
             <div className="min-w-0 flex-1">
               <p className="font-semibold tracking-tight">{service.title}</p>
               <p className={`mt-1 text-sm leading-5 ${theme.classes.muted}`}>{service.description}</p>
             </div>
-            <ChevronRight className="h-5 w-5 text-stone-300" />
+            <div className="flex shrink-0 items-center gap-1 text-xs font-semibold">
+              {service.actionLabel ? <span className="hidden sm:inline">{service.actionLabel}</span> : null}
+              <ChevronRight className="h-5 w-5 text-stone-300" />
+            </div>
           </button>
         ))}
       </div>
@@ -835,6 +842,10 @@ type ServiceTemplate = {
   priority: "medium" | "high" | "urgent";
   icon: React.ReactNode;
   group: "hotel" | "external";
+  imageUrl?: string;
+  actionLabel?: string;
+  visibleAsCard?: boolean;
+  visibleInServicesPage?: boolean;
   requestTitle?: string;
   detailsPreset?: RequestDetails;
 };
@@ -857,6 +868,109 @@ const serviceTemplates: ServiceTemplate[] = [
   { id: "transfert-aeroport", type: "taxi", title: "Transfert aeroport", description: "Preparer un trajet vers ou depuis l'aeroport.", priority: "medium", icon: <Car className="h-5 w-5" />, group: "external", requestTitle: "Demande transfert aeroport", detailsPreset: { destinationType: "airport", airport: "CDG" } },
   { id: "visite-guidee", type: "reception", title: "Visite guidee", description: "Demander une visite accompagnee ou un guide.", priority: "medium", icon: <TicketCheck className="h-5 w-5" />, group: "external", requestTitle: "Demande visite guidee", detailsPreset: { subject: "Visite guidee" } }
 ];
+
+function resolveServiceTemplates(dynamicServices: GuestEnabledService[], hasDynamicServices: boolean): ServiceTemplate[] {
+  if (!hasDynamicServices || dynamicServices.length === 0) return serviceTemplates;
+
+  const mapped = dynamicServices
+    .filter((service) => service.visibleAsCard || service.visibleInServicesPage)
+    .map(dynamicServiceToTemplate)
+    .filter((service): service is ServiceTemplate => Boolean(service));
+
+  return mapped.length > 0 ? mapped : serviceTemplates;
+}
+
+function dynamicServiceToTemplate(service: GuestEnabledService): ServiceTemplate | null {
+  const type = mapDynamicRequestType(service);
+  if (!type) return null;
+  const legacy = findLegacyServiceTemplate(service.serviceCode, type);
+  const title = service.title || legacy?.title || service.serviceCode;
+  const description = service.description || legacy?.description || "Votre demande sera transmise a la reception.";
+
+  return {
+    id: service.serviceCode,
+    type,
+    title,
+    description,
+    priority: legacy?.priority ?? "medium",
+    icon: legacy?.icon ?? iconForDynamicService(service, type),
+    group: groupForDynamicService(service, legacy),
+    imageUrl: service.imageUrl,
+    actionLabel: service.actionLabel,
+    visibleAsCard: service.visibleAsCard,
+    visibleInServicesPage: service.visibleInServicesPage,
+    requestTitle: service.requestTitle || legacy?.requestTitle || `Demande ${title}`,
+    detailsPreset: dynamicDetailsPreset(service, type, legacy)
+  };
+}
+
+function mapDynamicRequestType(service: GuestEnabledService): ServiceTemplate["type"] | null {
+  if (service.requestType === "taxi") return "taxi";
+  if (service.requestType === "restaurant") return "restaurant";
+  if (service.requestType === "room_service") return "room_service";
+  if (service.requestType === "towels") return "towels";
+  if (service.requestType === "reception") return "reception";
+  if (service.requestType === "maintenance") return "maintenance";
+  return null;
+}
+
+function findLegacyServiceTemplate(serviceCode: string, type: ServiceTemplate["type"]) {
+  const byServiceCode: Record<string, string> = {
+    taxi: "taxi",
+    airport_transfer: "transfert-aeroport",
+    restaurant_booking: "restaurant-exterieur",
+    room_service: "room-service",
+    breakfast_info: "petit-dejeuner",
+    towels: "service-etage",
+    maintenance: "maintenance",
+    reception_assistance: "bagagerie",
+    luggage_storage: "bagagerie",
+    partner_restaurants: "restaurant-exterieur",
+    museums_tickets: "musee",
+    local_experiences: "excursion"
+  };
+  const byId = serviceTemplates.find((template) => template.id === byServiceCode[serviceCode]);
+  if (byId) return byId;
+  return serviceTemplates.find((template) => template.type === type);
+}
+
+function groupForDynamicService(service: GuestEnabledService, legacy?: ServiceTemplate): ServiceTemplate["group"] {
+  if (legacy) return legacy.group;
+  const category = service.catalogItem?.category;
+  if (category === "transport" || category === "partner" || category === "local_guide") return "external";
+  return "hotel";
+}
+
+function iconForDynamicService(service: GuestEnabledService, type: ServiceTemplate["type"]) {
+  if (type === "taxi") return <Car className="h-5 w-5" />;
+  if (type === "restaurant" || type === "room_service") return <Utensils className="h-5 w-5" />;
+  if (type === "towels") return <Waves className="h-5 w-5" />;
+  if (type === "maintenance") return <Wrench className="h-5 w-5" />;
+  if (service.catalogItem?.category === "partner") return <TicketCheck className="h-5 w-5" />;
+  return <ConciergeBell className="h-5 w-5" />;
+}
+
+function dynamicDetailsPreset(service: GuestEnabledService, type: ServiceTemplate["type"], legacy?: ServiceTemplate): RequestDetails {
+  const preset = { ...(legacy?.detailsPreset ?? {}) };
+  if (type === "reception") return { subject: service.title, ...preset };
+  if (type === "room_service" && service.serviceCode === "breakfast_info") return { category: "Petit-déjeuner", ...preset };
+  return preset;
+}
+
+function ServiceIconTile({ service, className }: { service: ServiceTemplate; className: string }) {
+  if (service.imageUrl) {
+    return (
+      <div className={`flex overflow-hidden rounded-2xl shadow-sm ${className}`}>
+        <img src={service.imageUrl} alt="" className="h-full w-full object-cover" />
+      </div>
+    );
+  }
+  return (
+    <div className={`flex items-center justify-center rounded-2xl shadow-sm ${className}`}>
+      {service.icon}
+    </div>
+  );
+}
 
 function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }: { service: ServiceTemplate; session: Session; hotelSlug: string; onClose: () => void; onCreated: (request: RequestItem) => void }) {
   const theme = useGuestTheme();
