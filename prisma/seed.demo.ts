@@ -12,7 +12,7 @@ function dateFromToday(days: number) {
   return date;
 }
 
-async function clearDemoTenantData(hotelId: string) {
+export async function clearDemoTenantData(hotelId: string) {
   await prisma.message.deleteMany({ where: { hotelId } });
   await prisma.serviceRequest.deleteMany({ where: { hotelId } });
   await prisma.review.deleteMany({ where: { hotelId } });
@@ -21,7 +21,7 @@ async function clearDemoTenantData(hotelId: string) {
   await prisma.recommendation.deleteMany({ where: { hotelId } });
 }
 
-async function upsertDemoUser(email: string, name: string, role: UserRole, passwordHash: string) {
+export async function upsertDemoUser(email: string, name: string, role: UserRole, passwordHash: string) {
   return prisma.user.upsert({
     where: { email },
     update: { name, role, status: UserStatus.active, passwordHash },
@@ -29,7 +29,7 @@ async function upsertDemoUser(email: string, name: string, role: UserRole, passw
   });
 }
 
-async function main() {
+export async function runDemoSeed() {
   const passwordHash = await bcrypt.hash(demoOnlyCredential, 12);
 
   const hotel = await prisma.hotel.upsert({
@@ -370,13 +370,36 @@ async function main() {
       }
     ]
   });
+
+  return {
+    hotelId: hotel.id,
+    hotelSlug: hotel.slug,
+    counts: {
+      hotelSettings: 1,
+      users: 2,
+      hotelUsers: 2,
+      guests: 4,
+      stays: 4,
+      messages: 4,
+      serviceRequests: 4,
+      reviews: 3,
+      recommendations: 5
+    }
+  };
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+export { demoSlug };
+
+if (process.argv[1] && process.argv[1].endsWith("seed.demo.ts")) {
+  runDemoSeed()
+    .then((result) => {
+      console.log("Demo seed completed:", JSON.stringify(result, null, 2));
+    })
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

@@ -16,6 +16,7 @@ import { settingsRouter, publicSettingsRouter } from "./modules/settings/routes.
 import { analyticsRouter, publicAnalyticsRouter } from "./modules/analytics/routes.js";
 import { storageRouter } from "./modules/storage/routes.js";
 import { generatorRouter } from "./modules/generator/routes.js";
+import { seedDemoRouter } from "./modules/admin/seedDemo.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 import { requestId } from "./middleware/requestId.js";
 import { prisma } from "./database/prisma.js";
@@ -91,6 +92,7 @@ export function createApp() {
   app.use("/api", analyticsRouter);
   app.use("/api/storage", storageRouter);
   app.use("/api/generator", generatorRouter);
+  app.use("/api/admin", seedDemoRouter);
   app.use(notFound);
   app.use(errorHandler);
 
