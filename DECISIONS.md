@@ -1,6 +1,17 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
 ## 2026-06-06
+Decision : nettoyer les FQDNs du Web clone et les doublons `SEED_DEMO_*` de l'API clone (COOLIFY-DEMO-3).
+
+Motif : les FQDNs exposes `demo-vendome.welcomeparis.hotelmanager.fr` et `demo-admin.vendome.welcomeparis.hotelmanager.fr` avaient ete configures par mimetisme avec le pattern prod (`vendome`, `admin.vendome`) mais ne correspondaient pas au slug seede (`demo-paris-local`). Le frontend, via `tenant.ts`, en deduisait le slug `demo-vendome` depuis le hostname et faisait des appels API sur `/api/public/hotels/by-slug/demo-vendome` qui retournaient 404. Cote API clone, les env vars `SEED_DEMO_ENABLED` et `SEED_DEMO_SECRET` etaient dupliquees (2 paires), creant un risque de confusion et de consommation de doublons lors des futures verifications.
+
+Impact : FQDN du Web clone reduit a `https://demo.hotelmanager.fr` (les 2 sous-domaines `demo-vendome.*` ont ete retires). Les URLs `https://demo-vendome.welcomeparis.hotelmanager.fr` ne servent plus de frontend coherent (apres redéploiement Web clone). L'URL officielle de demo devient `https://demo.hotelmanager.fr/h/demo-paris-local/welcome` (slug dans le path, independant des FQDNs exposes). Cote API clone, 1 seule occurrence de `SEED_DEMO_ENABLED` (`j3cmt07cr…`) et de `SEED_DEMO_SECRET` (`fem1d8mzx…`) est conservee. Aucun code applicatif n'a ete modifie (le code `tenant.ts` n'est pas touche, conforme a la consigne).
+
+Statut : adopte, en attente de redéploiement Web clone pour prise en compte de la nouvelle config Traefik. Documentation mise a jour dans `docs/COOLIFY_DEMO_ISOLATION.md` (section 12 ajoutee pour l'URL officielle).
+
+---
+
+## 2026-06-06
 Decision : deployer un clone Coolify dedie `paris-local-demo` (COOLIFY-DEMO-1) avec DB PostgreSQL dediee, JWT_SECRET distinct, et endpoints sur `*.demo.hotelmanager.fr`, pour permettre des demos tablette en ligne sans `localhost`.
 
 Motif : la demo locale necessite un acces machine, pas compatible avec un RDV client tablette. Un clone complet de la stack isole de la prod evite tout risque de fuite vers la prod tout en donnant acces a un environnement realiste.

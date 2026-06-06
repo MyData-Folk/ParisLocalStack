@@ -19,7 +19,7 @@ L'objectif est de pouvoir exécuter un seed démo, démontrer la Guest App et le
 | Ressource | UUID | FQDN / endpoint | Statut |
 |---|---|---|---|
 | API clone | `e1u5so7e1kx216d5e16cwtur` | `https://api-demo.hotelmanager.fr` | running:healthy |
-| Web clone | `qhibcwqshd484o90ufcchbg0` | `https://demo.hotelmanager.fr` (+ `*.demo.hotelmanager.fr`) | running:healthy |
+| Web clone | `qhibcwqshd484o90ufcchbg0` | `https://demo.hotelmanager.fr` (URL officielle) | running:healthy |
 | DB démo | `xa4milhem5vfe1s9bwnue9dx` | `paris-local-postgres-demo`, env=27 | running:healthy |
 | Projet Coolify | `n3l5wij5f3y3rjnpwyw9xk4c` | `paris-local-demo`, id=25 | — |
 | Environnement | `l7cac0yp8wd0hmqzemb5rsv3` | `production` (du projet clone), id=27 | — |
@@ -42,6 +42,8 @@ L'isolation est prouvée par l'asymétrie suivante :
 | Hôtel Vendôme côté clone | `GET https://api-demo.hotelmanager.fr/api/public/hotels/by-slug/vendome` | **404** | La DB démo ne contient pas l'hôtel Vendôme (qui existe en prod) |
 | Hôtel Vendôme côté prod | `GET https://api.welcomeparis.hotelmanager.fr/api/public/hotels/by-slug/vendome` | **200** | Prod intacte, l'hôtel Vendôme est servi par la DB prod |
 | `wifiPassword` côté clone | grep sur réponse publique | absent | Fix SECURITY-1 (PR #99) — pas de fuite des clés sensibles |
+| **URL officielle démo (recommandée)** | `GET https://demo.hotelmanager.fr/h/demo-paris-local/welcome` | 200 | Force le slug dans le path, indépendant des FQDNs exposés |
+| `demo-vendome.welcomeparis.hotelmanager.fr` (historique) | retiré du Web clone (COOLIFY-DEMO-3) | 404 ou routé vers racine | Mismatch FQDN ↔ slug corrigé |
 
 Tant que l'asymétrie `clone/vendome=404` vs `prod/vendome=200` est préservée, l'isolation est effective.
 
@@ -136,4 +138,18 @@ Le tool `coolify_get_database` du MCP `@masonator/coolify-mcp@2.12.0` retourne p
 |---|---|---|---|
 | COOLIFY-DEMO-1 | 2026-06-04 → 2026-06-06 | Création DB démo, config env vars clone, redéploiement initial, preuves d'isolation | ✅ Validé |
 | COOLIFY-DEMO-2 | 2026-06-06 | Endpoint one-off `POST /api/admin/seed-demo` (PR #100), exécution seed, désactivation endpoint | ✅ Validé |
+| COOLIFY-DEMO-3 | 2026-06-06 | Nettoyage FQDNs Web clone (`demo-vendome.*` retiré) + nettoyage doublons `SEED_DEMO_*` (API clone) | ✅ Validé |
 | COOLIFY-DEMO-2 cleanup | À faire | PR de suppression de l'endpoint one-off | ⏳ À planifier |
+| COOLIFY-DEMO-3 cleanup | À faire | PR de suppression définitive de l'endpoint one-off + retrait des env vars `SEED_DEMO_*` | ⏳ À planifier |
+
+## 12. URL officielle de démo
+
+L'URL officielle pour la démo commerciale est :
+
+```
+https://demo.hotelmanager.fr/h/demo-paris-local/welcome
+```
+
+Cette URL force le slug `demo-paris-local` dans le path, ce qui contourne toute déduction basée sur le hostname (`tenant.ts`). Elle fonctionne indépendamment des FQDNs exposés par le Web clone.
+
+⚠️ **Ne pas utiliser** `https://demo-vendome.welcomeparis.hotelmanager.fr` : ce FQDN a été retiré du Web clone (COOLIFY-DEMO-3) car il ne correspondait à aucun hôtel seedé.

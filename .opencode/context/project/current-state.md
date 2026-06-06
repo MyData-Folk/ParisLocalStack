@@ -42,6 +42,7 @@ The project has working foundations for:
 - Commercial demo audit and runbook documented (Phase 9a/9b)
 - **Isolated Coolify demo clone (COOLIFY-DEMO-1)**: separate PostgreSQL database `paris-local-postgres-demo` (UUID `xa4milhem5vfe1s9bwnue9dx`), dedicated API clone `https://api-demo.hotelmanager.fr` and Web clone `https://demo.hotelmanager.fr`, distinct `JWT_SECRET`, `CORS_ORIGIN`, `WEB_URL`, `VITE_API_URL`. Isolation proved by `clone /vendome=404` vs `prod /vendome=200`. See `docs/COOLIFY_DEMO_ISOLATION.md`.
 - **Demo seed one-off endpoint (COOLIFY-DEMO-2, PR #100)**: `POST /api/admin/seed-demo` protected by `SEED_DEMO_ENABLED` flag + `X-Seed-Secret` header (timing-safe) + soft env check. Seed of `demo-paris-local` (Hôtel Lumière Demo Paris) executed only against the demo DB. Endpoint disabled (`SEED_DEMO_ENABLED=false`) and verified 403 after use. Cleanup PR to remove the endpoint is still pending.
+- **Demo clone cleanup (COOLIFY-DEMO-3)**: removed `demo-vendome.welcomeparis.hotelmanager.fr` and `demo-admin.vendome.welcomeparis.hotelmanager.fr` from the Web clone FQDNs (they did not match the seed slug and caused 404 console errors). Removed duplicate `SEED_DEMO_ENABLED` and `SEED_DEMO_SECRET` env vars on the API clone. Official demo URL is `https://demo.hotelmanager.fr/h/demo-paris-local/welcome` (slug in path, independent of hostnames).
 
 ## Critical Current Priorities
 

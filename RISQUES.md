@@ -40,6 +40,13 @@ Statut : **ferme pour le clone dedie** via COOLIFY-DEMO-1 + COOLIFY-DEMO-2 (PR #
 
 Risque residuel : l'endpoint one-off existe toujours dans le code (cleanup PR a planifier). `SEED_DEMO_SECRET` est conserve dans Coolify mais l'endpoint est inactif. Une rotation de `SEED_DEMO_SECRET` est recommandee avant suppression definitive.
 
+### FQDNs clone incoherents avec le slug seede
+Risque : les FQDNs exposes par le Web clone (ex. `demo-vendome.welcomeparis.hotelmanager.fr`) peuvent ne pas correspondre au slug cree par le seed demo (`demo-paris-local`). Le frontend, via `tenant.ts`, en deduit un slug inexistant et fait des appels API qui retournent 404.
+
+Statut : **ferme via COOLIFY-DEMO-3** (2026-06-06). Les FQDNs `demo-vendome.*` et `demo-admin.vendome.*` ont ete retires du Web clone via MCP `coolify_application update` ; le `fqdn` du Web clone est maintenant `https://demo.hotelmanager.fr`. L'URL officielle de demo force le slug dans le path (`https://demo.hotelmanager.fr/h/demo-paris-local/welcome`), ce qui rend le dedoublement de deduire le slug du hostname inutile. Le code `tenant.ts` n'a pas ete modifie (volontairement, pour eviter un mapping ad hoc).
+
+Risque residuel : les anciens FQDNs peuvent encore repondre 200 tant que le Web clone n'est pas redéploye (la config Traefik n'est regeneree qu'au redéploiement). Un redéploiement Web clone via UI Coolify est necessaire pour appliquer la nouvelle config.
+
 ### Staging public non identifie
 Risque : les URLs publiques demo repondent mais pointent vers un environnement non identifie, potentiellement production ou une base partagee.
 
