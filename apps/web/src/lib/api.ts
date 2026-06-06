@@ -48,10 +48,18 @@ export type PublicSettingsResponse = {
   commercialPackage: CommercialPackageValue;
   limits: GuestCardPlanLimits;
   guestCards: GuestCardConfig[];
+  hotelServiceLimits: HotelServicePlanLimits;
+  enabledServices: HotelServiceConfig[];
   _meta?: {
     totalEnabled: number;
     heroCount: number;
     shortcutCount: number;
+    services?: {
+      totalEnabled: number;
+      visibleInGuestApp: number;
+      visibleAsCard: number;
+      visibleInServicesPage: number;
+    };
   };
   createdAt: string;
   updatedAt: string;
