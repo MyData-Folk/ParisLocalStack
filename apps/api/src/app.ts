@@ -70,6 +70,7 @@ export function createApp() {
     }
   });
   app.post("/api/auth/login", authLimiter);
+  app.patch("/api/auth/me/password", authLimiter);
   app.use("/api/auth", authRouter);
   app.use("/api/hotels", hotelsRouter);
   app.use("/api/public/hotels", publicLimiter, publicHotelsRouter);

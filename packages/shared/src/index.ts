@@ -17,6 +17,11 @@ export const loginSchema = z.object({
   password: z.string().min(8)
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(16, "Password must be at least 16 characters").max(128)
+});
+
 export const hotelCreateSchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/),

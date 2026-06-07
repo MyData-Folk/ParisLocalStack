@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { loginSchema } from "@paris-local/shared";
+import { loginSchema, changePasswordSchema } from "@paris-local/shared";
 import { config } from "../../config.js";
 import { prisma } from "../../database/prisma.js";
 import { authenticate } from "../../middleware/auth.js";
@@ -34,6 +34,19 @@ authRouter.post("/login", validateBody(loginSchema), asyncHandler(async (req, re
       hotelIds: user.hotels.map((hotelUser) => hotelUser.hotelId)
     }
   });
+}));
+
+authRouter.patch("/me/password", authenticate, validateBody(changePasswordSchema), asyncHandler(async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
+  if (!user) return res.status(401).json({ error: "Invalid token" });
+
+  const valid = await bcrypt.compare(req.body.currentPassword, user.passwordHash);
+  if (!valid) return res.status(400).json({ error: "Current password is incorrect" });
+
+  const hash = await bcrypt.hash(req.body.newPassword, 12);
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash: hash } });
+
+  return sendOk(res, { passwordChanged: true });
 }));
 
 authRouter.post("/logout", authenticate, (_req, res) => sendOk(res, { ok: true }));
