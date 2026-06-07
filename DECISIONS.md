@@ -240,6 +240,17 @@ Statut : adopte.
 
 ---
 
+## 2026-06-07
+Decision : rotater le mot de passe de `reception@vendome.test` (SECURITY-ROTATION-2C-A) pour eliminer la dependance au mot de passe dev `ChangeMe123!` expose en clair dans `prisma/seed.ts:7`.
+
+Motif : le mot de passe dev a ete historiquement utilise pour les comptes seed (super_admin + receptionist Vendome) et est considere compromis (visible dans le code source versionne, etait le defaut avant l'instauration de `SEED_ADMIN_PASSWORD`). La rotation du super admin est bloquee par construction (ligne 99-101 de `apps/api/src/modules/hotels/routes.ts` : 403 si `membership.user.role === super_admin`). La rotation du receptionist est en revanche possible via l'endpoint PATCH `/api/hotels/:hotelId/users/:userId` qui accepte un champ `password` (ligne 108 de `adminUserUpdateSchema`).
+
+Impact : nouveau mot de passe (43 chars base64url) applique via PATCH sur l'utilisateur `5473057e-e9c3-4814-8927-0e99bbc1e0b6` (Vendome). Verifications post-rotation : ancien mdp = 401, nouveau mdp = 200 + JWT 188 chars, `/api/auth/me` avec token = 200, `/api/auth/me` sans token = 401, `admin@paris-local.test` toujours OK avec mdp dev (isole), API clone intacte. Documentation creee dans `SECURITY_ROTATION.md` (Phases 1, 2A, 2B, 2C, 2C-A documentees ; Phase 2C-B documentee comme BLOQUE). Aucune modification code (PR possible mais non necessaire : l'endpoint PATCH standard suffit pour les non-super-admin).
+
+Statut : adopte, valide par tests HTTP. Phase 2C-B (super admin) en attente de decision utilisateur (PR temporaire, SQL direct, ou autre).
+
+---
+
 ## 2026-05
 Decision : deploiement production via migrations Prisma versionnees.
 

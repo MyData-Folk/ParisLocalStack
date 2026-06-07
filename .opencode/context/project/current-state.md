@@ -217,3 +217,20 @@ The product strategy now frames:
 - what not to build now.
 
 Current priority is to keep the commercial demo focused on the validated local neutral tenant, clarify the public/staging environment, and prepare the priority service forms. Do not start PMS integrations, advanced AI, native apps, or Palace modules now.
+
+## Security Rotation Cycle (in progress)
+
+A new cycle of secret rotation was launched on 2026-06-06 to clean up historically compromised secrets. Master document : `SECURITY_ROTATION.md` (root).
+
+Phases completed and validated :
+- Phase 1 (audit) : 6 secret categories identified, 2 user accounts vulnerable.
+- Phase 2A : PostgreSQL prod password rotated via terminal UI Coolify, new DATABASE_URL applied manually, redéploiement manuel OK.
+- Phase 2B : JWT_SECRET prod rotated (64 chars base64url) via MCP, redéploiement manuel OK.
+- Phase 2C : user passwords audit.
+- Phase 2C-A (2026-06-07) : `reception@vendome.test` password rotated (43 chars base64url) via PATCH endpoint, all post-rotation tests pass, API clone intact.
+
+Phases planned or blocked :
+- Phase 2C-B : `admin@paris-local.test` rotation BLOCKED by construction (PATCH endpoint refuses super_admin, line 99-101 of `apps/api/src/modules/hotels/routes.ts`). User decision required : (a) temporary PR, (b) direct SQL via terminal UI Coolify, (c) other.
+- Phase 3 : R2/S3 tokens rotation (planned).
+- Phase 4 : Coolify token regeneration (planned, non-blocking — current token lacks `deploy` permission).
+- Phase 5 : demo accounts password rotation (planned, non-blocking — isolated in demo DB).

@@ -233,3 +233,16 @@ Mitigation : cible initiale independants et boutique hotels, package Boutique.
 - Le seed demo neutre doit rester separe du seed Vendome et ne doit jamais supprimer de donnees hors `hotel_id` demo.
 - Vague 5 cartes Guest App : affichage Guest App branche localement en Vague 5F avec fallback legacy ; staging et production non encore valides.
 - Vague 6 services configurables : affichage Guest App branche localement en Vague 6F avec fallback legacy ; staging et production non encore valides.
+
+## 2. Risques securite
+
+### Comptes utilisateur avec mot de passe dev (compromis)
+Risque : les comptes seed via `prisma/seed.ts` utilisent par defaut le mot de passe `ChangeMe123!` (visible en clair ligne 7 du fichier, `process.env.SEED_ADMIN_PASSWORD || "ChangeMe123!"`). Si `SEED_ADMIN_PASSWORD` n'est pas defini en production, les comptes seed sont accessibles publiquement par toute personne lisant le code source.
+
+Gravite : haute (compromission directe des comptes staff en cas de deploiement sans rotation).
+
+Mitigation : definir `SEED_ADMIN_PASSWORD` dans Coolify, verifier la rotation effective, supprimer l'historique de mots de passe dev.
+
+Statut :
+- `reception@vendome.test` (UUID `5473057e-...`) : **rote via SECURITY-ROTATION-2C-A** (2026-06-07). Nouveau mot de passe 43 chars base64url. Ancien mdp dev = 401, nouveau mdp = 200 + JWT 188 chars, `/api/auth/me` valide. Voir `SECURITY_ROTATION.md` section 5.
+- `admin@paris-local.test` (UUID `bfb7c90c-...`) : **non rote**, BLOQUE. L'endpoint PATCH standard refuse par construction (ligne 99-101 `routes.ts`). Voir `SECURITY_ROTATION.md` section 6. En attente de decision utilisateur (PR temporaire, SQL direct via terminal UI Coolify, autre).
