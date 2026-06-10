@@ -12,6 +12,158 @@ function dateFromToday(days: number) {
   return date;
 }
 
+const demoGuestCards = [
+  {
+    id: "demo-hero-paris-guide",
+    slot: "hero",
+    slotIndex: 0,
+    kind: "guide",
+    title: "Paris autour de vous",
+    description: "Restaurants, cafes et balades selectionnes par l'hotel pour profiter du quartier.",
+    imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
+    icon: "MapPin",
+    actionLabel: "Explorer",
+    actionType: "section",
+    actionTarget: "recommendations",
+    enabled: true
+  },
+  {
+    id: "demo-hero-evening",
+    slot: "hero",
+    slotIndex: 1,
+    kind: "promo",
+    title: "Votre soiree parisienne",
+    description: "Besoin d'une table, d'un taxi ou d'une idee culture ? La reception vous accompagne.",
+    imageUrl: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80",
+    icon: "Sparkles",
+    actionLabel: "Contacter",
+    actionType: "service_request",
+    actionTarget: "reception",
+    enabled: true
+  },
+  {
+    id: "demo-shortcut-taxi",
+    slot: "shortcut",
+    slotIndex: 0,
+    kind: "service",
+    title: "Taxi & transfert",
+    description: "Demandez un taxi ou un transfert aeroport en quelques secondes.",
+    icon: "Car",
+    actionLabel: "Demander",
+    actionType: "service_request",
+    actionTarget: "taxi",
+    enabled: true
+  },
+  {
+    id: "demo-shortcut-breakfast",
+    slot: "shortcut",
+    slotIndex: 1,
+    kind: "service",
+    title: "Petit-dejeuner",
+    description: "Horaires, service en chambre et demandes speciales.",
+    icon: "Coffee",
+    actionLabel: "Voir",
+    actionType: "service_request",
+    actionTarget: "room_service",
+    enabled: true
+  },
+  {
+    id: "demo-shortcut-pressing",
+    slot: "shortcut",
+    slotIndex: 2,
+    kind: "service",
+    title: "Pressing",
+    description: "Besoin de linge, pressing ou serviettes supplementaires ?",
+    icon: "Shirt",
+    actionLabel: "Demander",
+    actionType: "service_request",
+    actionTarget: "towels",
+    enabled: true
+  },
+  {
+    id: "demo-shortcut-reception",
+    slot: "shortcut",
+    slotIndex: 3,
+    kind: "info",
+    title: "Reception 24h/24",
+    description: "Une question, une bagagerie ou une assistance urgente.",
+    icon: "Bell",
+    actionLabel: "Ecrire",
+    actionType: "service_request",
+    actionTarget: "reception",
+    enabled: true
+  }
+];
+
+const demoEnabledServices = [
+  {
+    serviceCode: "taxi",
+    enabled: true,
+    order: 0,
+    customTitle: "Taxi & transfert",
+    customDescription: "La reception organise vos trajets dans Paris ou vers les aeroports.",
+    visibleInGuestApp: true,
+    visibleAsCard: true,
+    visibleInServicesPage: true,
+    actionLabel: "Demander un taxi"
+  },
+  {
+    serviceCode: "room_service",
+    enabled: true,
+    order: 1,
+    customTitle: "Room service",
+    customDescription: "Petit-dejeuner, boissons et encas servis en chambre selon les horaires de l'hotel.",
+    visibleInGuestApp: true,
+    visibleAsCard: true,
+    visibleInServicesPage: true,
+    actionLabel: "Commander"
+  },
+  {
+    serviceCode: "reception_assistance",
+    enabled: true,
+    order: 2,
+    customTitle: "Conciergerie",
+    customDescription: "Une question, une adresse ou une demande particuliere ? Notre equipe vous repond.",
+    visibleInGuestApp: true,
+    visibleAsCard: true,
+    visibleInServicesPage: true,
+    actionLabel: "Contacter"
+  },
+  {
+    serviceCode: "towels",
+    enabled: true,
+    order: 3,
+    customTitle: "Blanchisserie & pressing",
+    customDescription: "Demandez du linge, des serviettes supplementaires ou un service pressing.",
+    visibleInGuestApp: true,
+    visibleAsCard: true,
+    visibleInServicesPage: true,
+    actionLabel: "Faire une demande"
+  },
+  {
+    serviceCode: "luggage_storage",
+    enabled: true,
+    order: 4,
+    customTitle: "Bagagerie",
+    customDescription: "Confiez vos bagages avant l'arrivee ou apres le depart.",
+    visibleInGuestApp: true,
+    visibleAsCard: false,
+    visibleInServicesPage: true,
+    actionLabel: "Demander"
+  },
+  {
+    serviceCode: "local_recommendations",
+    enabled: true,
+    order: 5,
+    customTitle: "Recommandations locales",
+    customDescription: "Les adresses preferees de l'hotel pour sortir, diner et decouvrir le quartier.",
+    visibleInGuestApp: true,
+    visibleAsCard: true,
+    visibleInServicesPage: true,
+    actionLabel: "Explorer"
+  }
+];
+
 export async function clearDemoTenantData(hotelId: string) {
   await prisma.message.deleteMany({ where: { hotelId } });
   await prisma.serviceRequest.deleteMany({ where: { hotelId } });
@@ -40,12 +192,13 @@ export async function runDemoSeed() {
       address: "10 Rue Demo Lumiere",
       city: "Paris",
       country: "France",
-      phone: "demo-phone-hotel",
+      phone: "+33 1 00 00 00 00",
       email: "contact@demo-paris-local.test",
       website: "https://demo-paris-local.example",
       primaryColor: "#c9a84c",
       secondaryColor: "#111827",
-      status: HotelStatus.active
+      status: HotelStatus.active,
+      commercialPackage: "premium"
     },
     create: {
       name: "Hôtel Lumière Demo Paris",
@@ -54,12 +207,13 @@ export async function runDemoSeed() {
       address: "10 Rue Demo Lumiere",
       city: "Paris",
       country: "France",
-      phone: "demo-phone-hotel",
+      phone: "+33 1 00 00 00 00",
       email: "contact@demo-paris-local.test",
       website: "https://demo-paris-local.example",
       primaryColor: "#c9a84c",
       secondaryColor: "#111827",
-      status: HotelStatus.active
+      status: HotelStatus.active,
+      commercialPackage: "premium"
     }
   });
 
@@ -72,11 +226,13 @@ export async function runDemoSeed() {
       checkinTime: "15:00",
       checkoutTime: "11:00",
       roomServiceHours: "07:00 - 23:00",
-      receptionPhone: "demo-phone-reception",
-      whatsappNumber: "demo-phone-whatsapp",
+      receptionPhone: "+33 1 00 00 00 10",
+      whatsappNumber: "+33 1 00 00 00 11",
       guestTheme: "parisian_boutique",
       languages: ["fr", "en", "it"],
-      modules: { messages: true, requests: true, reviews: true, recommendations: true }
+      modules: { messages: true, requests: true, reviews: true, recommendations: true },
+      guestCards: demoGuestCards,
+      enabledServices: demoEnabledServices
     },
     create: {
       hotelId: hotel.id,
@@ -86,11 +242,13 @@ export async function runDemoSeed() {
       checkinTime: "15:00",
       checkoutTime: "11:00",
       roomServiceHours: "07:00 - 23:00",
-      receptionPhone: "demo-phone-reception",
-      whatsappNumber: "demo-phone-whatsapp",
+      receptionPhone: "+33 1 00 00 00 10",
+      whatsappNumber: "+33 1 00 00 00 11",
       guestTheme: "parisian_boutique",
       languages: ["fr", "en", "it"],
-      modules: { messages: true, requests: true, reviews: true, recommendations: true }
+      modules: { messages: true, requests: true, reviews: true, recommendations: true },
+      guestCards: demoGuestCards,
+      enabledServices: demoEnabledServices
     }
   });
 
@@ -126,7 +284,7 @@ export async function runDemoSeed() {
       firstName: "Camille",
       lastName: "Martin",
       email: "camille.martin@demo-paris-local.test",
-      phone: "demo-phone-guest-001",
+      phone: "+33 1 00 00 00 01",
       language: "fr",
       marketingConsent: true,
       internalNotes: "Cliente fictive sensible à la rapidité de réponse.",
@@ -141,7 +299,7 @@ export async function runDemoSeed() {
       firstName: "Alex",
       lastName: "Turner",
       email: "alex.turner@demo-paris-local.test",
-      phone: "demo-phone-guest-002",
+      phone: "+33 1 00 00 00 02",
       language: "en",
       marketingConsent: false,
       internalNotes: "Client fictif préfère les réponses en anglais.",
@@ -156,7 +314,7 @@ export async function runDemoSeed() {
       firstName: "Sofia",
       lastName: "Rossi",
       email: "sofia.rossi@demo-paris-local.test",
-      phone: "demo-phone-guest-003",
+      phone: "+33 1 00 00 00 03",
       language: "it",
       marketingConsent: true,
       internalNotes: "Cliente fictive intéressée par les restaurants végétariens.",
@@ -171,7 +329,7 @@ export async function runDemoSeed() {
       firstName: "Léa",
       lastName: "Dubois",
       email: "lea.dubois@demo-paris-local.test",
-      phone: "demo-phone-guest-004",
+      phone: "+33 1 00 00 00 04",
       language: "fr",
       marketingConsent: true,
       internalNotes: "Cliente fictive avec demande récurrente d'oreillers supplémentaires.",
@@ -319,54 +477,70 @@ export async function runDemoSeed() {
       {
         hotelId: hotel.id,
         category: "restaurant",
-        name: "Bistrot Demo Rive Droite",
-        description: "Adresse fictive de cuisine française pour une démonstration.",
-        address: "12 Rue Exemple, 75001 Paris",
+        name: "Le Comptoir Lumiere",
+        description: "Bistrot parisien fictif pour un diner elegant a deux pas de l'hotel.",
+        address: "14 Rue Saint-Honore, 75001 Paris",
         distance: "450m",
-        tags: ["demo", "français"],
+        imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
+        tags: ["restaurant", "bistrot", "diner"],
         isFeatured: true,
         sortOrder: 1
       },
       {
         hotelId: hotel.id,
         category: "cafe",
-        name: "Café Demo Palais",
-        description: "Café fictif calme pour travailler ou lire.",
-        address: "4 Passage Exemple, 75001 Paris",
+        name: "Cafe des Arcades",
+        description: "Cafe fictif lumineux pour un espresso, un rendez-vous ou une pause lecture.",
+        address: "4 Passage des Arcades, 75001 Paris",
         distance: "300m",
-        tags: ["demo", "calme"],
+        imageUrl: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80",
+        tags: ["cafe", "calme", "matin"],
         isFeatured: true,
         sortOrder: 2
       },
       {
         hotelId: hotel.id,
         category: "museum",
-        name: "Galerie Demo Paris",
-        description: "Lieu culturel fictif pour illustrer le guide local.",
-        address: "18 Avenue Demo, 75002 Paris",
+        name: "Galerie du Passage",
+        description: "Lieu culturel fictif avec une exposition photo accessible en fin d'apres-midi.",
+        address: "18 Passage Vivienne, 75002 Paris",
         distance: "900m",
-        tags: ["demo", "culture"],
+        imageUrl: "https://images.unsplash.com/photo-1545987796-200677ee1011?auto=format&fit=crop&w=1200&q=80",
+        tags: ["musee", "culture", "exposition"],
         sortOrder: 3
       },
       {
         hotelId: hotel.id,
-        category: "pharmacy",
-        name: "Pharmacie Demo Centrale",
-        description: "Pharmacie fictive utile pour la démonstration.",
-        address: "2 Rue Locale, 75002 Paris",
-        distance: "250m",
-        tags: ["demo", "utile"],
+        category: "event",
+        name: "Soiree Jazz Rive Droite",
+        description: "Evenement fictif recommande pour une sortie parisienne simple a organiser.",
+        address: "22 Rue Montorgueil, 75002 Paris",
+        distance: "1.1km",
+        imageUrl: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&w=1200&q=80",
+        tags: ["jazz", "sortie", "soir"],
         sortOrder: 4
       },
       {
         hotelId: hotel.id,
-        category: "transport",
-        name: "Métro Demo Ligne 1",
-        description: "Point transport fictif pour montrer les recommandations pratiques.",
-        address: "Place Demo, 75001 Paris",
-        distance: "200m",
-        tags: ["demo", "transport"],
+        category: "shopping",
+        name: "Atelier Parisien",
+        description: "Boutique fictive de createurs pour un cadeau local et facile a rapporter.",
+        address: "7 Rue des Petits Champs, 75001 Paris",
+        distance: "650m",
+        imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+        tags: ["shopping", "createurs", "cadeau"],
         sortOrder: 5
+      },
+      {
+        hotelId: hotel.id,
+        category: "walk",
+        name: "Balade Palais Royal",
+        description: "Promenade fictive de 25 minutes entre galeries, jardins et facades parisiennes.",
+        address: "Jardins du Palais Royal, 75001 Paris",
+        distance: "700m",
+        imageUrl: "https://images.unsplash.com/photo-1508050919630-b135583b29ab?auto=format&fit=crop&w=1200&q=80",
+        tags: ["balade", "quartier", "photo"],
+        sortOrder: 6
       }
     ]
   });
@@ -383,7 +557,7 @@ export async function runDemoSeed() {
       messages: 4,
       serviceRequests: 4,
       reviews: 3,
-      recommendations: 5
+      recommendations: 6
     }
   };
 }
