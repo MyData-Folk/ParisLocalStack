@@ -564,7 +564,23 @@ export async function runDemoSeed() {
 
 export { demoSlug };
 
+function assertDemoSeedExecutionAllowed() {
+  if (process.env.DEMO_SEED_CONFIRM !== demoSlug) {
+    throw new Error("Demo seed refused: set DEMO_SEED_CONFIRM to the demo tenant slug.");
+  }
+
+  if (!process.env.DATABASE_URL) {
+    throw new Error("Demo seed refused: DATABASE_URL is not available in the execution context.");
+  }
+
+  if (process.env.NODE_ENV === "production" && process.env.DEMO_SEED_ENV !== "coolify-demo") {
+    throw new Error("Demo seed refused: production NODE_ENV requires DEMO_SEED_ENV=coolify-demo.");
+  }
+}
+
 if (process.argv[1] && process.argv[1].endsWith("seed.demo.ts")) {
+  assertDemoSeedExecutionAllowed();
+
   runDemoSeed()
     .then((result) => {
       console.log("Demo seed completed:", JSON.stringify(result, null, 2));
