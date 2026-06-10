@@ -1,5 +1,15 @@
 ﻿# DECISIONS.md - Journal de decisions ParisLocalStack
 
+## 2026-06-10
+Decision : cloturer SECURITY-ROTATION-2C apres ajout et deploiement de l'endpoint personnel de changement de mot de passe.
+
+Motif : les comptes applicatifs prod connus qui dependaient encore d'un mot de passe de developpement ont ete securises sans documenter de secret, sans SQL manuel durable et sans seed. La PR #102 ajoute `PATCH /api/auth/me/password` pour permettre a un utilisateur authentifie de changer son propre mot de passe de facon encadree.
+
+Impact : l'endpoint `PATCH /api/auth/me/password` exige l'authentification, `currentPassword`, `newPassword` min 16 / max 128, verifie le mot de passe courant, hash le nouveau mot de passe avec bcrypt cost 12 et met a jour uniquement l'utilisateur connecte. `admin@paris-local.test` a ete recupere et securise sans secret partage ; le fichier SQL temporaire de recuperation a ete supprime ; login avec le nouveau mot de passe OK ; `/api/auth/me` OK. `reception@vendome.test` a ete securise via l'endpoint admin existant ; login avec le nouveau mot de passe OK ; `/api/auth/me` OK ; role receptionist OK. Aucun ancien ou nouveau mot de passe, hash, token ou header Authorization ne doit etre documente.
+
+Statut : adopte et termine. Les rotations applicatives prod SECURITY-ROTATION-2C sont closes pour les deux comptes prod connus. Cette decision supersede les notes anterieures indiquant que la rotation super_admin etait bloquee.
+
+---
 ## 2026-06-06
 Decision : supprimer les env vars `SEED_DEMO_ENABLED` et `SEED_DEMO_SECRET` de l'API clone Coolify (CLEANUP-DEMO-2) maintenant que l'endpoint one-off a ete supprime du code via PR #101 (commit `9f4875c`).
 

@@ -1,5 +1,17 @@
 # Current State — ParisLocalStack
 
+## Security Rotation 2C Closure - 2026-06-10
+
+SECURITY-ROTATION-2C is closed for the two known prod accounts.
+
+- PR #102 is merged and deployed: `PATCH /api/auth/me/password` is available.
+- Endpoint properties: authentication required, `currentPassword` required, `newPassword` min 16 / max 128, current password verification, bcrypt cost 12, update limited to the authenticated user.
+- `admin@paris-local.test` is secured; recovery was performed without sharing a secret; temporary SQL recovery material was removed; login with the new password OK; `/api/auth/me` OK.
+- `reception@vendome.test` is secured through the existing admin endpoint; login with the new password OK; `/api/auth/me` OK; role receptionist OK.
+- The old development-password risk is closed for these two known prod accounts.
+- Never document old passwords, new passwords, password hashes, tokens, Authorization headers, `DATABASE_URL`, or `JWT_SECRET`.
+
+This closure supersedes older notes in this file that described the super admin rotation as blocked.
 ## Product Status
 
 ParisLocalStack is no longer a prototype. It is a functional multi-tenant hotel SaaS MVP.

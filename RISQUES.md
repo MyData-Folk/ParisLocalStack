@@ -1,5 +1,17 @@
 ﻿# RISQUES.md - ParisLocalStack
 
+### Cloture SECURITY-ROTATION-2C des comptes applicatifs prod connus
+Risque traite : deux comptes applicatifs prod connus pouvaient encore dependre d'un mot de passe de developpement historique. Aucun ancien ou nouveau mot de passe ne doit etre documente.
+
+Gravite : critique.
+
+Statut au 2026-06-10 : ferme pour les deux comptes prod connus.
+
+Comptes securises :
+- `admin@paris-local.test` : securise via recuperation controlee puis changement de mot de passe personnel. Recuperation effectuee sans secret partage ; fichier SQL temporaire supprime ; login nouveau mot de passe OK ; `/api/auth/me` OK.
+- `reception@vendome.test` : securise via endpoint admin existant. Login nouveau mot de passe OK ; `/api/auth/me` OK ; role receptionist OK.
+
+Mitigation durable : PR #102 ajoute `PATCH /api/auth/me/password`, authentifie, avec `currentPassword` requis, `newPassword` min 16 / max 128, verification du mot de passe courant, hash bcrypt cost 12 et mise a jour limitee a l'utilisateur connecte. Ne jamais documenter ancien mot de passe, nouveau mot de passe, hash, token ou header Authorization.
 ## 1. Risques techniques
 ### Fuite inter-tenant
 Risque : une route oublie le filtre hotel_id et expose les donnees d'un autre hotel.
