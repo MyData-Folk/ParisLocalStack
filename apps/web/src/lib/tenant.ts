@@ -5,6 +5,7 @@ export type TenantResolution =
   | { kind: "platform"; hostname: string; isLocal: false }
   | { kind: "guest"; hostname: string; hotelSlug: string; isLocal: false }
   | { kind: "reception"; hostname: string; hotelSlug: string; isLocal: false }
+  | { kind: "hotelAdmin"; hostname: string; hotelSlug: string; isLocal: false }
   | { kind: "local"; hostname: string; isLocal: true };
 
 export function resolveTenantFromHostname(hostname = window.location.hostname): TenantResolution {
@@ -21,6 +22,9 @@ export function resolveTenantFromHostname(hostname = window.location.hostname): 
   if (normalized.endsWith(`.${tenantRoot}`)) {
     const prefix = normalized.slice(0, -tenantRoot.length - 1);
     const labels = prefix.split(".");
+    if (labels[0]?.startsWith("hotel-admin-") && labels[0].length > "hotel-admin-".length) {
+      return { kind: "hotelAdmin", hostname: normalized, hotelSlug: labels[0].slice("hotel-admin-".length), isLocal: false };
+    }
     if (labels[0]?.startsWith("admin-") && labels[0].length > "admin-".length) {
       return { kind: "reception", hostname: normalized, hotelSlug: labels[0].slice("admin-".length), isLocal: false };
     }
@@ -43,7 +47,7 @@ export function resolveTenantFromHostname(hostname = window.location.hostname): 
 
 export function extractHotelSlug(hostname = window.location.hostname) {
   const tenant = resolveTenantFromHostname(hostname);
-  return tenant.kind === "guest" || tenant.kind === "reception" ? tenant.hotelSlug : null;
+  return tenant.kind === "guest" || tenant.kind === "reception" || tenant.kind === "hotelAdmin" ? tenant.hotelSlug : null;
 }
 
 export function routeHotelSlug(pathSlug?: string) {
