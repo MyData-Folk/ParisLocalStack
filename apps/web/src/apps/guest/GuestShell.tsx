@@ -268,45 +268,47 @@ export function GuestShell() {
 function GuestHeader({ hotel, settings, session, unreadMessagesCount }: { hotel: any; settings: any; session: Session | null; unreadMessagesCount: number }) {
   const theme = useGuestTheme();
   return (
-    <header className={`relative isolate overflow-hidden rounded-b-[2.5rem] shadow-xl ${theme.classes.header}`}>
-      <img src={heroImage} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover scale-[1.02]" />
-      <div className={`absolute inset-0 -z-10 ${theme.classes.headerOverlay}`} />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-      <div className="px-6 pb-7 pt-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white/90 shadow-sm backdrop-blur-md">
+    <header className="relative isolate overflow-hidden">
+      <div className="relative h-[280px]">
+        <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className={`absolute inset-0 ${theme.classes.headerOverlay}`} />
+        <div className="absolute inset-0 flex flex-col justify-between p-6">
+          <div className="flex items-start justify-between">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white backdrop-blur-md">
               <Sparkles className="h-3 w-3" />
               Concierge privé
             </div>
-            <h1 className="mt-5 text-[2rem] font-bold tracking-[-0.02em] leading-[1.1] text-white drop-shadow-sm">{hotel?.name}</h1>
-            <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-white/80">{hotel?.description || "Votre assistant de séjour, disponible à tout moment."}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2.5">
-            {session ? (
-              <div
-                className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/15 shadow-lg backdrop-blur-md transition-base hover:bg-white/20"
-                aria-label={unreadMessagesCount > 0 ? `${unreadMessagesCount} nouveau message réception` : "Aucun nouveau message réception"}
-                aria-live="polite"
-              >
-                <Bell className="h-[18px] w-[18px] text-white" />
-                {unreadMessagesCount > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white/80">
-                    {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
-                  </span>
-                ) : null}
+            <div className="flex items-center gap-2">
+              {session ? (
+                <div
+                  className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-md transition-all duration-200 hover:bg-white/25"
+                  aria-label={unreadMessagesCount > 0 ? `${unreadMessagesCount} nouveau message réception` : "Aucun nouveau message réception"}
+                  aria-live="polite"
+                >
+                  <Bell className="h-4 w-4 text-white" />
+                  {unreadMessagesCount > 0 ? (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white ring-2 ring-white/50">
+                      {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/15 text-base font-bold text-white backdrop-blur-md">
+                {hotel?.logoUrl ? <img src={hotel.logoUrl} alt={hotel?.name ?? "Hotel"} className="h-full w-full object-cover" /> : hotel?.name?.charAt(0) ?? <Hotel className="h-4 w-4" />}
               </div>
-            ) : null}
-            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/15 text-lg font-bold shadow-lg backdrop-blur-md">
-              {hotel?.logoUrl ? <img src={hotel.logoUrl} alt={hotel?.name ?? "Hotel"} className="h-full w-full object-cover" /> : hotel?.name?.charAt(0) ?? <Hotel className="h-5 w-5 text-white" />}
             </div>
           </div>
+          <div>
+            <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-white font-serif">{hotel?.name}</h1>
+            <p className="mt-1 text-[13px] leading-relaxed text-white/75">{hotel?.description || "Votre assistant de séjour, disponible à tout moment."}</p>
+          </div>
         </div>
-
-        <div className="mt-7 grid grid-cols-3 gap-2.5">
-          <MiniFact icon={<Wifi className="h-4 w-4" />} label="Wi-Fi" value={settings?.wifiName || "Invite"} />
-          <MiniFact icon={<Clock className="h-4 w-4" />} label="Check-out" value={settings?.checkoutTime || "11:00"} />
-          <MiniFact icon={<ConciergeBell className="h-4 w-4" />} label="Chambre" value={session?.roomNumber || "À activer"} />
+      </div>
+      <div className="relative -mt-5 mx-4">
+        <div className="grid grid-cols-3 gap-2 rounded-2xl bg-white/95 p-3 shadow-lg shadow-black/8 ring-1 ring-black/[0.04] backdrop-blur-xl">
+          <MiniFact icon={<Wifi className="h-3.5 w-3.5" />} label="Wi-Fi" value={settings?.wifiName || "Invite"} />
+          <MiniFact icon={<Clock className="h-3.5 w-3.5" />} label="Check-out" value={settings?.checkoutTime || "11:00"} />
+          <MiniFact icon={<ConciergeBell className="h-3.5 w-3.5" />} label="Chambre" value={session?.roomNumber || "À activer"} />
         </div>
       </div>
     </header>
@@ -445,11 +447,11 @@ function HomeSection({ hotel, settings, session, requests, services, onServiceRe
         <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Votre séjour, simplement.</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <StayCard icon={<Wifi className="h-5 w-5" />} label="Wi-Fi" title={settings?.wifiName || "Reseau invite"} detail={settings?.wifiPassword || "Mot de passe à la réception"} />
-        <StayCard icon={<Coffee className="h-5 w-5" />} label="Petit-déjeuner" title={settings?.breakfastHours || "07:00 - 10:30"} detail="Salon principal" />
-        <StayCard icon={<Clock className="h-5 w-5" />} label="Check-out" title={settings?.checkoutTime || "11:00"} detail={`Check-in ${settings?.checkinTime || "15:00"}`} />
-        <StayCard icon={<Phone className="h-5 w-5" />} label="Réception" title={settings?.receptionPhone || "24/7"} detail="Assistance sejour" />
+      <div className="space-y-2">
+        <StayCard icon={<Wifi className="h-4 w-4" />} label="Wi-Fi" title={settings?.wifiName || "Réseau invité"} detail={settings?.wifiPassword || "Mot de passe à la réception"} />
+        <StayCard icon={<Coffee className="h-4 w-4" />} label="Petit-déjeuner" title={settings?.breakfastHours || "07:00 - 10:30"} detail="Salon principal" />
+        <StayCard icon={<Clock className="h-4 w-4" />} label="Check-out" title={settings?.checkoutTime || "11:00"} detail={`Check-in ${settings?.checkinTime || "15:00"}`} />
+        <StayCard icon={<Phone className="h-4 w-4" />} label="Réception" title={settings?.receptionPhone || "24/7"} detail="Assistance séjour" />
       </div>
 
       {showShortcutCards ? (
@@ -669,45 +671,48 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
         {filtered.length === 0 && (
           <div className={`rounded-2xl p-8 text-center ${theme.classes.card}`}>
             <MapPin className={`mx-auto h-10 w-10 ${theme.classes.muted}`} />
-            <p className="mt-3 font-semibold">Le guide local arrive bientôt</p>
-            <p className={`mt-1 text-sm ${theme.classes.muted}`}>Nos recommandations personnalisées pour votre quartier seront disponibles sous peu.</p>
+            <p className="mt-3 font-bold font-serif text-lg">Le guide arrive bientôt</p>
+            <p className={`mt-1 text-sm ${theme.classes.muted}`}>Nos recommandations pour votre quartier seront disponibles sous peu.</p>
           </div>
         )}
-        {filtered.map((item, index) => (
-          <article key={item.id} className={`group overflow-hidden rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${theme.classes.card}`}>
-            <div className="relative h-44 overflow-hidden">
-              <img src={item.imageUrl || guideImage(index)} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-              <div className="absolute left-3 top-3 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-stone-700 shadow-sm backdrop-blur-sm">{item.category || "Adresse"}</div>
-              {item.isFeatured && (
-                <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/90 shadow-sm">
-                  <Star className="h-3.5 w-3.5 fill-white text-white" />
-                </div>
-              )}
-              {item.distance && (
-                <div className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-                  {item.distance}
-                </div>
-              )}
-            </div>
-            <div className="p-5">
-              <h3 className="text-[15px] font-bold tracking-tight">{item.name}</h3>
-              <p className={`mt-1.5 text-sm leading-relaxed ${theme.classes.muted}`}>{item.description}</p>
-              {(item.address || item.openingHours || (Array.isArray(item.tags) && item.tags.length > 0)) && (
-                <div className={`mt-3 flex flex-wrap gap-1.5 text-[11px] font-medium ${theme.classes.muted}`}>
-                  {item.address && <span className={`rounded-lg px-2.5 py-1 ${theme.classes.subtleCard}`}>{item.address}</span>}
-                  {item.openingHours && <span className={`rounded-lg px-2.5 py-1 ${theme.classes.subtleCard}`}>{item.openingHours}</span>}
-                  {Array.isArray(item.tags) ? item.tags.slice(0, 3).map((tag: string) => <span key={tag} className={`rounded-lg px-2.5 py-1 ${theme.classes.subtleCard}`}>{tag}</span>) : null}
-                </div>
-              )}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {item.phone ? <a href={`tel:${item.phone}`} className={`rounded-xl px-4 py-2 text-xs font-semibold transition-base ${theme.classes.secondaryButton}`}>Appeler</a> : null}
-                {item.website ? <a href={item.website} target="_blank" rel="noreferrer" className={`rounded-xl px-4 py-2 text-xs font-semibold transition-base ${theme.classes.secondaryButton}`}>Site web</a> : null}
-                {(item.latitude && item.longitude) || item.address ? <a href={mapsUrl(item)} target="_blank" rel="noreferrer" className={`rounded-xl px-4 py-2 text-xs font-semibold transition-base ${theme.classes.primaryButton}`}>Itinéraire</a> : null}
+        {filtered.map((item, index) => {
+          const isFeaturedFirst = index === 0 && item.isFeatured;
+          return (
+            <article key={item.id} className={`group overflow-hidden rounded-2xl transition-all duration-200 hover:-translate-y-0.5 ${theme.classes.card}`}>
+              <div className={`relative overflow-hidden ${isFeaturedFirst ? "h-52" : "h-36"}`}>
+                <img src={item.imageUrl || guideImage(index)} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                <div className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#4a3f37] shadow-sm">{item.category || "Adresse"}</div>
+                {item.isFeatured && (
+                  <div className="absolute right-3 top-3 rounded-full bg-[#b8973a] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
+                    Coup de cœur
+                  </div>
+                )}
+                {item.distance && (
+                  <div className="absolute bottom-3 left-3 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur">
+                    {item.distance}
+                  </div>
+                )}
               </div>
-            </div>
-          </article>
-        ))}
+              <div className="p-4">
+                <h3 className="font-serif text-[16px] font-bold tracking-tight">{item.name}</h3>
+                <p className={`mt-1 text-[13px] leading-relaxed ${theme.classes.muted}`}>{item.description}</p>
+                {(item.address || item.openingHours || (Array.isArray(item.tags) && item.tags.length > 0)) && (
+                  <div className={`mt-3 flex flex-wrap gap-1.5 text-[10px] font-medium ${theme.classes.muted}`}>
+                    {item.address && <span className={`rounded-full px-2.5 py-0.5 ${theme.classes.subtleCard}`}>{item.address}</span>}
+                    {item.openingHours && <span className={`rounded-full px-2.5 py-0.5 ${theme.classes.subtleCard}`}>{item.openingHours}</span>}
+                    {Array.isArray(item.tags) ? item.tags.slice(0, 3).map((tag: string) => <span key={tag} className={`rounded-full px-2.5 py-0.5 ${theme.classes.subtleCard}`}>{tag}</span>) : null}
+                  </div>
+                )}
+                <div className="mt-3.5 flex flex-wrap gap-2">
+                  {item.phone ? <a href={`tel:${item.phone}`} className={`rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-all duration-200 ${theme.classes.secondaryButton}`}>Appeler</a> : null}
+                  {item.website ? <a href={item.website} target="_blank" rel="noreferrer" className={`rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-all duration-200 ${theme.classes.secondaryButton}`}>Site web</a> : null}
+                  {(item.latitude && item.longitude) || item.address ? <a href={mapsUrl(item)} target="_blank" rel="noreferrer" className={`rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-all duration-200 ${theme.classes.primaryButton}`}>Itinéraire</a> : null}
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
@@ -1250,27 +1255,27 @@ async function loadGuestTimeline(hotelSlug: string, session: Session, setMessage
 function GuestNav({ basePath, active, hasSession, unreadMessagesCount }: { basePath: string; active: GuestSection; hasSession: boolean; unreadMessagesCount: number }) {
   const theme = useGuestTheme();
   const items = [
-    { id: "home", label: "Séjour", icon: <Home className="h-[18px] w-[18px]" /> },
-    { id: "services", label: "Services", icon: <ConciergeBell className="h-[18px] w-[18px]" /> },
-    { id: "messages", label: "Messages", icon: <MessageCircle className="h-[18px] w-[18px]" /> },
-    { id: "guide", label: "Guide", icon: <MapPin className="h-[18px] w-[18px]" /> },
-    { id: "review", label: "Avis", icon: <Star className="h-[18px] w-[18px]" /> }
+    { id: "home", label: "Séjour", icon: <Home className="h-4 w-4" /> },
+    { id: "services", label: "Services", icon: <ConciergeBell className="h-4 w-4" /> },
+    { id: "messages", label: "Messages", icon: <MessageCircle className="h-4 w-4" /> },
+    { id: "guide", label: "Guide", icon: <MapPin className="h-4 w-4" /> },
+    { id: "review", label: "Avis", icon: <Star className="h-4 w-4" /> }
   ] as const;
 
   return (
-    <nav className={`fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 border-t px-2 pb-4 pt-2 shadow-2xl backdrop-blur-xl md:bottom-6 md:rounded-b-[2rem] ${theme.classes.nav}`}>
+    <nav className={`fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 px-3 pb-3 pt-1.5 backdrop-blur-xl md:bottom-4 md:px-6 ${theme.classes.nav}`}>
       <div className="grid grid-cols-5">
         {items.map((item) => (
-          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`relative flex flex-col items-center gap-0.5 rounded-xl px-1 py-2.5 text-[11px] font-semibold transition-all duration-200 focus:outline-none ${active === item.id ? theme.classes.navActive : theme.classes.navIdle}`}>
+          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`relative flex flex-col items-center gap-0.5 rounded-lg py-2 text-[10px] font-medium transition-all duration-150 ${active === item.id ? `${theme.classes.navActive} rounded-xl` : theme.classes.navIdle}`}>
             <span className="relative">
               {item.icon}
               {item.id === "messages" && unreadMessagesCount > 0 ? (
-                <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold leading-none text-white shadow ring-2 ring-white/80">
-                  {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                <span className="absolute -right-2 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-1.5 ring-white">
+                  {unreadMessagesCount > 9 ? "+" : unreadMessagesCount}
                 </span>
               ) : null}
             </span>
-            <span className="mt-0.5">{item.label}</span>
+            <span>{item.label}</span>
           </Link>
         ))}
       </div>
@@ -1290,9 +1295,9 @@ function GuestInput({ label, value, onChange, type = "text", required = false }:
 
 function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur-lg">
-      <div className="flex items-center gap-2 text-white/70">{icon}<span className="text-[10px] font-bold uppercase tracking-widest">{label}</span></div>
-      <p className="mt-1.5 truncate text-[13px] font-bold text-white">{value}</p>
+    <div className="text-center">
+      <div className="flex items-center justify-center gap-1 text-[#8c7e73]">{icon}<span className="text-[9px] font-semibold uppercase tracking-widest">{label}</span></div>
+      <p className="mt-1 truncate text-[12px] font-bold text-[#1a1613]">{value}</p>
     </div>
   );
 }
@@ -1300,11 +1305,13 @@ function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string
 function StayCard({ icon, label, title, detail }: { icon: React.ReactNode; label: string; title: string; detail: string }) {
   const theme = useGuestTheme();
   return (
-    <div className={`rounded-2xl p-4 transition-all duration-200 hover:shadow-md ${theme.classes.card}`}>
-      <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>{icon}</div>
-      <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>{label}</p>
-      <p className="mt-1 truncate text-[15px] font-bold tracking-tight">{title}</p>
-      <p className={`mt-0.5 truncate text-xs ${theme.classes.muted}`}>{detail}</p>
+    <div className={`flex items-center gap-3 rounded-xl p-3.5 ${theme.classes.card}`}>
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>{icon}</div>
+      <div className="min-w-0">
+        <p className={`text-[10px] font-semibold uppercase tracking-wider ${theme.classes.muted}`}>{label}</p>
+        <p className="truncate text-[14px] font-bold tracking-tight">{title}</p>
+        <p className={`truncate text-[11px] ${theme.classes.muted}`}>{detail}</p>
+      </div>
     </div>
   );
 }
