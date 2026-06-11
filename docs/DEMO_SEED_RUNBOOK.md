@@ -38,7 +38,7 @@ Avant execution, l'operateur doit confirmer sans afficher de valeur sensible :
    - `GET https://api-demo.hotelmanager.fr/ready` retourne 200 avec database ok.
    - `GET https://api-demo.hotelmanager.fr/api/public/hotels/by-slug/demo-paris-local` retourne 200.
    - `GET https://api-demo.hotelmanager.fr/api/public/hotels/by-slug/vendome` retourne 404.
-4. Le contexte d'execution dispose des dependances de developpement, notamment `tsx`.
+4. Le contexte d'execution dispose de `tsx`. Depuis DEMO-SEED-RUNTIME-1, `tsx` est une dependance runtime afin que l'image API clone puisse executer `npm run seed:demo` apres rebuild, sans installation interactive.
 
 ## Commande seed demo
 
@@ -62,9 +62,9 @@ Ne jamais copier ni afficher la valeur de `DATABASE_URL` dans la commande, le te
 
 ## Choix du contexte d'execution
 
-Option recommandee : environnement one-shot interne non public avec le code du repo, les dependances de developpement installees, et une variable `DATABASE_URL` fournie par l'operateur vers la DB demo uniquement.
+Option recommandee : terminal Coolify du conteneur API clone apres redéploiement de l'image qui contient DEMO-SEED-RUNTIME-1. Le conteneur runtime installe les dependances avec `npm install --omit=dev`, mais `tsx` est disponible car il est declare en dependency runtime.
 
-Option possible sous controle strict : terminal Coolify du clone API uniquement si `tsx` est disponible. Si `tsx` n'est pas disponible dans le conteneur runtime, stopper au lieu de bricoler une installation dans le conteneur en cours.
+Option alternative : environnement one-shot interne non public avec le code du repo, les dependances installees, et une variable `DATABASE_URL` fournie par l'operateur vers la DB demo uniquement.
 
 Option a eviter : poste local Windows avec URL DB demo collee dans l'historique shell. Si cette option est utilisee, la valeur doit etre fournie par un mecanisme local temporaire non affiche et efface apres usage.
 
@@ -88,7 +88,7 @@ Stopper immediatement si :
 
 - la cible DB n'est pas confirmee comme demo ;
 - `vendome` est visible sur le clone ;
-- `tsx` n'est pas disponible dans le contexte choisi ;
+- `tsx` n'est pas disponible dans le contexte choisi apres rebuild ;
 - une commande demande une migration, un reset ou un db push ;
 - une valeur sensible apparait dans un terminal partage ;
 - le contexte pointe vers un service ou une URL production.
