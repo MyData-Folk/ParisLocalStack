@@ -14,7 +14,7 @@ import { HotelAdminModulesPage } from "./pages/HotelAdminModulesPage";
 import { HotelAdminAnalyticsPage } from "./pages/HotelAdminAnalyticsPage";
 import { HotelAdminCrmPage } from "./pages/HotelAdminCrmPage";
 
-export function HotelAdminApp() {
+export function HotelAdminApp({ basePath = "/hotel-admin" }: { basePath?: string }) {
   const { token, currentUser } = useAppStore();
   const [activeHotel, setActiveHotel] = useState<any>(null);
   const [activeHotelId, setActiveHotelId] = useState<string>("");
@@ -103,9 +103,10 @@ export function HotelAdminApp() {
           availableHotels={availableHotels}
           isSuperAdminView={isSuperAdmin}
           onHotelChange={setActiveHotelId}
+          basePath={basePath}
         >
           <Routes>
-            <Route path="/" element={<HotelAdminDashboard hotel={activeHotel} hotelId={activeHotelId} />} />
+            <Route path="/" element={<HotelAdminDashboard hotel={activeHotel} hotelId={activeHotelId} basePath={basePath} />} />
             <Route path="/profile" element={<HotelAdminProfilePage hotel={activeHotel} hotelId={activeHotelId} token={token!} onHotelUpdated={setActiveHotel} />} />
             <Route path="/recommendations" element={<HotelAdminRecommendationsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/settings" element={<HotelAdminSettingsPage hotelId={activeHotelId} token={token!} />} />
@@ -113,7 +114,7 @@ export function HotelAdminApp() {
             <Route path="/analytics" element={<HotelAdminAnalyticsPage hotel={activeHotel} hotelId={activeHotelId} token={token!} />} />
             <Route path="/qr" element={<HotelAdminQRPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/crm" element={<HotelAdminCrmPage hotelId={activeHotelId} token={token!} />} />
-            <Route path="*" element={<Navigate to="/hotel-admin" replace />} />
+            <Route path="*" element={<Navigate to={basePath || "/"} replace />} />
           </Routes>
         </HotelAdminShell>
       )}

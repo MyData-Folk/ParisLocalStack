@@ -9,15 +9,17 @@ type ShellProps = {
   availableHotels: any[];
   isSuperAdminView: boolean;
   onHotelChange: (hotelId: string) => void;
+  basePath: string;
   children: ReactNode;
 };
 
-export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, isSuperAdminView, onHotelChange, children }: ShellProps) {
+export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, isSuperAdminView, onHotelChange, basePath, children }: ShellProps) {
   const { currentUser, logout } = useAppStore();
+  const route = (path = "") => `${basePath}${path}` || "/";
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 lg:flex">
       <aside className="border-b border-white/[0.07] bg-[#111115]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-col lg:border-b-0 lg:border-r">
-        <Link to="/hotel-admin" className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-amber-400/15">
+        <Link to={route()} className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 transition hover:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-amber-400/15">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-400/25 bg-amber-400/10 text-amber-300">
             <ShieldCheck className="h-5 w-5" />
           </span>
@@ -45,16 +47,16 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
 
         <nav className="mt-5 space-y-5 text-sm">
           <HotelAdminNavGroup label="Hotel">
-            <HotelAdminNavLink to="/hotel-admin" label="Tableau de bord" icon={<LayoutDashboard className="h-4 w-4" />} />
-            <HotelAdminNavLink to="/hotel-admin/profile" label="Profil hotel" icon={<Building2 className="h-4 w-4" />} />
-            <HotelAdminNavLink to="/hotel-admin/recommendations" label="Recommandations" icon={<Compass className="h-4 w-4" />} />
-            <HotelAdminNavLink to="/hotel-admin/settings" label="Parametres" icon={<Settings className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route()} label="Tableau de bord" icon={<LayoutDashboard className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route("/profile")} label="Profil hotel" icon={<Building2 className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route("/recommendations")} label="Recommandations" icon={<Compass className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route("/settings")} label="Parametres" icon={<Settings className="h-4 w-4" />} />
           </HotelAdminNavGroup>
           <HotelAdminNavGroup label="Performance">
-            <HotelAdminNavLink to="/hotel-admin/modules" label="Modules & offre" icon={<Sparkles className="h-4 w-4" />} />
-            <HotelAdminNavLink to="/hotel-admin/analytics" label="Analytics" icon={<BarChart3 className="h-4 w-4" />} />
-            <HotelAdminNavLink to="/hotel-admin/qr" label="QR Code" icon={<QrCode className="h-4 w-4" />} />
-            <HotelAdminNavLink to="/hotel-admin/crm" label="Base clients" icon={<Users className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route("/modules")} label="Modules & offre" icon={<Sparkles className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route("/analytics")} label="Analytics" icon={<BarChart3 className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route("/qr")} label="QR Code" icon={<QrCode className="h-4 w-4" />} />
+            <HotelAdminNavLink to={route("/crm")} label="Base clients" icon={<Users className="h-4 w-4" />} />
           </HotelAdminNavGroup>
         </nav>
 
@@ -106,7 +108,8 @@ function HotelAdminNavGroup({ label, children }: { label: string; children: Reac
 
 function HotelAdminNavLink({ to, label, icon }: { to: string; label: string; icon: ReactNode }) {
   const location = useLocation();
-  const active = location.pathname === to || (to !== "/hotel-admin" && location.pathname.startsWith(to));
+  const isHomeRoute = to === "/" || to === "/hotel-admin";
+  const active = location.pathname === to || (!isHomeRoute && location.pathname.startsWith(to));
   return (
     <Link className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-amber-400/15 ${active ? "border-amber-400/25 bg-amber-400/10 text-amber-100" : "border-transparent text-zinc-400 hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-white"}`} to={to}>
       <span className={active ? "text-amber-300" : "text-zinc-500"}>{icon}</span>
