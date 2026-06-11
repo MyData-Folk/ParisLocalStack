@@ -33,6 +33,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "socket.io": "^4.8.1",
+    "tsx": "^4.19.4",
     "zod": "^3.25.28"
   },
   "devDependencies": {
@@ -59,7 +60,6 @@
     "tailwind-merge": "3.4.0",
     "tailwindcss": "4.1.17",
     "tsup": "^8.5.0",
-    "tsx": "^4.19.4",
     "typescript": "5.9.3",
     "vite": "7.3.2",
     "vite-plugin-singlefile": "2.3.0",
