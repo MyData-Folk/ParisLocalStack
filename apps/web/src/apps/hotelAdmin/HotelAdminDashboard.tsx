@@ -2,16 +2,17 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BarChart3, Compass, Hotel, QrCode, Settings } from "lucide-react";
 import { COMMERCIAL_PACKAGES, SERVICE_CATALOG, type CommercialPackage } from "@paris-local/shared";
 
-export function HotelAdminDashboard({ hotel, hotelId: _hotelId }: { hotel: any; hotelId: string }) {
+export function HotelAdminDashboard({ hotel, hotelId: _hotelId, basePath = "/hotel-admin" }: { hotel: any; hotelId: string; basePath?: string }) {
+  const route = (path = "") => `${basePath}${path}` || "/";
   const previewServices = SERVICE_CATALOG.filter((s) =>
     ["taxi", "restaurant_booking", "room_service", "maintenance", "local_recommendations"].includes(s.id)
   );
 
   const quickActions = [
-    { to: "/hotel-admin/recommendations", icon: <Compass className="h-5 w-5" />, label: "Gerer recommandations" },
-    { to: "/hotel-admin/settings", icon: <Settings className="h-5 w-5" />, label: "Modifier parametres hotel" },
-    { to: "/hotel-admin/qr", icon: <QrCode className="h-5 w-5" />, label: "Voir QR Code" },
-    { to: "/hotel-admin/analytics", icon: <BarChart3 className="h-5 w-5" />, label: "Voir analytics" }
+    { to: route("/recommendations"), icon: <Compass className="h-5 w-5" />, label: "Gerer recommandations" },
+    { to: route("/settings"), icon: <Settings className="h-5 w-5" />, label: "Modifier parametres hotel" },
+    { to: route("/qr"), icon: <QrCode className="h-5 w-5" />, label: "Voir QR Code" },
+    { to: route("/analytics"), icon: <BarChart3 className="h-5 w-5" />, label: "Voir analytics" }
   ];
 
   return (

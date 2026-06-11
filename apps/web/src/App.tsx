@@ -16,7 +16,7 @@ export default function App() {
   }
 
   if (tenant.kind === "reception") return <ReceptionApp basePath="" />;
-  if (tenant.kind === "hotelAdmin") return <HotelAdminApp />;
+  if (tenant.kind === "hotelAdmin") return <HotelAdminApp basePath="" />;
   if (tenant.kind === "guest") return <GuestShell />;
 
   return (
@@ -26,7 +26,7 @@ export default function App() {
       <Route path="/h/:hotelSlug/:section" element={<GuestShell />} />
       <Route path="/reception/*" element={<ReceptionApp basePath="/reception" />} />
       <Route path="/admin/*" element={<AdminApp />} />
-      <Route path="/hotel-admin/*" element={<HotelAdminApp />} />
+      <Route path="/hotel-admin/*" element={<HotelAdminApp basePath="/hotel-admin" />} />
       <Route path="/generator/*" element={<GeneratorApp />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
