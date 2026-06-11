@@ -16,6 +16,7 @@ export default function App() {
   }
 
   if (tenant.kind === "reception") return <ReceptionApp basePath="" />;
+  if (tenant.kind === "hotelAdmin") return <HotelAdminApp />;
   if (tenant.kind === "guest") return <GuestShell />;
 
   return (
