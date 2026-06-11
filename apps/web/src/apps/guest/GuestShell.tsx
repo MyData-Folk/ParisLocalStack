@@ -474,38 +474,40 @@ function HomeSection({ hotel, settings, session, requests, services, onServiceRe
           </div>
         </div>
       ) : (
-        <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
-          <div className="mb-4 flex items-center justify-between">
+        <div className={`rounded-2xl p-5 ${theme.classes.card}`}>
+          <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Actions rapides</p>
-              <h3 className={`text-lg font-semibold ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
+              <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Actions rapides</p>
+              <h3 className={`mt-1 text-lg font-bold tracking-tight ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
             </div>
-            <ConciergeBell className="h-5 w-5 text-stone-400" />
+            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>
+              <ConciergeBell className="h-4 w-4" />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {quickServices.map((service) => (
-              <button key={service.id} onClick={() => onServiceRequest(service)} className={`group rounded-2xl p-4 text-left transition focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
-                <ServiceIconTile service={service} className={`mb-3 h-10 w-10 ${theme.classes.iconSoft}`} />
-                <p className="font-semibold">{service.title}</p>
-                <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>{service.description}</p>
-                {service.actionLabel ? <p className="mt-3 text-xs font-semibold">{service.actionLabel}</p> : null}
+              <button key={service.id} onClick={() => onServiceRequest(service)} className={`group rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md active:scale-[0.97] focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
+                <ServiceIconTile service={service} className={`mb-3 h-10 w-10 rounded-xl ${theme.classes.iconSoft}`} />
+                <p className="text-[13px] font-bold tracking-tight">{service.title}</p>
+                <p className={`mt-1 text-[11px] leading-relaxed ${theme.classes.muted}`}>{service.description}</p>
+                {service.actionLabel ? <p className={`mt-3 text-[11px] font-bold ${theme.classes.eyebrow}`}>{service.actionLabel}</p> : null}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
+      <div className={`rounded-2xl p-5 ${theme.classes.card}`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Suivi réception</p>
-            <h3 className="text-lg font-semibold tracking-tight">Vos demandes</h3>
-            <p className={`mt-1 text-xs leading-5 ${theme.classes.muted}`}>La réception reçoit votre demande et peut vous répondre depuis son espace.</p>
+            <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Suivi réception</p>
+            <h3 className="mt-1 text-lg font-bold tracking-tight">Vos demandes</h3>
+            <p className={`mt-1.5 text-[12px] leading-relaxed ${theme.classes.muted}`}>La réception reçoit votre demande et vous répond en temps réel.</p>
           </div>
-          <Link to="services" className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${theme.classes.secondaryButton}`}>Voir tout</Link>
+          <Link to="services" className={`shrink-0 rounded-xl px-3.5 py-2 text-[11px] font-bold transition-base ${theme.classes.secondaryButton}`}>Voir tout</Link>
         </div>
         <div className="mt-4 space-y-2">
-          {recentRequests.length === 0 && <p className={`rounded-2xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. La réception reste disponible a tout moment.</p>}
+          {recentRequests.length === 0 && <p className={`rounded-xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. La réception reste disponible à tout moment.</p>}
           {recentRequests.map((request) => <RequestRow key={request.id} request={request} />)}
         </div>
       </div>
@@ -523,13 +525,14 @@ function HomeSection({ hotel, settings, session, requests, services, onServiceRe
           ))}
         </div>
       ) : (
-        <div className={`overflow-hidden rounded-3xl shadow-lg ${theme.classes.header}`}>
-          <img src={heroImage} alt="" className="h-32 w-full object-cover opacity-80" />
-          <div className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Guide local</p>
-            <h3 className="mt-1 text-xl font-semibold tracking-tight">Paris autour de {hotel?.name}</h3>
-            <p className="mt-2 text-sm leading-6 opacity-75">Restaurants, cafes, pharmacies et lieux utiles selectionnes pour votre sejour.</p>
-            <Link to="guide" className={`mt-4 inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold ${theme.classes.primaryButton}`}>
+        <div className={`group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl ${theme.classes.header}`}>
+          <img src={heroImage} alt="" className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Guide local</p>
+            <h3 className="mt-1 text-xl font-bold tracking-tight text-white">Paris autour de {hotel?.name}</h3>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-white/75">Restaurants, cafés, pharmacies et lieux sélectionnés pour votre séjour.</p>
+            <Link to="guide" className={`mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold ${theme.classes.primaryButton}`}>
               Explorer le quartier <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -1247,27 +1250,27 @@ async function loadGuestTimeline(hotelSlug: string, session: Session, setMessage
 function GuestNav({ basePath, active, hasSession, unreadMessagesCount }: { basePath: string; active: GuestSection; hasSession: boolean; unreadMessagesCount: number }) {
   const theme = useGuestTheme();
   const items = [
-    { id: "home", label: "Sejour", icon: <Home className="h-4 w-4" /> },
-    { id: "services", label: "Services", icon: <ConciergeBell className="h-4 w-4" /> },
-    { id: "messages", label: "Messages", icon: <MessageCircle className="h-4 w-4" /> },
-    { id: "guide", label: "Guide", icon: <MapPin className="h-4 w-4" /> },
-    { id: "review", label: "Avis", icon: <Star className="h-4 w-4" /> }
+    { id: "home", label: "Séjour", icon: <Home className="h-[18px] w-[18px]" /> },
+    { id: "services", label: "Services", icon: <ConciergeBell className="h-[18px] w-[18px]" /> },
+    { id: "messages", label: "Messages", icon: <MessageCircle className="h-[18px] w-[18px]" /> },
+    { id: "guide", label: "Guide", icon: <MapPin className="h-[18px] w-[18px]" /> },
+    { id: "review", label: "Avis", icon: <Star className="h-[18px] w-[18px]" /> }
   ] as const;
 
   return (
-    <nav className={`fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 border-t px-3 pb-3 pt-2 shadow-2xl backdrop-blur md:bottom-6 md:rounded-b-[2rem] ${theme.classes.nav}`}>
-      <div className="grid grid-cols-5 gap-1">
+    <nav className={`fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 border-t px-2 pb-4 pt-2 shadow-2xl backdrop-blur-xl md:bottom-6 md:rounded-b-[2rem] ${theme.classes.nav}`}>
+      <div className="grid grid-cols-5">
         {items.map((item) => (
-          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`relative flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-xs font-semibold transition focus:outline-none focus:ring-4 ${active === item.id ? theme.classes.navActive : theme.classes.navIdle}`}>
+          <Link key={item.id} to={`${basePath}/${hasSession ? item.id : item.id === "guide" ? "guide" : "welcome"}`} className={`relative flex flex-col items-center gap-0.5 rounded-xl px-1 py-2.5 text-[11px] font-semibold transition-all duration-200 focus:outline-none ${active === item.id ? theme.classes.navActive : theme.classes.navIdle}`}>
             <span className="relative">
               {item.icon}
               {item.id === "messages" && unreadMessagesCount > 0 ? (
-                <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white">
+                <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold leading-none text-white shadow ring-2 ring-white/80">
                   {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
                 </span>
               ) : null}
             </span>
-            <span>{item.label}</span>
+            <span className="mt-0.5">{item.label}</span>
           </Link>
         ))}
       </div>
@@ -1287,10 +1290,9 @@ function GuestInput({ label, value, onChange, type = "text", required = false }:
 
 function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/12 p-3 backdrop-blur">
-      <div className="text-amber-100">{icon}</div>
-      <p className="mt-2 text-[0.7rem] font-semibold uppercase tracking-wide text-white/60">{label}</p>
-      <p className="mt-0.5 truncate text-sm font-semibold text-white">{value}</p>
+    <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur-lg">
+      <div className="flex items-center gap-2 text-white/70">{icon}<span className="text-[10px] font-bold uppercase tracking-widest">{label}</span></div>
+      <p className="mt-1.5 truncate text-[13px] font-bold text-white">{value}</p>
     </div>
   );
 }
@@ -1298,11 +1300,11 @@ function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string
 function StayCard({ icon, label, title, detail }: { icon: React.ReactNode; label: string; title: string; detail: string }) {
   const theme = useGuestTheme();
   return (
-    <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
-      <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-2xl ${theme.classes.iconSoft}`}>{icon}</div>
-      <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.muted}`}>{label}</p>
-      <p className="mt-1 truncate font-semibold">{title}</p>
-      <p className={`mt-1 truncate text-xs ${theme.classes.muted}`}>{detail}</p>
+    <div className={`rounded-2xl p-4 transition-all duration-200 hover:shadow-md ${theme.classes.card}`}>
+      <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>{icon}</div>
+      <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>{label}</p>
+      <p className="mt-1 truncate text-[15px] font-bold tracking-tight">{title}</p>
+      <p className={`mt-0.5 truncate text-xs ${theme.classes.muted}`}>{detail}</p>
     </div>
   );
 }
@@ -1310,12 +1312,12 @@ function StayCard({ icon, label, title, detail }: { icon: React.ReactNode; label
 function RequestRow({ request }: { request: RequestItem }) {
   const theme = useGuestTheme();
   return (
-    <div className={`flex items-start justify-between gap-3 rounded-2xl p-3 ${theme.classes.subtleCard}`}>
+    <div className={`flex items-center justify-between gap-3 rounded-xl p-3.5 ${theme.classes.subtleCard}`}>
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold">{request.title}</p>
-        <p className={`mt-1 truncate text-xs ${theme.classes.muted}`}>{request.description}</p>
+        <p className="truncate text-[13px] font-bold tracking-tight">{request.title}</p>
+        <p className={`mt-0.5 truncate text-[11px] ${theme.classes.muted}`}>{request.description}</p>
       </div>
-      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${requestStatusClass(request.status, theme)}`}>
+      <span className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${requestStatusClass(request.status, theme)}`}>
         {requestStatusLabel(request.status)}
       </span>
     </div>
