@@ -268,44 +268,45 @@ export function GuestShell() {
 function GuestHeader({ hotel, settings, session, unreadMessagesCount }: { hotel: any; settings: any; session: Session | null; unreadMessagesCount: number }) {
   const theme = useGuestTheme();
   return (
-    <header className={`relative isolate overflow-hidden rounded-b-[2rem] border-b border-white/10 ${theme.classes.header}`}>
-      <img src={heroImage} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+    <header className={`relative isolate overflow-hidden rounded-b-[2.5rem] shadow-xl ${theme.classes.header}`}>
+      <img src={heroImage} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover scale-[1.02]" />
       <div className={`absolute inset-0 -z-10 ${theme.classes.headerOverlay}`} />
-      <div className="px-5 pb-6 pt-7">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+      <div className="px-6 pb-7 pt-8">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-current backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" />
-              Concierge prive
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white/90 shadow-sm backdrop-blur-md">
+              <Sparkles className="h-3 w-3" />
+              Concierge privé
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-[-0.015em] leading-[1.1]">{hotel?.name}</h1>
-            <p className="mt-2 line-clamp-2 text-sm leading-6 opacity-85">{hotel?.description || "Votre assistant de sejour, disponible a tout moment."}</p>
+            <h1 className="mt-5 text-[2rem] font-bold tracking-[-0.02em] leading-[1.1] text-white drop-shadow-sm">{hotel?.name}</h1>
+            <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-white/80">{hotel?.description || "Votre assistant de séjour, disponible à tout moment."}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2.5">
             {session ? (
               <div
-                className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/15 shadow-lg backdrop-blur"
+                className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/15 shadow-lg backdrop-blur-md transition-base hover:bg-white/20"
                 aria-label={unreadMessagesCount > 0 ? `${unreadMessagesCount} nouveau message réception` : "Aucun nouveau message réception"}
                 aria-live="polite"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-[18px] w-[18px] text-white" />
                 {unreadMessagesCount > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white">
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white/80">
                     {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
                   </span>
                 ) : null}
               </div>
             ) : null}
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/15 text-lg font-semibold shadow-lg backdrop-blur">
-              {hotel?.logoUrl ? <img src={hotel.logoUrl} alt={hotel?.name ?? "Hotel"} className="h-full w-full object-cover" /> : hotel?.name?.charAt(0) ?? <Hotel className="h-5 w-5" />}
+            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/15 text-lg font-bold shadow-lg backdrop-blur-md">
+              {hotel?.logoUrl ? <img src={hotel.logoUrl} alt={hotel?.name ?? "Hotel"} className="h-full w-full object-cover" /> : hotel?.name?.charAt(0) ?? <Hotel className="h-5 w-5 text-white" />}
             </div>
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-2">
+        <div className="mt-7 grid grid-cols-3 gap-2.5">
           <MiniFact icon={<Wifi className="h-4 w-4" />} label="Wi-Fi" value={settings?.wifiName || "Invite"} />
           <MiniFact icon={<Clock className="h-4 w-4" />} label="Check-out" value={settings?.checkoutTime || "11:00"} />
-          <MiniFact icon={<ConciergeBell className="h-4 w-4" />} label="Chambre" value={session?.roomNumber || "A activer"} />
+          <MiniFact icon={<ConciergeBell className="h-4 w-4" />} label="Chambre" value={session?.roomNumber || "À activer"} />
         </div>
       </div>
     </header>
@@ -437,11 +438,11 @@ function HomeSection({ hotel, settings, session, requests, services, onServiceRe
   const showShortcutCards = shortcutCards.length > 0;
   const showHeroCards = guestCards.length > 0;
   return (
-    <section className="space-y-5 px-5 py-6">
+    <section className="space-y-6 px-5 py-7">
       <div>
         <p className={`text-sm font-medium ${theme.classes.muted}`}>Bonjour {greetingName}</p>
-        {roomLabel ? <p className={`mt-0.5 text-xs font-medium uppercase tracking-wide ${theme.classes.muted}`}>{roomLabel}</p> : null}
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre séjour, simplement.</h2>
+        {roomLabel ? <p className={`mt-0.5 text-xs font-semibold uppercase tracking-widest ${theme.classes.eyebrow}`}>{roomLabel}</p> : null}
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Votre séjour, simplement.</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -543,11 +544,11 @@ function ServicesSection({ session, requests, services, onServiceRequest }: { ho
   const hotelServices = services.filter((service) => service.group === "hotel" && service.visibleInServicesPage !== false);
   const externalServices = services.filter((service) => service.group === "external" && service.visibleInServicesPage !== false);
   return (
-    <section className="space-y-5 px-5 py-6">
+    <section className="space-y-5 px-5 py-7">
       <div>
-        <p className={`text-sm font-medium ${theme.classes.muted}`}>Chambre {session.roomNumber}</p>
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Services de l'hôtel</h2>
-        <p className={`mt-2 text-sm leading-6 ${theme.classes.muted}`}>Choisissez une catégorie pour trouver rapidement le service adapté. La réception vous répond depuis son espace.</p>
+        <p className={`text-xs font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Chambre {session.roomNumber}</p>
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Services de l'hôtel</h2>
+        <p className={`mt-2 text-sm leading-relaxed ${theme.classes.muted}`}>Choisissez une catégorie pour trouver rapidement le service adapté. La réception vous répond depuis son espace.</p>
       </div>
       {hotelServices.length > 0 ? <ServiceGroup title="À l'hôtel" services={hotelServices} onServiceRequest={onServiceRequest} /> : null}
       {externalServices.length > 0 ? <ServiceGroup title="À l'extérieur" services={externalServices} onServiceRequest={onServiceRequest} /> : null}
@@ -567,19 +568,16 @@ function ServiceGroup({ title, services, onServiceRequest }: { title: string; se
   const theme = useGuestTheme();
   return (
     <div className="space-y-3">
-      <h3 className={`text-sm font-semibold uppercase tracking-wide ${theme.classes.muted}`}>{title}</h3>
+      <h3 className={`text-xs font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>{title}</h3>
       <div className="grid gap-3">
         {services.map((service) => (
-          <button key={service.id} onClick={() => onServiceRequest(service)} className={`flex items-center gap-4 rounded-3xl p-4 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 ${theme.classes.elevatedCard}`}>
-            <ServiceIconTile service={service} className={`h-12 w-12 shrink-0 ${theme.classes.iconTile}`} />
+          <button key={service.id} onClick={() => onServiceRequest(service)} className={`group flex items-center gap-4 rounded-2xl p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus:outline-none focus:ring-4 ${theme.classes.elevatedCard}`}>
+            <ServiceIconTile service={service} className={`h-12 w-12 shrink-0 rounded-xl ${theme.classes.iconTile}`} />
             <div className="min-w-0 flex-1">
               <p className="font-semibold tracking-tight">{service.title}</p>
-              <p className={`mt-1 text-sm leading-5 ${theme.classes.muted}`}>{service.description}</p>
+              <p className={`mt-1 text-[13px] leading-relaxed ${theme.classes.muted}`}>{service.description}</p>
             </div>
-            <div className="flex shrink-0 items-center gap-1 text-xs font-semibold">
-              {service.actionLabel ? <span className="hidden sm:inline">{service.actionLabel}</span> : null}
-              <ChevronRight className="h-5 w-5 text-stone-300" />
-            </div>
+            <ChevronRight className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${theme.classes.muted}`} />
           </button>
         ))}
       </div>
@@ -605,18 +603,20 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
   }
 
   return (
-    <section className="flex min-h-[calc(100vh-18rem)] flex-col px-5 py-6">
-      <div className="mb-4">
-        <p className={`text-sm font-medium ${theme.classes.muted}`}>Réception</p>
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Votre messagerie</h2>
+    <section className="flex min-h-[calc(100vh-18rem)] flex-col px-5 py-7">
+      <div className="mb-5">
+        <p className={`text-xs font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Réception</p>
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Votre messagerie</h2>
       </div>
       <div className={`flex-1 space-y-3 overflow-y-auto rounded-3xl p-4 ${theme.classes.card}`}>
         {messages.length === 0 && (
-          <div className={`grid min-h-56 place-items-center rounded-3xl p-6 text-center ${theme.classes.subtleCard}`}>
+          <div className={`grid min-h-56 place-items-center rounded-2xl p-8 text-center ${theme.classes.subtleCard}`}>
             <div>
-              <MessageCircle className={`mx-auto h-10 w-10 ${theme.classes.muted}`} />
-              <p className="mt-3 font-semibold">La réception est à votre écoute</p>
-              <p className={`mt-1 text-sm ${theme.classes.muted}`}>Envoyez un message, la reponse apparaitra ici instantanement.</p>
+              <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${theme.classes.iconSoft}`}>
+                <MessageCircle className="h-6 w-6" />
+              </div>
+              <p className="mt-4 font-semibold">La réception est à votre écoute</p>
+              <p className={`mt-1.5 text-sm leading-relaxed ${theme.classes.muted}`}>Envoyez un message, la réponse apparaîtra ici instantanément.</p>
             </div>
           </div>
         )}
@@ -650,10 +650,10 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
   const filtered = category === "all" ? orderedRecommendations : orderedRecommendations.filter((item) => item.category === category);
 
   return (
-    <section className="space-y-5 px-5 py-6">
+    <section className="space-y-5 px-5 py-7">
       <div>
-        <p className={`text-sm font-medium ${theme.classes.muted}`}>Selection locale</p>
-        <h2 className={`mt-1 text-3xl font-semibold ${theme.classes.title}`}>Guide du quartier</h2>
+        <p className={`text-xs font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Sélection locale</p>
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Guide du quartier</h2>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {categories.map((item) => (
@@ -662,32 +662,45 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
           </button>
         ))}
       </div>
-      <div className="space-y-3">
-        {filtered.length === 0 && <p className={`rounded-3xl p-5 text-sm ${theme.classes.card}`}>Le guide local sera bientot disponible.</p>}
+      <div className="space-y-4">
+        {filtered.length === 0 && (
+          <div className={`rounded-2xl p-8 text-center ${theme.classes.card}`}>
+            <MapPin className={`mx-auto h-10 w-10 ${theme.classes.muted}`} />
+            <p className="mt-3 font-semibold">Le guide local arrive bientôt</p>
+            <p className={`mt-1 text-sm ${theme.classes.muted}`}>Nos recommandations personnalisées pour votre quartier seront disponibles sous peu.</p>
+          </div>
+        )}
         {filtered.map((item, index) => (
-          <article key={item.id} className={`overflow-hidden rounded-3xl ${theme.classes.card}`}>
-            <div className="relative h-36">
-              <img src={item.imageUrl || guideImage(index)} alt="" className="h-full w-full object-cover" />
-              <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize text-stone-800 backdrop-blur">{item.category || "Adresse"}</div>
-            </div>
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold tracking-tight">{item.name}</h3>
-                  <p className={`mt-1 text-sm leading-6 ${theme.classes.muted}`}>{item.description}</p>
+          <article key={item.id} className={`group overflow-hidden rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${theme.classes.card}`}>
+            <div className="relative h-44 overflow-hidden">
+              <img src={item.imageUrl || guideImage(index)} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+              <div className="absolute left-3 top-3 rounded-lg bg-white/95 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-stone-700 shadow-sm backdrop-blur-sm">{item.category || "Adresse"}</div>
+              {item.isFeatured && (
+                <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/90 shadow-sm">
+                  <Star className="h-3.5 w-3.5 fill-white text-white" />
                 </div>
-                {item.isFeatured && <Star className="h-5 w-5 fill-amber-300 text-amber-400" />}
-              </div>
-              <div className={`mt-3 flex flex-wrap gap-2 text-xs font-medium ${theme.classes.muted}`}>
-                {item.distance && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.distance}</span>}
-                {item.address && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.address}</span>}
-                {item.openingHours && <span className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{item.openingHours}</span>}
-                {Array.isArray(item.tags) ? item.tags.slice(0, 3).map((tag: string) => <span key={tag} className={`rounded-full px-3 py-1 ${theme.classes.subtleCard}`}>{tag}</span>) : null}
-              </div>
+              )}
+              {item.distance && (
+                <div className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                  {item.distance}
+                </div>
+              )}
+            </div>
+            <div className="p-5">
+              <h3 className="text-[15px] font-bold tracking-tight">{item.name}</h3>
+              <p className={`mt-1.5 text-sm leading-relaxed ${theme.classes.muted}`}>{item.description}</p>
+              {(item.address || item.openingHours || (Array.isArray(item.tags) && item.tags.length > 0)) && (
+                <div className={`mt-3 flex flex-wrap gap-1.5 text-[11px] font-medium ${theme.classes.muted}`}>
+                  {item.address && <span className={`rounded-lg px-2.5 py-1 ${theme.classes.subtleCard}`}>{item.address}</span>}
+                  {item.openingHours && <span className={`rounded-lg px-2.5 py-1 ${theme.classes.subtleCard}`}>{item.openingHours}</span>}
+                  {Array.isArray(item.tags) ? item.tags.slice(0, 3).map((tag: string) => <span key={tag} className={`rounded-lg px-2.5 py-1 ${theme.classes.subtleCard}`}>{tag}</span>) : null}
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap gap-2">
-                {item.phone ? <a href={`tel:${item.phone}`} className={`rounded-2xl px-4 py-2 text-xs font-semibold ${theme.classes.secondaryButton}`}>Appeler</a> : null}
-                {item.website ? <a href={item.website} target="_blank" rel="noreferrer" className={`rounded-2xl px-4 py-2 text-xs font-semibold ${theme.classes.secondaryButton}`}>Site web</a> : null}
-                {(item.latitude && item.longitude) || item.address ? <a href={mapsUrl(item)} target="_blank" rel="noreferrer" className={`rounded-2xl px-4 py-2 text-xs font-semibold ${theme.classes.primaryButton}`}>Itineraire</a> : null}
+                {item.phone ? <a href={`tel:${item.phone}`} className={`rounded-xl px-4 py-2 text-xs font-semibold transition-base ${theme.classes.secondaryButton}`}>Appeler</a> : null}
+                {item.website ? <a href={item.website} target="_blank" rel="noreferrer" className={`rounded-xl px-4 py-2 text-xs font-semibold transition-base ${theme.classes.secondaryButton}`}>Site web</a> : null}
+                {(item.latitude && item.longitude) || item.address ? <a href={mapsUrl(item)} target="_blank" rel="noreferrer" className={`rounded-xl px-4 py-2 text-xs font-semibold transition-base ${theme.classes.primaryButton}`}>Itinéraire</a> : null}
               </div>
             </div>
           </article>
