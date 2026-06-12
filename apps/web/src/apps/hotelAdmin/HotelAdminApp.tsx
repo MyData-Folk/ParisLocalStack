@@ -106,7 +106,7 @@ export function HotelAdminApp({ basePath = "/hotel-admin" }: { basePath?: string
           basePath={basePath}
         >
           <Routes>
-            <Route path="/" element={<HotelAdminDashboard hotel={activeHotel} hotelId={activeHotelId} basePath={basePath} />} />
+            <Route path="/" element={<HotelAdminDashboard hotel={activeHotel} hotelId={activeHotelId} token={token!} basePath={basePath} />} />
             <Route path="/profile" element={<HotelAdminProfilePage hotel={activeHotel} hotelId={activeHotelId} token={token!} onHotelUpdated={setActiveHotel} />} />
             <Route path="/recommendations" element={<HotelAdminRecommendationsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/settings" element={<HotelAdminSettingsPage hotelId={activeHotelId} token={token!} />} />
