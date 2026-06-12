@@ -72,7 +72,7 @@ export function HotelAdminDashboard({ hotel, hotelId, token, basePath = "/hotel-
         <ActionCard to={route("/crm")} title="Clients & CRM" description="Consultez votre base clients, exportez et segmentez." icon={<Users className="h-5 w-5" />} />
         <ActionCard to={route("/recommendations")} title="Recommandations locales" description="Gérez vos adresses et conseils pour les clients." icon={<Star className="h-5 w-5" />} />
         <ActionCard to={route("/profile")} title="Mon hôtel" description="Informations, paramètres et thème de votre établissement." icon={<Sparkles className="h-5 w-5" />} />
-        <ActionCard to="/reception" title="Dashboard Réception" description="Accédez au tableau de bord opérationnel." icon={<MessageSquare className="h-5 w-5" />} />
+        <ActionCard to={route("/analytics")} title="Statistiques détaillées" description="Consultez l'activité complète de votre établissement." icon={<MessageSquare className="h-5 w-5" />} />
       </section>
 
       {/* ZONE 4 — MON OFFRE (bandeau compact) */}
