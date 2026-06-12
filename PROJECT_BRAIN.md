@@ -84,7 +84,17 @@ Priorite suivante : obtenir la preuve d'un staging dedie et protege pour `demo-p
 - La Guest App doit etre premium, mobile-first et differenciee visuellement.
 - Aucune donnee CRM privee ne doit etre exposee dans l'app publique.
 
-## 9. Regles de travail
+## 9. Deployment Strategy — Juin 2026
+
+Prod protegee : Auto Deploy OFF sur API prod et Web prod. Aucun merge ne declenche de deploiement production. Le deploiement prod est manuel via UI Coolify apres validation sur demo.
+
+Demo comme environnement de validation : Auto Deploy ON avec watch_paths filtres sur API demo et Web demo. Seuls les fichiers pertinents declenchent un redeploiement demo.
+
+Workflow : PR → merge main → auto deploy demo filtre → validation demo (healthcheck + visuel) → deploy prod manuel.
+
+Reference complete : `docs/DEPLOYMENT_CONTROL.md`.
+
+## 10. Regles de travail
 - Travailler par petites etapes.
 - Ne pas refactoriser massivement sans validation.
 - Ne pas modifier Prisma sans migration claire.
