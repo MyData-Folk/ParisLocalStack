@@ -46,9 +46,21 @@ Migrations connues historiquement : initialisation, champs CRM guest, theme gues
 Regle absolue : utiliser les migrations versionnees en production, pas de synchronisation destructive.
 
 ## 6. Docker / Coolify
-Services Coolify connus : paris-local-web gukenjn38rxuj9n7sn5g43ey, paris-local-api m2rfu2ypdlq07jylh59e8oh6, paris-local-postgres hl7aaurvn9xrmj5y3g6bw5ds.
 
-Domaines connus : welcomeparis.hotelmanager.fr, api.welcomeparis.hotelmanager.fr, {hotelSlug}.welcomeparis.hotelmanager.fr, admin-{hotelSlug}.welcomeparis.hotelmanager.fr, admin.{hotelSlug}.welcomeparis.hotelmanager.fr.
+### Coolify Deployment Architecture
+
+| Service | UUID | Role | Env | Auto Deploy | Watch Paths |
+|---------|------|------|-----|-------------|-------------|
+| paris-local-api | `m2rfu2ypdlq07jylh59e8oh6` | API prod | PROD | OFF | — |
+| paris-local-web | `gukenjn38rxuj9n7sn5g43ey` | Web prod | PROD | OFF | — |
+| paris-local-postgres | `hl7aaurvn9xrmj5y3g6bw5ds` | DB prod | PROD | N/A | — |
+| clone-of-paris-local-api | `e1u5so7e1kx216d5e16cwtur` | API demo | DEMO | ON | `apps/api/**`, `packages/shared/**`, `prisma/**`, `Dockerfile.api`, `scripts/**` |
+| clone-of-paris-local-web | `qhibcwqshd484o90ufcchbg0` | Web demo | DEMO | ON | `apps/web/**`, `packages/shared/**`, `Dockerfile.web`, `package.json`, `package-lock.json` |
+| paris-local-postgres-demo | `xa4milhem5vfe1s9bwnue9dx` | DB demo | DEMO | N/A | — |
+
+Regle de separation : la production ne se deploie jamais automatiquement. La demo se deploie automatiquement uniquement sur les fichiers concernes. La production se deploie manuellement via UI Coolify apres validation demo.
+
+Domaines connus : welcomeparis.hotelmanager.fr, api.welcomeparis.hotelmanager.fr, {hotelSlug}.welcomeparis.hotelmanager.fr, admin-{hotelSlug}.welcomeparis.hotelmanager.fr, admin.{hotelSlug}.welcomeparis.hotelmanager.fr, demo-paris-local.welcomeparis.hotelmanager.fr, admin-demo-paris-local.welcomeparis.hotelmanager.fr, hotel-admin-demo-paris-local.welcomeparis.hotelmanager.fr, api-demo.hotelmanager.fr.
 
 ## 7. Cloudflare / DNS / Wildcard
 Etat connu depuis historique projet : wildcard subdomains OK.

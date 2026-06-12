@@ -445,7 +445,11 @@ Règles Git / déploiement :
 - commit clair ;
 - push sur GitHub ;
 - déployer Coolify seulement si demandé ou si nécessaire pour valider la demande ;
-- vérifier statut et logs Coolify après déploiement.
+- vérifier statut et logs Coolify après déploiement ;
+- ne jamais réactiver Auto Deploy sur les services prod (API prod et Web prod) ;
+- ne jamais modifier les watch_paths des services demo sans validation explicite ;
+- toute PR doit partir du principe que la demo est le banc de validation et que la prod est manuelle ;
+- référence : `docs/DEPLOYMENT_CONTROL.md`.
 
 ## 7. Points critiques à ne jamais casser
 

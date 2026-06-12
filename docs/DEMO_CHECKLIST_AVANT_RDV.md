@@ -170,7 +170,22 @@ Garde-fous staging : ne jamais lancer seed hors local sans confirmation d'une DB
 
 Avant d'utiliser une URL publique en rendez-vous, appliquer la checklist `Validation staging controle avant seed hors local` dans `DEPLOIEMENT.md`. Si la checklist n'est pas complete, utiliser la demo locale validee ou un support prepare.
 
-## 9. Apres rendez-vous
+## 9. Verification deploiement avant rendez-vous
+
+Avant chaque demo, verifier que l'environnement demo est sain :
+
+- [ ] API demo /health : `curl -s https://api-demo.hotelmanager.fr/health` → 200
+- [ ] API demo /ready : `curl -s https://api-demo.hotelmanager.fr/ready` → database ok
+- [ ] Web demo Guest : `https://demo-paris-local.welcomeparis.hotelmanager.fr` → 200
+- [ ] Web demo Reception : `https://admin-demo-paris-local.welcomeparis.hotelmanager.fr` → 200
+- [ ] Web demo Hotel Admin : `https://hotel-admin-demo-paris-local.welcomeparis.hotelmanager.fr` → 200
+- [ ] Verifier que la demo est sur le dernier commit attendu (ouvrir Guest App, verifier visuellement les derniers changements).
+- [ ] Ne pas deployer prod pendant une preparation de demo.
+- [ ] Si un healthcheck echoue, ne pas utiliser l'URL publique en rendez-vous ; basculer sur local ou captures preparees.
+
+Reference : `docs/DEPLOYMENT_CONTROL.md`.
+
+## 10. Apres rendez-vous
 - Noter objections.
 - Noter modules demandes.
 - Classer prospect par package probable.
