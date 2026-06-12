@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Building2, Compass, LayoutDashboard, LogOut, QrCode, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Hotel as HotelIcon, LayoutDashboard, LogOut, QrCode, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAppStore } from "../../stores/appStore";
 
 type ShellProps = {
@@ -45,19 +45,12 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
           </div>
         ) : null}
 
-        <nav className="mt-5 space-y-5 text-sm">
-          <HotelAdminNavGroup label="Hotel">
-            <HotelAdminNavLink to={route()} label="Tableau de bord" icon={<LayoutDashboard className="h-4 w-4" />} />
-            <HotelAdminNavLink to={route("/profile")} label="Profil hotel" icon={<Building2 className="h-4 w-4" />} />
-            <HotelAdminNavLink to={route("/recommendations")} label="Recommandations" icon={<Compass className="h-4 w-4" />} />
-            <HotelAdminNavLink to={route("/settings")} label="Parametres" icon={<Settings className="h-4 w-4" />} />
-          </HotelAdminNavGroup>
-          <HotelAdminNavGroup label="Performance">
-            <HotelAdminNavLink to={route("/modules")} label="Modules & offre" icon={<Sparkles className="h-4 w-4" />} />
-            <HotelAdminNavLink to={route("/analytics")} label="Analytics" icon={<BarChart3 className="h-4 w-4" />} />
-            <HotelAdminNavLink to={route("/qr")} label="QR Code" icon={<QrCode className="h-4 w-4" />} />
-            <HotelAdminNavLink to={route("/crm")} label="Base clients" icon={<Users className="h-4 w-4" />} />
-          </HotelAdminNavGroup>
+        <nav className="mt-5 space-y-1 text-sm">
+          <HotelAdminNavLink to={route()} label="Tableau de bord" icon={<LayoutDashboard className="h-4 w-4" />} />
+          <HotelAdminNavLink to={route("/profile")} label="Mon hôtel" icon={<HotelIcon className="h-4 w-4" />} secondaryPaths={[route("/settings")]} />
+          <HotelAdminNavLink to={route("/modules")} label="Expérience client" icon={<Sparkles className="h-4 w-4" />} secondaryPaths={[route("/recommendations")]} />
+          <HotelAdminNavLink to={route("/qr")} label="QR & diffusion" icon={<QrCode className="h-4 w-4" />} />
+          <HotelAdminNavLink to={route("/crm")} label="Clients & CRM" icon={<Users className="h-4 w-4" />} secondaryPaths={[route("/analytics")]} />
         </nav>
 
         <div className="mt-5 rounded-2xl border border-amber-400/15 bg-amber-400/10 p-4 text-sm text-amber-100 lg:mt-auto">
@@ -97,19 +90,13 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
   );
 }
 
-function HotelAdminNavGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <p className="mb-2 hidden px-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 lg:block">{label}</p>
-      <div className="space-y-1">{children}</div>
-    </div>
-  );
-}
 
-function HotelAdminNavLink({ to, label, icon }: { to: string; label: string; icon: ReactNode }) {
+function HotelAdminNavLink({ to, label, icon, secondaryPaths }: { to: string; label: string; icon: ReactNode; secondaryPaths?: string[] }) {
   const location = useLocation();
   const isHomeRoute = to === "/" || to === "/hotel-admin";
-  const active = location.pathname === to || (!isHomeRoute && location.pathname.startsWith(to));
+  const matchesPrimary = location.pathname === to || (!isHomeRoute && location.pathname.startsWith(to));
+  const matchesSecondary = secondaryPaths?.some((p) => location.pathname === p || location.pathname.startsWith(p)) ?? false;
+  const active = matchesPrimary || matchesSecondary;
   return (
     <Link className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 font-medium transition focus:outline-none focus:ring-4 focus:ring-amber-400/15 ${active ? "border-amber-400/25 bg-amber-400/10 text-amber-100" : "border-transparent text-zinc-400 hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-white"}`} to={to}>
       <span className={active ? "text-amber-300" : "text-zinc-500"}>{icon}</span>
