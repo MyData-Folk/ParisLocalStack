@@ -32,7 +32,7 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
         {activeHotel ? (
           <div className="mt-4 rounded-xl border border-white/[0.07] bg-[#09090b] p-3">
             <p className="truncate text-sm font-medium text-white">{activeHotel.name}</p>
-            <p className="mt-0.5 text-xs text-zinc-500">{activeHotel.city ?? "Paris"}{activeHotel.country ? `, ${activeHotel.country}` : ""}</p>
+            <p className="mt-0.5 text-xs text-zinc-400">{activeHotel.city ?? "Paris"}{activeHotel.country ? `, ${activeHotel.country}` : ""}</p>
           </div>
         ) : null}
 
@@ -65,7 +65,7 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
           <div className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-white">{currentUser?.name}</p>
-              <p className="truncate text-[11px] text-zinc-500">{currentUser?.email}</p>
+              <p className="truncate text-[11px] text-zinc-400">{currentUser?.email}</p>
             </div>
             <button type="button" onClick={() => void logout()} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.04] text-zinc-400 transition hover:border-red-400/30 hover:bg-red-500/10 hover:text-red-100 focus:outline-none focus:ring-4 focus:ring-red-400/10" aria-label="Se deconnecter">
               <LogOut className="h-4 w-4" />
@@ -77,8 +77,8 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
         <div className="sticky top-0 z-10 border-b border-white/[0.07] bg-[#09090b]/85 px-4 py-3 backdrop-blur-xl md:px-6">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Admin Hotel</p>
-              <p className="text-sm font-medium text-zinc-200">Gestion de votre etablissement</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Espace hôtelier</p>
+              <p className="text-sm font-medium text-zinc-200">Pilotage de votre établissement</p>
             </div>
           </div>
         </div>
