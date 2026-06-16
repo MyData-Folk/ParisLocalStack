@@ -18,7 +18,7 @@ interface ReceptionShellProps {
 function ReceptionNavGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-2 hidden px-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 lg:block">{label}</p>
+      <p className="mb-2 hidden px-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 lg:block">{label}</p>
       <div className="space-y-1">{children}</div>
     </div>
   );
@@ -85,7 +85,7 @@ export function ReceptionShell({
           </div>
           <div className="mt-4 rounded-xl border border-white/[0.07] bg-[#09090b] p-3">
             <p className="truncate text-sm font-medium text-white">{hotelContext?.name ?? currentUser?.name}</p>
-            <p className="mt-1 text-xs text-zinc-500">{tenantSlug ? `admin-${tenantSlug}` : "Centre operationnel hotelier"}</p>
+            <p className="mt-1 text-xs text-zinc-400">{tenantSlug ? `admin-${tenantSlug}` : "Centre opérationnel hôtelier"}</p>
           </div>
         </div>
         <nav className="mt-4 grid grid-cols-2 gap-2 text-sm lg:block lg:space-y-5">
@@ -143,8 +143,8 @@ export function ReceptionShell({
         <div className="sticky top-0 z-10 border-b border-white/[0.07] bg-[#09090b]/85 px-4 py-3 backdrop-blur-xl md:px-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Front desk</p>
-              <p className="text-sm font-medium text-zinc-200">Messages, demandes, CRM et satisfaction</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Réception</p>
+              <p className="text-sm font-medium text-zinc-200">Messages, demandes, clients et satisfaction</p>
             </div>
             <div className="flex items-center gap-3">
               <NotificationBell

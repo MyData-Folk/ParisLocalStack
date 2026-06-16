@@ -71,13 +71,13 @@ export function HotelAdminAnalyticsPage({ hotel, hotelId, token }: { hotel: any;
       <section className="rounded-2xl border border-white/[0.07] bg-[#111115] p-6 shadow-lg shadow-black/20 md:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">Analytics</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Tableau de bord</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">Activité</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Performance de votre hôtel</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-              Activite de votre hotel sur la periode disponible.
+              Suivi de l'activité client sur la période disponible.
             </p>
             {hotelName ? (
-              <p className="mt-2 text-xs text-zinc-500">Etablissement : {hotelName}</p>
+              <p className="mt-2 text-xs text-zinc-400">Établissement : {hotelName}</p>
             ) : null}
           </div>
         </div>

@@ -444,7 +444,7 @@ function HomeSection({ hotel, settings, session, requests, services, onServiceRe
       <div>
         <p className={`text-sm font-medium ${theme.classes.muted}`}>Bonjour {greetingName}</p>
         {roomLabel ? <p className={`mt-0.5 text-xs font-semibold uppercase tracking-widest ${theme.classes.eyebrow}`}>{roomLabel}</p> : null}
-        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Votre séjour, simplement.</h2>
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>À votre service.</h2>
       </div>
 
       <div className="space-y-2">
@@ -552,7 +552,7 @@ function ServicesSection({ session, requests, services, onServiceRequest }: { ho
     <section className="space-y-5 px-5 py-7">
       <div>
         <p className={`text-xs font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Chambre {session.roomNumber}</p>
-        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Services de l'hôtel</h2>
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>À votre disposition</h2>
         <p className={`mt-2 text-sm leading-relaxed ${theme.classes.muted}`}>Choisissez une catégorie pour trouver rapidement le service adapté. La réception vous répond depuis son espace.</p>
       </div>
       {hotelServices.length > 0 ? <ServiceGroup title="À l'hôtel" services={hotelServices} onServiceRequest={onServiceRequest} /> : null}
@@ -611,7 +611,7 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
     <section className="flex min-h-[calc(100vh-18rem)] flex-col px-5 py-7">
       <div className="mb-5">
         <p className={`text-xs font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Réception</p>
-        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Votre messagerie</h2>
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Échangez avec la réception</h2>
       </div>
       <div className={`flex-1 space-y-3 overflow-y-auto rounded-3xl p-4 ${theme.classes.card}`}>
         {messages.length === 0 && (
@@ -639,7 +639,7 @@ function MessagesSection({ hotelSlug, session, messages, setMessages }: { hotelS
       </div>
       <div className={`mt-3 flex items-end gap-2 rounded-3xl p-2 ${theme.classes.card}`}>
         <textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Ecrire à la réception..." className={`min-h-12 flex-1 resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 ${theme.classes.input}`} />
-        <button onClick={() => void sendMessage()} disabled={sending || !content.trim()} aria-label="Envoyer le message" className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
+        <button onClick={() => void sendMessage()} disabled={sending || !content.trim()} aria-label="Envoyer à la réception" className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-all duration-200 active:scale-95 focus:outline-none focus:ring-4 disabled:opacity-50 ${theme.classes.primaryButton}`}>
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
       </div>
@@ -658,7 +658,7 @@ function GuideSection({ recommendations }: { recommendations: any[] }) {
     <section className="space-y-5 px-5 py-7">
       <div>
         <p className={`text-xs font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Sélection locale</p>
-        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Guide du quartier</h2>
+        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>Notre sélection locale</h2>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {categories.map((item) => (
@@ -1305,7 +1305,7 @@ function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string
 function StayCard({ icon, label, title, detail }: { icon: React.ReactNode; label: string; title: string; detail: string }) {
   const theme = useGuestTheme();
   return (
-    <div className={`flex items-center gap-3 rounded-xl p-3.5 ${theme.classes.card}`}>
+    <div className={`flex items-center gap-3 rounded-xl p-3.5 transition-all duration-200 active:scale-[0.98] ${theme.classes.card}`}>
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>{icon}</div>
       <div className="min-w-0">
         <p className={`text-[10px] font-semibold uppercase tracking-wider ${theme.classes.muted}`}>{label}</p>

@@ -69,10 +69,10 @@ export function HotelAdminDashboard({ hotel, hotelId, token, basePath = "/hotel-
 
       {/* ZONE 3 — ACTIONS RAPIDES */}
       <section className="grid gap-3 md:grid-cols-2">
-        <ActionCard to={route("/crm")} title="Clients & CRM" description="Consultez votre base clients, exportez et segmentez." icon={<Users className="h-5 w-5" />} />
-        <ActionCard to={route("/recommendations")} title="Recommandations locales" description="Gérez vos adresses et conseils pour les clients." icon={<Star className="h-5 w-5" />} />
-        <ActionCard to={route("/profile")} title="Mon hôtel" description="Informations, paramètres et thème de votre établissement." icon={<Sparkles className="h-5 w-5" />} />
-        <ActionCard to={route("/analytics")} title="Statistiques détaillées" description="Consultez l'activité complète de votre établissement." icon={<MessageSquare className="h-5 w-5" />} />
+        <ActionCard to={route("/crm")} title="Vos clients" description="Consultez votre base clients, exportez et segmentez." icon={<Users className="h-5 w-5" />} />
+        <ActionCard to={route("/recommendations")} title="Guide local" description="Vos adresses et recommandations pour les voyageurs." icon={<Star className="h-5 w-5" />} />
+        <ActionCard to={route("/profile")} title="Mon établissement" description="Identité, préférences et apparence de votre hôtel." icon={<Sparkles className="h-5 w-5" />} />
+        <ActionCard to={route("/analytics")} title="Activité" description="Suivez la fréquentation et la satisfaction de vos clients." icon={<MessageSquare className="h-5 w-5" />} />
       </section>
 
       {/* ZONE 4 — MON OFFRE (bandeau compact) */}
@@ -83,7 +83,7 @@ export function HotelAdminDashboard({ hotel, hotelId, token, basePath = "/hotel-
           </span>
           <div>
             <p className="text-sm font-semibold text-white">Offre {packageLabel}</p>
-            <p className="text-xs text-zinc-500">{kpis ? `${kpis.guests} clients enregistrés` : "Votre concierge digital actif"}</p>
+            <p className="text-xs text-zinc-400">{kpis ? `${kpis.guests} clients enregistrés` : "Votre concierge digital actif"}</p>
           </div>
         </div>
         <Link to={route("/modules")} className="text-xs font-semibold text-amber-300 transition hover:text-amber-200">
