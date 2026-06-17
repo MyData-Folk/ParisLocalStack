@@ -221,6 +221,7 @@ export function GuestShell() {
                 guestCards={guestCardsData.heroCards}
                 shortcutCards={guestCardsData.shortcutCards}
                 services={serviceTemplatesForGuest}
+                navigateServices={enabledServicesData.services.filter((s) => s.behavior === "navigate")}
                 allowExternalLinks={guestCardsData.limits?.allowExternalLinks ?? false}
                 onGuestCardAction={handleGuestCardAction}
               />
@@ -428,7 +429,7 @@ function Onboarding({ hotel, hotelSlug, onReady }: { hotel: any; hotelSlug: stri
   );
 }
 
-function HomeSection({ hotel, settings, session, requests, services, onServiceRequest, guestCards = [], shortcutCards = [], allowExternalLinks = false, onGuestCardAction = () => {} }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; services: ServiceTemplate[]; onServiceRequest: (service: ServiceTemplate) => void; guestCards?: GuestCardConfig[]; shortcutCards?: GuestCardConfig[]; allowExternalLinks?: boolean; onGuestCardAction?: (card: GuestCardConfig) => void }) {
+function HomeSection({ hotel, settings, session, requests, services, navigateServices = [], onServiceRequest, guestCards = [], shortcutCards = [], allowExternalLinks = false, onGuestCardAction = () => {} }: { hotel: any; settings: any; session: Session; requests: RequestItem[]; services: ServiceTemplate[]; navigateServices?: GuestEnabledService[]; onServiceRequest: (service: ServiceTemplate) => void; guestCards?: GuestCardConfig[]; shortcutCards?: GuestCardConfig[]; allowExternalLinks?: boolean; onGuestCardAction?: (card: GuestCardConfig) => void }) {
   const theme = useGuestTheme();
   const recentRequests = requests.slice(0, 3);
   const cardServices = services.filter((service) => service.visibleAsCard !== false);
@@ -496,13 +497,25 @@ function HomeSection({ hotel, settings, session, requests, services, onServiceRe
         <div>
           <p className={`mb-3 text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>À votre service</p>
           <div className="grid grid-cols-4 gap-2">
-            {quickServices.map((service) => (
+            {quickServices.slice(0, 4).map((service) => (
               <button key={service.id} onClick={() => onServiceRequest(service)} className={`flex flex-col items-center gap-1.5 rounded-xl p-3 text-center transition-all duration-200 active:scale-95 ${theme.classes.subtleCard}`}>
                 <ServiceIconTile service={service} className={`h-9 w-9 rounded-lg ${theme.classes.iconSoft}`} />
-                <span className="text-[10px] font-semibold leading-tight">{service.title.split(" ")[0]}</span>
+                <span className="line-clamp-2 text-[10px] font-semibold leading-tight">{service.title}</span>
               </button>
             ))}
           </div>
+          {navigateServices.map((navService) => (
+            <Link key={navService.id} to={navService.navigateTarget || "guide"} className={`mt-2 flex items-center gap-3 rounded-xl p-3 transition-all duration-200 active:scale-[0.98] ${theme.classes.subtleCard}`}>
+              <MapPin className={`h-4 w-4 shrink-0 ${theme.classes.eyebrow}`} />
+              <span className="text-[12px] font-semibold">{navService.title}</span>
+              <ChevronRight className={`ml-auto h-3.5 w-3.5 ${theme.classes.muted}`} />
+            </Link>
+          ))}
+          {services.length > 4 && (
+            <Link to="services" className={`mt-2 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-semibold transition-all duration-200 ${theme.classes.muted} hover:opacity-80`}>
+              Voir tous les services <ChevronRight className="h-3 w-3" />
+            </Link>
+          )}
         </div>
       )}
 
@@ -903,7 +916,7 @@ function resolveServiceTemplates(dynamicServices: GuestEnabledService[], hasDyna
   if (!hasDynamicServices || dynamicServices.length === 0) return serviceTemplates;
 
   const mapped = dynamicServices
-    .filter((service) => service.visibleAsCard || service.visibleInServicesPage)
+    .filter((service) => (service.visibleAsCard || service.visibleInServicesPage) && service.behavior === "request")
     .map(dynamicServiceToTemplate)
     .filter((service): service is ServiceTemplate => Boolean(service));
 
@@ -951,9 +964,7 @@ function findLegacyServiceTemplate(serviceCode: string, type: ServiceTemplate["t
     restaurant_booking: "restaurant-exterieur",
     room_service: "room-service",
     breakfast_info: "petit-dejeuner",
-    towels: "service-etage",
     maintenance: "maintenance",
-    reception_assistance: "bagagerie",
     luggage_storage: "bagagerie",
     partner_restaurants: "restaurant-exterieur",
     museums_tickets: "musee",
@@ -981,6 +992,9 @@ function iconForDynamicService(service: GuestEnabledService, type: ServiceTempla
 }
 
 function dynamicDetailsPreset(service: GuestEnabledService, type: ServiceTemplate["type"], legacy?: ServiceTemplate): RequestDetails {
+  if (service.serviceCode === "reception_assistance") return { subject: "Assistance réception" };
+  if (service.serviceCode === "luggage_storage") return { subject: "Consigne bagages" };
+  if (service.serviceCode === "towels") return { itemType: "linge", quantity: 1 };
   const preset = { ...(legacy?.detailsPreset ?? {}) };
   if (type === "reception") return { subject: service.title, ...preset };
   if (type === "room_service" && service.serviceCode === "breakfast_info") return { category: "Petit-déjeuner", ...preset };
