@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { SERVICE_CATALOG, type HotelServiceRequestType, type ServiceCatalogItem } from "@paris-local/shared";
 import type { HotelServiceConfig, HotelServicePlanLimits, PublicSettingsResponse } from "../../../lib/api";
 
+export type GuestServiceBehavior = "request" | "navigate";
+
 export type GuestEnabledService = {
   id: string;
   serviceCode: string;
@@ -16,6 +18,8 @@ export type GuestEnabledService = {
   visibleInServicesPage: boolean;
   catalogItem?: ServiceCatalogItem;
   source: HotelServiceConfig;
+  behavior: GuestServiceBehavior;
+  navigateTarget?: string;
 };
 
 export type UseEnabledServicesResult = {
@@ -54,6 +58,10 @@ const requestTypeByServiceCode: Record<string, HotelServiceRequestType> = {
   analytics_dashboard: "reception"
 };
 
+const NAVIGATE_SERVICES: Record<string, string> = {
+  local_recommendations: "guide"
+};
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -81,6 +89,7 @@ function mapGuestService(service: HotelServiceConfig): GuestEnabledService {
   const title = service.customTitle || catalogItem?.labelFr || service.serviceCode;
   const description = service.customDescription || catalogItem?.descriptionFr || "";
   const requestType = requestTypeByServiceCode[service.serviceCode] ?? "custom_service";
+  const navigateTarget = NAVIGATE_SERVICES[service.serviceCode];
 
   return {
     id: service.serviceCode,
@@ -95,7 +104,9 @@ function mapGuestService(service: HotelServiceConfig): GuestEnabledService {
     visibleAsCard: service.visibleAsCard,
     visibleInServicesPage: service.visibleInServicesPage,
     catalogItem,
-    source: service
+    source: service,
+    behavior: navigateTarget ? "navigate" : "request",
+    navigateTarget
   };
 }
 
