@@ -435,112 +435,121 @@ function HomeSection({ hotel, settings, session, requests, services, onServiceRe
   const hotelCardServices = cardServices.filter((service) => service.group === "hotel").slice(0, 4);
   const quickServices = hotelCardServices.length > 0 ? hotelCardServices : cardServices.slice(0, 4);
   const fullGuestName = [session.firstName, session.lastName].filter(Boolean).join(" ");
-  const greetingName = fullGuestName || "Bienvenue";
-  const roomLabel = session.roomNumber ? `Chambre ${session.roomNumber}` : null;
+  const greetingName = fullGuestName || "";
   const showShortcutCards = shortcutCards.length > 0;
   const showHeroCards = guestCards.length > 0;
   return (
-    <section className="space-y-6 px-5 py-7">
-      <div>
-        <p className={`text-sm font-medium ${theme.classes.muted}`}>Bonjour {greetingName}</p>
-        {roomLabel ? <p className={`mt-0.5 text-xs font-semibold uppercase tracking-widest ${theme.classes.eyebrow}`}>{roomLabel}</p> : null}
-        <h2 className={`mt-1.5 text-[1.75rem] font-bold tracking-tight ${theme.classes.title}`}>À votre service.</h2>
+    <section className="space-y-7 px-5 py-7">
+      {/* ZONE 1 — ACCUEIL PERSONNALISÉ */}
+      <div className="text-center">
+        <h2 className={`text-[1.85rem] font-bold tracking-tight ${theme.classes.title}`}>
+          {greetingName ? `Bienvenue ${greetingName}` : "Bienvenue"}
+        </h2>
+        {session.roomNumber && (
+          <p className={`mt-1 text-sm ${theme.classes.muted}`}>
+            Chambre {session.roomNumber} · {hotel?.name}
+          </p>
+        )}
       </div>
 
-      <div className="space-y-2">
-        <StayCard icon={<Wifi className="h-4 w-4" />} label="Wi-Fi" title={settings?.wifiName || "Réseau invité"} detail={settings?.wifiPassword || "Mot de passe à la réception"} />
-        <StayCard icon={<Coffee className="h-4 w-4" />} label="Petit-déjeuner" title={settings?.breakfastHours || "07:00 - 10:30"} detail="Salon principal" />
-        <StayCard icon={<Clock className="h-4 w-4" />} label="Check-out" title={settings?.checkoutTime || "11:00"} detail={`Check-in ${settings?.checkinTime || "15:00"}`} />
-        <StayCard icon={<Phone className="h-4 w-4" />} label="Réception" title={settings?.receptionPhone || "24/7"} detail="Assistance séjour" />
+      {/* ZONE 2 — INFORMATIONS ESSENTIELLES (compact 2x2) */}
+      <div className="grid grid-cols-2 gap-2">
+        <MiniStayFact icon={<Wifi className="h-3.5 w-3.5" />} label="Wi-Fi" value={settings?.wifiName || "Invité"} />
+        <MiniStayFact icon={<Clock className="h-3.5 w-3.5" />} label="Check-out" value={settings?.checkoutTime || "11:00"} />
+        <MiniStayFact icon={<Coffee className="h-3.5 w-3.5" />} label="Petit-déj" value={settings?.breakfastHours || "07:00 – 10:30"} />
+        <MiniStayFact icon={<Phone className="h-3.5 w-3.5" />} label="Réception" value={settings?.receptionPhone || "24h/24"} />
       </div>
 
-      {showShortcutCards ? (
-        <div className={`rounded-3xl p-4 ${theme.classes.card}`}>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${theme.classes.eyebrow}`}>Actions rapides</p>
-              <h3 className={`text-lg font-semibold ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
-            </div>
-            <ConciergeBell className="h-5 w-5 text-stone-400" />
+      {/* ZONE 3 — COUP DE CŒUR (featured recommendation ou hero card) */}
+      {showHeroCards ? (
+        <div className="space-y-4">
+          {guestCards.slice(0, 1).map((card) => (
+            <GuestHeroCard key={card.id} card={card} theme={theme} onAction={onGuestCardAction} allowExternalLinks={allowExternalLinks} />
+          ))}
+        </div>
+      ) : (
+        <div className={`group relative overflow-hidden rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg`}>
+          <img src={heroImage} alt="" className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <p className={`text-[10px] font-bold uppercase tracking-widest text-white/60`}>Coup de cœur</p>
+            <h3 className="mt-1 text-lg font-bold tracking-tight text-white">Découvrez le quartier</h3>
+            <p className="mt-1 text-[12px] leading-relaxed text-white/70">Nos adresses préférées à deux pas de votre hôtel.</p>
+            <Link to="guide" className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1.5 text-[11px] font-semibold text-white backdrop-blur-sm transition hover:bg-white/30">
+              Explorer <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+        </div>
+      )}
+
+      {/* ZONE 4 — SERVICES RAPIDES */}
+      {showShortcutCards ? (
+        <div>
+          <p className={`mb-3 text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>À votre service</p>
+          <div className="grid grid-cols-2 gap-2.5">
             {shortcutCards.map((card) => (
-              <GuestShortcutCard
-                key={card.id}
-                card={card}
-                theme={theme}
-                onAction={onGuestCardAction}
-                allowExternalLinks={allowExternalLinks}
-              />
+              <GuestShortcutCard key={card.id} card={card} theme={theme} onAction={onGuestCardAction} allowExternalLinks={allowExternalLinks} />
             ))}
           </div>
         </div>
       ) : (
-        <div className={`rounded-2xl p-5 ${theme.classes.card}`}>
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Actions rapides</p>
-              <h3 className={`mt-1 text-lg font-bold tracking-tight ${theme.classes.title}`}>Besoin de quelque chose ?</h3>
-            </div>
-            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>
-              <ConciergeBell className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className={`mb-3 text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>À votre service</p>
+          <div className="grid grid-cols-4 gap-2">
             {quickServices.map((service) => (
-              <button key={service.id} onClick={() => onServiceRequest(service)} className={`group rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md active:scale-[0.97] focus:outline-none focus:ring-4 ${theme.classes.secondaryButton}`}>
-                <ServiceIconTile service={service} className={`mb-3 h-10 w-10 rounded-xl ${theme.classes.iconSoft}`} />
-                <p className="text-[13px] font-bold tracking-tight">{service.title}</p>
-                <p className={`mt-1 text-[11px] leading-relaxed ${theme.classes.muted}`}>{service.description}</p>
-                {service.actionLabel ? <p className={`mt-3 text-[11px] font-bold ${theme.classes.eyebrow}`}>{service.actionLabel}</p> : null}
+              <button key={service.id} onClick={() => onServiceRequest(service)} className={`flex flex-col items-center gap-1.5 rounded-xl p-3 text-center transition-all duration-200 active:scale-95 ${theme.classes.subtleCard}`}>
+                <ServiceIconTile service={service} className={`h-9 w-9 rounded-lg ${theme.classes.iconSoft}`} />
+                <span className="text-[10px] font-semibold leading-tight">{service.title.split(" ")[0]}</span>
               </button>
             ))}
           </div>
         </div>
       )}
 
-      <div className={`rounded-2xl p-5 ${theme.classes.card}`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>Suivi réception</p>
-            <h3 className="mt-1 text-lg font-bold tracking-tight">Vos demandes</h3>
-            <p className={`mt-1.5 text-[12px] leading-relaxed ${theme.classes.muted}`}>La réception reçoit votre demande et vous répond en temps réel.</p>
-          </div>
-          <Link to="services" className={`shrink-0 rounded-xl px-3.5 py-2 text-[11px] font-bold transition-base ${theme.classes.secondaryButton}`}>Voir tout</Link>
+      {/* ZONE 5 — RÉCEPTION (CTA conversationnel) */}
+      <Link to="messages" className={`flex items-center gap-4 rounded-2xl p-4 transition-all duration-200 active:scale-[0.98] ${theme.classes.card}`}>
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>
+          <MessageCircle className="h-5 w-5" />
         </div>
-        <div className="mt-4 space-y-2">
-          {recentRequests.length === 0 && <p className={`rounded-xl p-4 text-sm ${theme.classes.subtleCard}`}>Aucune demande en cours. La réception reste disponible à tout moment.</p>}
-          {recentRequests.map((request) => <RequestRow key={request.id} request={request} />)}
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] font-bold tracking-tight">Un message pour la réception ?</p>
+          <p className={`mt-0.5 text-[12px] ${theme.classes.muted}`}>Nous vous répondons en quelques minutes.</p>
         </div>
-      </div>
+        <ChevronRight className={`h-4 w-4 shrink-0 ${theme.classes.muted}`} />
+      </Link>
 
-      {showHeroCards ? (
-        <div className="space-y-4">
-          {guestCards.map((card) => (
-            <GuestHeroCard
-              key={card.id}
-              card={card}
-              theme={theme}
-              onAction={onGuestCardAction}
-              allowExternalLinks={allowExternalLinks}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className={`group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl ${theme.classes.header}`}>
-          <img src={heroImage} alt="" className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Guide local</p>
-            <h3 className="mt-1 text-xl font-bold tracking-tight text-white">Paris autour de {hotel?.name}</h3>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-white/75">Restaurants, cafés, pharmacies et lieux sélectionnés pour votre séjour.</p>
-            <Link to="guide" className={`mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold ${theme.classes.primaryButton}`}>
-              Explorer le quartier <ChevronRight className="h-4 w-4" />
-            </Link>
+      {/* ZONE 6 — DEMANDES EN COURS (si existantes) */}
+      {recentRequests.length > 0 && (
+        <div>
+          <p className={`mb-2 text-[10px] font-bold uppercase tracking-widest ${theme.classes.eyebrow}`}>En cours</p>
+          <div className="space-y-2">
+            {recentRequests.map((request) => <RequestRow key={request.id} request={request} />)}
           </div>
         </div>
       )}
+
+      {/* ZONE 7 — HERO CARDS SUPPLÉMENTAIRES */}
+      {showHeroCards && guestCards.length > 1 ? (
+        <div className="space-y-3">
+          {guestCards.slice(1).map((card) => (
+            <GuestHeroCard key={card.id} card={card} theme={theme} onAction={onGuestCardAction} allowExternalLinks={allowExternalLinks} />
+          ))}
+        </div>
+      ) : null}
     </section>
+  );
+}
+
+function MiniStayFact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  const theme = useGuestTheme();
+  return (
+    <div className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 ${theme.classes.subtleCard}`}>
+      <span className={theme.classes.muted}>{icon}</span>
+      <div className="min-w-0">
+        <p className={`text-[9px] font-semibold uppercase tracking-widest ${theme.classes.muted}`}>{label}</p>
+        <p className="truncate text-[12px] font-bold">{value}</p>
+      </div>
+    </div>
   );
 }
 
@@ -1302,19 +1311,6 @@ function MiniFact({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function StayCard({ icon, label, title, detail }: { icon: React.ReactNode; label: string; title: string; detail: string }) {
-  const theme = useGuestTheme();
-  return (
-    <div className={`flex items-center gap-3 rounded-xl p-3.5 transition-all duration-200 active:scale-[0.98] ${theme.classes.card}`}>
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${theme.classes.iconSoft}`}>{icon}</div>
-      <div className="min-w-0">
-        <p className={`text-[10px] font-semibold uppercase tracking-wider ${theme.classes.muted}`}>{label}</p>
-        <p className="truncate text-[14px] font-bold tracking-tight">{title}</p>
-        <p className={`truncate text-[11px] ${theme.classes.muted}`}>{detail}</p>
-      </div>
-    </div>
-  );
-}
 
 function RequestRow({ request }: { request: RequestItem }) {
   const theme = useGuestTheme();
