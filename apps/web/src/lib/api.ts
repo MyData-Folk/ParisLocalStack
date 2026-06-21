@@ -176,6 +176,11 @@ export const api = {
     body: JSON.stringify({ email, password })
   }),
   me: (token: string) => request<ApiUser>("/api/auth/me", { token }),
+  changeMyPassword: (body: { currentPassword: string; newPassword: string }, token: string) => request<{ passwordChanged: boolean }>("/api/auth/me/password", {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
+  }),
   logout: (token: string) => request<{ ok: boolean }>("/api/auth/logout", { method: "POST", token }),
   hotelBySlug: (slug: string) => request<any>(`/api/public/hotels/by-slug/${slug}`),
   settings: (slug: string) => request<PublicSettingsResponse>(`/api/public/${slug}/settings`),

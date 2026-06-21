@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle, Loader2 } from "lucide-react";
+import { ChangePasswordCard } from "../../../components/auth/ChangePasswordCard";
 import { api } from "../../../lib/api";
 import { Field, ColorField } from "../../admin/components/AdminField";
 import { ErrorState, LoadingState } from "../../admin/components/AdminSharedUI";
@@ -95,6 +96,7 @@ export function HotelAdminProfilePage({ hotel, hotelId, token, onHotelUpdated }:
           </div>
         </form>
       </section>
+      <ChangePasswordCard token={token} />
     </div>
   );
 }
