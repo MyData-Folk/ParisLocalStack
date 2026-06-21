@@ -4,6 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { config, isAllowedOrigin } from "./config.js";
+import { adminRouter } from "./modules/admin/routes.js";
 import { authRouter } from "./modules/auth/routes.js";
 import { hotelsRouter, publicHotelsRouter } from "./modules/hotels/routes.js";
 import { guestsRouter, publicGuestsRouter } from "./modules/guests/routes.js";
@@ -71,6 +72,8 @@ export function createApp() {
   });
   app.post("/api/auth/login", authLimiter);
   app.patch("/api/auth/me/password", authLimiter);
+  app.patch("/api/admin/hotel-admins/:userId/password", authLimiter);
+  app.use("/api/admin", adminRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/hotels", hotelsRouter);
   app.use("/api/public/hotels", publicLimiter, publicHotelsRouter);
