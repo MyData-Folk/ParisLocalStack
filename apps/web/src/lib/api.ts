@@ -181,6 +181,11 @@ export const api = {
     token,
     body: JSON.stringify(body)
   }),
+  resetHotelAdminPassword: (userId: string, body: { newPassword: string; confirmPassword: string }, token: string) => request<{ passwordReset: boolean }>(`/api/admin/hotel-admins/${userId}/password`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
+  }),
   logout: (token: string) => request<{ ok: boolean }>("/api/auth/logout", { method: "POST", token }),
   hotelBySlug: (slug: string) => request<any>(`/api/public/hotels/by-slug/${slug}`),
   settings: (slug: string) => request<PublicSettingsResponse>(`/api/public/${slug}/settings`),

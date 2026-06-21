@@ -21,6 +21,9 @@ export function AdminUsersPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState<AdminHotelUser | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<AdminHotelUser | null>(null);
+  const [passwordForm, setPasswordForm] = useState({ newPassword: "", confirmPassword: "" });
+  const [passwordMessage, setPasswordMessage] = useState("");
   const [form, setForm] = useState({ name: "", email: "", role: "receptionist", status: "active", password: "" });
 
   async function loadUsers() {
@@ -92,6 +95,39 @@ export function AdminUsersPage() {
       setMessage(nextStatus === "inactive" ? "Compte desactive. La connexion est bloquee." : "Compte reactive.");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Changement de statut impossible");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openPasswordReset(entry: AdminHotelUser) {
+    setPasswordTarget(entry);
+    setPasswordForm({ newPassword: "", confirmPassword: "" });
+    setPasswordMessage("");
+    setMessage("");
+  }
+
+  async function resetHotelAdminPassword(event: FormEvent) {
+    event.preventDefault();
+    if (!token || !passwordTarget) return;
+    setSaving(true);
+    setPasswordMessage("");
+    try {
+      if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+        throw new Error("validation");
+      }
+      if (passwordForm.newPassword.length < 16) {
+        throw new Error("validation");
+      }
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        throw new Error("validation");
+      }
+      await api.resetHotelAdminPassword(passwordTarget.user.id, passwordForm, token);
+      setPasswordForm({ newPassword: "", confirmPassword: "" });
+      setPasswordTarget(null);
+      setMessage("Mot de passe réinitialisé avec succès.");
+    } catch {
+      setPasswordMessage("Impossible de réinitialiser le mot de passe.");
     } finally {
       setSaving(false);
     }
@@ -191,6 +227,9 @@ export function AdminUsersPage() {
                     <UserStatusBadge status={entry.user.status || "active"} />
                     <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
                       <button type="button" onClick={() => openEditor(entry)} className="rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-medium text-zinc-200 transition hover:border-amber-400/30 hover:bg-amber-400/10 focus:outline-none focus:ring-4 focus:ring-amber-400/10">Editer</button>
+                      {entry.role === "hotel_admin" ? (
+                        <button type="button" onClick={() => openPasswordReset(entry)} className="rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-medium text-zinc-200 transition hover:border-emerald-400/30 hover:bg-emerald-400/10 focus:outline-none focus:ring-4 focus:ring-emerald-400/10">Réinitialiser</button>
+                      ) : null}
                       <button type="button" onClick={() => void toggleStatus(entry)} disabled={saving} className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-medium text-zinc-200 transition hover:border-sky-400/30 hover:bg-sky-400/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10 disabled:opacity-60">
                         {entry.user.status === "inactive" ? <UserCheck className="h-3.5 w-3.5" /> : <UserX className="h-3.5 w-3.5" />}
                         {entry.user.status === "inactive" ? "Activer" : "Bloquer"}
@@ -245,6 +284,45 @@ export function AdminUsersPage() {
           )}
         </aside>
       </section>
+
+      {passwordTarget ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+          <form onSubmit={resetHotelAdminPassword} className="w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#111115] p-6 shadow-2xl shadow-black/40">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200/80">Admin hôtel</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">Réinitialiser le mot de passe</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-400">Définissez un nouveau mot de passe sécurisé pour ce compte Admin Hôtel.</p>
+            </div>
+            <div className="mt-5 space-y-4">
+              <Field
+                type="password"
+                label="Nouveau mot de passe"
+                value={passwordForm.newPassword}
+                onChange={(value) => setPasswordForm((current) => ({ ...current, newPassword: value }))}
+                helper="Minimum 16 caractères."
+                required
+              />
+              <Field
+                type="password"
+                label="Confirmer le nouveau mot de passe"
+                value={passwordForm.confirmPassword}
+                onChange={(value) => setPasswordForm((current) => ({ ...current, confirmPassword: value }))}
+                required
+              />
+            </div>
+            {passwordMessage ? <p className="mt-5 rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">{passwordMessage}</p> : null}
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => { setPasswordTarget(null); setPasswordMessage(""); }} className="rounded-xl border border-white/[0.07] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-white/[0.07] focus:outline-none focus:ring-4 focus:ring-white/10">
+                Annuler
+              </button>
+              <button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200 focus:outline-none focus:ring-4 focus:ring-emerald-300/20 disabled:opacity-60">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                Réinitialiser
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </AdminShell>
   );
 }
