@@ -139,6 +139,23 @@ export type HotelServicesResponse = {
   enabledServices: HotelServiceConfig[];
 };
 
+export type HotelAdminReceptionist = {
+  id: string;
+  hotelId: string;
+  userId: string;
+  role: "receptionist";
+  createdAt: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: "receptionist";
+    status?: "active" | "inactive";
+    createdAt?: string;
+    updatedAt?: string;
+  };
+};
+
 export type RecommendationPayload = {
   category: string;
   name: string;
@@ -182,6 +199,12 @@ export const api = {
     body: JSON.stringify(body)
   }),
   resetHotelAdminPassword: (userId: string, body: { newPassword: string; confirmPassword: string }, token: string) => request<{ passwordReset: boolean }>(`/api/admin/hotel-admins/${userId}/password`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body)
+  }),
+  hotelAdminReceptionists: (hotelId: string, token: string) => request<HotelAdminReceptionist[]>(`/api/hotel-admin/hotels/${hotelId}/receptionists`, { token }),
+  resetReceptionistPassword: (hotelId: string, userId: string, body: { newPassword: string; confirmPassword: string }, token: string) => request<{ passwordReset: boolean }>(`/api/hotel-admin/hotels/${hotelId}/receptionists/${userId}/password`, {
     method: "PATCH",
     token,
     body: JSON.stringify(body)

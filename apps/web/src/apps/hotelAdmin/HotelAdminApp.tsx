@@ -13,6 +13,7 @@ import { HotelAdminSettingsPage } from "./pages/HotelAdminSettingsPage";
 import { HotelAdminModulesPage } from "./pages/HotelAdminModulesPage";
 import { HotelAdminAnalyticsPage } from "./pages/HotelAdminAnalyticsPage";
 import { HotelAdminCrmPage } from "./pages/HotelAdminCrmPage";
+import { HotelAdminTeamPage } from "./pages/HotelAdminTeamPage";
 
 export function HotelAdminApp({ basePath = "/hotel-admin" }: { basePath?: string }) {
   const { token, currentUser } = useAppStore();
@@ -111,6 +112,7 @@ export function HotelAdminApp({ basePath = "/hotel-admin" }: { basePath?: string
             <Route path="/recommendations" element={<HotelAdminRecommendationsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/settings" element={<HotelAdminSettingsPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/modules" element={<HotelAdminModulesPage hotel={activeHotel} hotelId={activeHotelId} token={token!} />} />
+            <Route path="/team" element={<HotelAdminTeamPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/analytics" element={<HotelAdminAnalyticsPage hotel={activeHotel} hotelId={activeHotelId} token={token!} />} />
             <Route path="/qr" element={<HotelAdminQRPage hotelId={activeHotelId} token={token!} />} />
             <Route path="/crm" element={<HotelAdminCrmPage hotelId={activeHotelId} token={token!} />} />

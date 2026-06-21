@@ -22,13 +22,15 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(16, "Password must be at least 16 characters").max(128)
 });
 
-export const adminPasswordResetSchema = z.object({
+export const passwordResetSchema = z.object({
   newPassword: z.string().min(16, "Password must be at least 16 characters").max(128),
   confirmPassword: z.string().min(16, "Password must be at least 16 characters").max(128)
 }).refine((value) => value.newPassword === value.confirmPassword, {
   message: "Password confirmation does not match",
   path: ["confirmPassword"]
 });
+
+export const adminPasswordResetSchema = passwordResetSchema;
 
 export const hotelCreateSchema = z.object({
   name: z.string().min(2),

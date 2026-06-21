@@ -6,6 +6,7 @@ import path from "path";
 import { config, isAllowedOrigin } from "./config.js";
 import { adminRouter } from "./modules/admin/routes.js";
 import { authRouter } from "./modules/auth/routes.js";
+import { hotelAdminRouter } from "./modules/hotelAdmin/routes.js";
 import { hotelsRouter, publicHotelsRouter } from "./modules/hotels/routes.js";
 import { guestsRouter, publicGuestsRouter } from "./modules/guests/routes.js";
 import { staysRouter, publicStaysRouter } from "./modules/stays/routes.js";
@@ -73,8 +74,10 @@ export function createApp() {
   app.post("/api/auth/login", authLimiter);
   app.patch("/api/auth/me/password", authLimiter);
   app.patch("/api/admin/hotel-admins/:userId/password", authLimiter);
+  app.patch("/api/hotel-admin/hotels/:hotelId/receptionists/:userId/password", authLimiter);
   app.use("/api/admin", adminRouter);
   app.use("/api/auth", authRouter);
+  app.use("/api/hotel-admin", hotelAdminRouter);
   app.use("/api/hotels", hotelsRouter);
   app.use("/api/public/hotels", publicLimiter, publicHotelsRouter);
   app.use("/api/public/:hotelSlug/guests", publicLimiter, publicGuestsRouter);
