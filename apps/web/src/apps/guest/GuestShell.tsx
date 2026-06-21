@@ -439,6 +439,7 @@ function HomeSection({ hotel, settings, session, requests, services, navigateSer
   const greetingName = fullGuestName || "";
   const showShortcutCards = shortcutCards.length > 0;
   const showHeroCards = guestCards.length > 0;
+  const guideAlreadyLinked = [...guestCards, ...shortcutCards].some((card) => card.actionType === "section" && (card.actionTarget === "guide" || card.actionTarget === "recommendations"));
   return (
     <section className="space-y-7 px-5 py-7">
       {/* ZONE 1 — ACCUEIL PERSONNALISÉ */}
@@ -492,6 +493,18 @@ function HomeSection({ hotel, settings, session, requests, services, navigateSer
               <GuestShortcutCard key={card.id} card={card} theme={theme} onAction={onGuestCardAction} allowExternalLinks={allowExternalLinks} />
             ))}
           </div>
+          {!guideAlreadyLinked && navigateServices.map((navService) => (
+            <Link key={navService.id} to={navService.navigateTarget || "guide"} className={`mt-2 flex items-center gap-3 rounded-xl p-3 transition-all duration-200 active:scale-[0.98] ${theme.classes.subtleCard}`}>
+              <MapPin className={`h-4 w-4 shrink-0 ${theme.classes.eyebrow}`} />
+              <span className="text-[12px] font-semibold">{navService.title}</span>
+              <ChevronRight className={`ml-auto h-3.5 w-3.5 ${theme.classes.muted}`} />
+            </Link>
+          ))}
+          {services.length > 4 && (
+            <Link to="services" className={`mt-2 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-semibold transition-all duration-200 ${theme.classes.muted} hover:opacity-80`}>
+              Voir tous les services <ChevronRight className="h-3 w-3" />
+            </Link>
+          )}
         </div>
       ) : (
         <div>
@@ -504,7 +517,7 @@ function HomeSection({ hotel, settings, session, requests, services, navigateSer
               </button>
             ))}
           </div>
-          {navigateServices.map((navService) => (
+          {!guideAlreadyLinked && navigateServices.map((navService) => (
             <Link key={navService.id} to={navService.navigateTarget || "guide"} className={`mt-2 flex items-center gap-3 rounded-xl p-3 transition-all duration-200 active:scale-[0.98] ${theme.classes.subtleCard}`}>
               <MapPin className={`h-4 w-4 shrink-0 ${theme.classes.eyebrow}`} />
               <span className="text-[12px] font-semibold">{navService.title}</span>
