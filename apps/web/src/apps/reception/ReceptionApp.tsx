@@ -2120,6 +2120,7 @@ function requestPrimaryDetail(request: any) {
   if (request.type === "restaurant") return `${details.people ?? "-"} pers.${details.cuisine ? ` - ${details.cuisine}` : ""}${details.area ? ` - ${details.area}` : ""}`;
   if (request.type === "room_service") return `${details.category || details.requestType || "Room service"}${details.quantity ? ` x${details.quantity}` : ""}`;
   if (request.type === "towels") return `${details.quantity ?? 1} ${details.itemType ?? "linge"}`;
+  if (request.type === "laundry_pressing") return `${laundryServiceKindLabel(String(details.serviceKind ?? "pressing"))} - ${details.itemCount ?? 1} article(s)`;
   if (request.type === "maintenance") return details.category ?? "Maintenance";
   return details.subject ?? request.description ?? "-";
 }
@@ -2147,6 +2148,7 @@ function requestCategoryTag(request: any): { label: string; tone: "hotel" | "ext
   const text = normalizeTagText([request.title, request.description, details.category, details.requestType, details.subject].filter(Boolean).join(" "));
 
   if (request.type === "towels") return { label: "Service d’étage", tone: "hotel" };
+  if (request.type === "laundry_pressing") return { label: "Pressing", tone: "hotel" };
   if (request.type === "maintenance") return { label: "Maintenance", tone: "maintenance" };
   if (request.type === "restaurant") return { label: "Restaurant", tone: "external" };
   if (request.type === "taxi") {
@@ -2182,6 +2184,20 @@ function requestTagClass(tone: "hotel" | "external" | "maintenance" | "neutral")
 
 function normalizeTagText(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function laundryServiceKindLabel(value: string) {
+  if (value === "lavage") return "Lavage";
+  if (value === "repassage") return "Repassage";
+  if (value === "nettoyage_a_sec") return "Nettoyage a sec";
+  if (value === "autre") return "Autre service";
+  return "Pressing";
+}
+
+function laundryDeadlineLabel(value: string) {
+  if (value === "today") return "Aujourd'hui";
+  if (value === "tomorrow") return "Demain";
+  return "Flexible";
 }
 
 function requestDetailsEntries(request: any): Array<[string, string]> {
@@ -2229,6 +2245,15 @@ function requestDetailsEntries(request: any): Array<[string, string]> {
       ["Article", String(details.itemType ?? "-")],
       ["Quantite", String(details.quantity ?? "1")],
       ["Urgent", details.urgent ? "Oui" : "Non"],
+      ["Commentaire", String(details.notes ?? "-")]
+    ];
+    return entries.filter(([, value]) => value && value !== "-");
+  }
+  if (request.type === "laundry_pressing") {
+    const entries: Array<[string, string]> = [
+      ["Service", laundryServiceKindLabel(String(details.serviceKind ?? "pressing"))],
+      ["Articles", String(details.itemCount ?? "1")],
+      ["Delai", laundryDeadlineLabel(String(details.deadline ?? "flexible"))],
       ["Commentaire", String(details.notes ?? "-")]
     ];
     return entries.filter(([, value]) => value && value !== "-");

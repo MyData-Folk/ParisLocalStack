@@ -16,6 +16,7 @@ export const hotelServiceRequestTypes = [
   "restaurant",
   "room_service",
   "towels",
+  "laundry_pressing",
   "reception",
   "maintenance",
   "wellness",
@@ -29,6 +30,7 @@ export const hotelServiceFormKinds = [
   "taxi",
   "restaurant",
   "linen",
+  "laundry_pressing",
   "room_service",
   "wellness"
 ] as const;

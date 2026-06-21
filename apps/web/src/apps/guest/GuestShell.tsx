@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Phone,
   Send,
+  Shirt,
   ShoppingBag,
   Sparkles,
   Star,
@@ -891,7 +892,7 @@ function PublishedReviewsPanel({ reviews }: { reviews: any[] }) {
 
 type ServiceTemplate = {
   id: string;
-  type: "taxi" | "restaurant" | "room_service" | "towels" | "reception" | "maintenance";
+  type: "taxi" | "restaurant" | "room_service" | "towels" | "laundry_pressing" | "reception" | "maintenance";
   title: string;
   description: string;
   priority: "medium" | "high" | "urgent";
@@ -962,6 +963,7 @@ function mapDynamicRequestType(service: GuestEnabledService): ServiceTemplate["t
   if (service.requestType === "restaurant") return "restaurant";
   if (service.requestType === "room_service") return "room_service";
   if (service.requestType === "towels") return "towels";
+  if (service.requestType === "laundry_pressing") return "laundry_pressing";
   if (service.requestType === "reception") return "reception";
   if (service.requestType === "maintenance") return "maintenance";
   return null;
@@ -996,6 +998,7 @@ function iconForDynamicService(service: GuestEnabledService, type: ServiceTempla
   if (type === "taxi") return <Car className="h-5 w-5" />;
   if (type === "restaurant" || type === "room_service") return <Utensils className="h-5 w-5" />;
   if (type === "towels") return <Waves className="h-5 w-5" />;
+  if (type === "laundry_pressing") return <Shirt className="h-5 w-5" />;
   if (type === "maintenance") return <Wrench className="h-5 w-5" />;
   if (service.catalogItem?.category === "partner") return <TicketCheck className="h-5 w-5" />;
   return <ConciergeBell className="h-5 w-5" />;
@@ -1073,6 +1076,7 @@ function ServiceRequestSheet({ service, session, hotelSlug, onClose, onCreated }
           {service.type === "restaurant" ? <RestaurantFields form={form} update={update} /> : null}
           {service.type === "room_service" ? <RoomServiceFields form={form} update={update} /> : null}
           {service.type === "towels" ? <LinenFields form={form} update={update} /> : null}
+          {service.type === "laundry_pressing" ? <LaundryPressingFields form={form} update={update} /> : null}
           {service.type === "reception" ? <ReceptionAssistanceFields form={form} update={update} /> : null}
           {service.type === "maintenance" ? <MaintenanceFields form={form} update={update} /> : null}
         </div>
@@ -1156,6 +1160,18 @@ function LinenFields({ form, update }: { form: RequestDetails; update: (field: s
   );
 }
 
+function LaundryPressingFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
+  return (
+    <>
+      <GuestSelect label="Type de service" value={String(form.serviceKind ?? "pressing")} onChange={(value) => update("serviceKind", value)} options={[["pressing", "Pressing"], ["lavage", "Lavage"], ["repassage", "Repassage"], ["nettoyage_a_sec", "Nettoyage a sec"], ["autre", "Autre"]]} />
+      <GuestInput label="Nombre d'articles" type="number" value={String(form.itemCount ?? 1)} onChange={(value) => update("itemCount", Number(value))} required />
+      <GuestSelect label="Delai souhaite" value={String(form.deadline ?? "flexible")} onChange={(value) => update("deadline", value)} options={[["today", "Aujourd'hui"], ["tomorrow", "Demain"], ["flexible", "Flexible"]]} />
+      <GuestTextarea label="Commentaire" value={String(form.notes ?? "")} onChange={(value) => update("notes", value)} />
+      <p className="text-xs leading-5 opacity-70">La reception confirmera les modalites et le tarif.</p>
+    </>
+  );
+}
+
 function ReceptionAssistanceFields({ form, update }: { form: RequestDetails; update: (field: string, value: string | number | boolean) => void }) {
   return (
     <>
@@ -1218,6 +1234,7 @@ function defaultRequestDetails(service: ServiceTemplate, today: string): Request
   else if (service.type === "restaurant") defaults = { requestedDate: today, requestedTime: "20:00", people: 2, budget: "medium" };
   else if (service.type === "room_service") defaults = { asap: true, category: "Autre", quantity: 1 };
   else if (service.type === "towels") defaults = { itemType: "linge", quantity: 1, urgent: false };
+  else if (service.type === "laundry_pressing") defaults = { serviceKind: "pressing", itemCount: 1, deadline: "flexible" };
   else if (service.type === "maintenance") defaults = { category: "Plomberie", description: "", urgent: false, availability: "" };
   else defaults = { subject: service.title, urgent: false, notes: "" };
   return { ...defaults, ...(service.detailsPreset ?? {}) };
@@ -1253,6 +1270,16 @@ function normalizeRequestPayload(service: ServiceTemplate, form: RequestDetails)
   if (service.type === "towels") {
     return { title: service.requestTitle ?? "Demande service d’étage", priority, details, description: `${form.quantity || 1} ${form.itemType || "article(s)"} demande(s).${form.notes ? ` ${form.notes}` : ""}` };
   }
+  if (service.type === "laundry_pressing") {
+    const serviceKind = laundryServiceKindLabel(String(form.serviceKind ?? "pressing"));
+    const deadline = laundryDeadlineLabel(String(form.deadline ?? "flexible"));
+    return {
+      title: service.requestTitle ?? "Demande pressing & blanchisserie",
+      priority,
+      details,
+      description: `${serviceKind} - ${form.itemCount || 1} article(s), delai ${deadline}.${form.notes ? ` ${form.notes}` : ""}`
+    };
+  }
   if (service.type === "maintenance") {
     return {
       title: `Maintenance - ${form.category || "Probleme technique"}`,
@@ -1275,6 +1302,20 @@ function airportLabel(value: string) {
   if (value === "ORY") return "Aeroport Orly";
   if (value === "BVA") return "Aeroport Beauvais";
   return "Aeroport";
+}
+
+function laundryServiceKindLabel(value: string) {
+  if (value === "lavage") return "Lavage";
+  if (value === "repassage") return "Repassage";
+  if (value === "nettoyage_a_sec") return "Nettoyage a sec";
+  if (value === "autre") return "Autre service";
+  return "Pressing";
+}
+
+function laundryDeadlineLabel(value: string) {
+  if (value === "today") return "aujourd'hui";
+  if (value === "tomorrow") return "demain";
+  return "flexible";
 }
 
 async function loadGuestTimeline(hotelSlug: string, session: Session, setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>, setRequests: React.Dispatch<React.SetStateAction<RequestItem[]>>) {

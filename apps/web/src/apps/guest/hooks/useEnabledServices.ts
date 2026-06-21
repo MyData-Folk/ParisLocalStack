@@ -40,6 +40,7 @@ const requestTypeByServiceCode: Record<string, HotelServiceRequestType> = {
   room_service: "room_service",
   breakfast_info: "room_service",
   towels: "towels",
+  laundry_pressing: "laundry_pressing",
   housekeeping: "towels",
   maintenance: "maintenance",
   reception_assistance: "reception",
