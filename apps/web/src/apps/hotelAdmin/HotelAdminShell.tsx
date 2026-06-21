@@ -49,6 +49,7 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
           <HotelAdminNavLink to={route()} label="Tableau de bord" icon={<LayoutDashboard className="h-4 w-4" />} />
           <HotelAdminNavLink to={route("/profile")} label="Mon hôtel" icon={<HotelIcon className="h-4 w-4" />} secondaryPaths={[route("/settings")]} />
           <HotelAdminNavLink to={route("/modules")} label="Expérience client" icon={<Sparkles className="h-4 w-4" />} secondaryPaths={[route("/recommendations")]} />
+          <HotelAdminNavLink to={route("/team")} label="Equipe reception" icon={<Users className="h-4 w-4" />} />
           <HotelAdminNavLink to={route("/qr")} label="QR & diffusion" icon={<QrCode className="h-4 w-4" />} />
           <HotelAdminNavLink to={route("/crm")} label="Clients & CRM" icon={<Users className="h-4 w-4" />} secondaryPaths={[route("/analytics")]} />
         </nav>
