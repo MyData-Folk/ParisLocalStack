@@ -12,6 +12,7 @@ const CATEGORY_BY_SERVICE_ID: Record<string, HotelServiceCategory> = {
   restaurant_booking: "service",
   room_service: "service",
   towels: "service",
+  laundry_pressing: "service",
   housekeeping: "service",
   maintenance: "service",
   reception_assistance: "hotel",

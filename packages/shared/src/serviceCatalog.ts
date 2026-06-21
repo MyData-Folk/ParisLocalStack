@@ -7,6 +7,7 @@ export type ServiceId =
   | "restaurant_booking"
   | "room_service"
   | "towels"
+  | "laundry_pressing"
   | "housekeeping"
   | "maintenance"
   | "reception_assistance"
@@ -224,6 +225,7 @@ const ALL_MODULES: Record<ServiceId, ModuleMeta> = {
   restaurant_booking: { labelFr: "Réservation restaurant", labelEn: "Restaurant Booking",   desc: "Réservation de table dans un restaurant partenaire ou recommandé.",     cat: "food_beverage", pri: "p1", min: "boutique", segs: SEGMENTS.BOUTIQUE_UP, gv: "very_high", hv: "high",      cx: "medium", dp: "medium",   pm: true,  gvis: true,  rvis: true,  upsell: "Permet de valoriser les restaurants partenaires et d'améliorer l'expérience locale." },
   room_service:       { labelFr: "Room service",           labelEn: "Room Service",         desc: "Commande de repas, boissons ou collations en chambre.",                cat: "food_beverage", pri: "p2", min: "boutique", segs: SEGMENTS.BOUTIQUE_UP, gv: "high",      hv: "medium",    cx: "low",    dp: "medium",   pm: false, gvis: true,  rvis: true,  upsell: "Améliore la satisfaction clients sans surcharger la réception." },
   towels:             { labelFr: "Serviettes / Linge",     labelEn: "Towels / Linen",       desc: "Demande de serviettes, oreillers ou couvertures supplémentaires.",     cat: "housekeeping", pri: "p1", min: "starter",  segs: SEGMENTS.ALL,         gv: "medium",    hv: "medium",    cx: "low",    dp: "medium",   pm: false, gvis: true,  rvis: true,  upsell: "Service essentiel pour le confort en chambre." },
+  laundry_pressing:   { labelFr: "Pressing & blanchisserie", labelEn: "Laundry & Pressing", desc: "Demandez un service de pressing, lavage ou repassage pour vos vêtements.", cat: "housekeeping", pri: "p2", min: "boutique", segs: SEGMENTS.BOUTIQUE_UP, gv: "high", hv: "medium", cx: "medium", dp: "medium", pm: false, gvis: true, rvis: true, upsell: "Service pratique distinct du linge de chambre et valorisant pour les hôtels boutiques." },
   housekeeping:       { labelFr: "Ménage",                 labelEn: "Housekeeping",         desc: "Demande de ménage ou entretien de la chambre.",                        cat: "housekeeping", pri: "p2", min: "boutique", segs: SEGMENTS.BOUTIQUE_UP, gv: "medium",    hv: "high",      cx: "low",    dp: "medium",   pm: false, gvis: true,  rvis: true,  upsell: "Centralise les demandes ménage et réduit les appels." },
   maintenance:        { labelFr: "Maintenance",            labelEn: "Maintenance",          desc: "Signalement d'un problème technique dans la chambre.",                 cat: "maintenance", pri: "p1", min: "starter",  segs: SEGMENTS.ALL,         gv: "high",      hv: "very_high", cx: "medium", dp: "urgent",   pm: false, gvis: true,  rvis: true,  upsell: "Évite les mauvaises surprises et protège la réputation." },
   reception_assistance:{ labelFr: "Assistance réception",  labelEn: "Reception Assistance", desc: "Contacter la réception pour toute question ou besoin particulier.",     cat: "reception",   pri: "p1", min: "starter",  segs: SEGMENTS.ALL,         gv: "very_high", hv: "high",      cx: "low",    dp: "urgent",   pm: false, gvis: true,  rvis: true,  upsell: "Remonte les demandes urgentes en priorité." },
@@ -332,6 +334,16 @@ export const SERVICE_CATALOG: readonly ServiceCatalogItem[] = [
     _d("itemType",       "Article"),
     _d("quantity",       "Quantité"),
     _d("urgent",         "Urgent")
+  ]),
+  buildCatalogItem("laundry_pressing",    ALL_MODULES.laundry_pressing, [
+    _f("serviceKind",     "Type de service",    "select",   true,  { options: [{value:"pressing",labelFr:"Pressing",labelEn:"Pressing"},{value:"lavage",labelFr:"Lavage",labelEn:"Laundry"},{value:"repassage",labelFr:"Repassage",labelEn:"Ironing"},{value:"nettoyage_a_sec",labelFr:"Nettoyage à sec",labelEn:"Dry cleaning"},{value:"autre",labelFr:"Autre",labelEn:"Other"}] }),
+    _f("itemCount",       "Nombre d'articles",  "number",   true),
+    _f("deadline",        "Délai souhaité",     "select",   true,  { options: [{value:"today",labelFr:"Aujourd'hui",labelEn:"Today"},{value:"tomorrow",labelFr:"Demain",labelEn:"Tomorrow"},{value:"flexible",labelFr:"Flexible",labelEn:"Flexible"}] }),
+    _f("notes",           "Commentaire",        "textarea", false, { maxLength: 300 })
+  ], [
+    _d("serviceKind",    "Service"),
+    _d("itemCount",      "Articles"),
+    _d("deadline",       "Délai")
   ]),
   buildCatalogItem("housekeeping",        ALL_MODULES.housekeeping,         _asyncF, _asyncD),
   buildCatalogItem("maintenance",         ALL_MODULES.maintenance, [
