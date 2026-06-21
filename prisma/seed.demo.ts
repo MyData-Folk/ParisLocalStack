@@ -68,12 +68,12 @@ const demoGuestCards = [
     enabled: true
   },
   {
-    id: "demo-shortcut-pressing",
+    id: "demo-shortcut-linge",
     slot: "shortcut",
     slotIndex: 2,
     kind: "service",
-    title: "Pressing",
-    description: "Besoin de linge, pressing ou serviettes supplementaires ?",
+    title: "Linge de chambre",
+    description: "Serviettes, oreillers ou couvertures supplementaires.",
     icon: "Shirt",
     actionLabel: "Demander",
     actionType: "service_request",
@@ -133,12 +133,12 @@ const demoEnabledServices = [
     serviceCode: "towels",
     enabled: true,
     order: 3,
-    customTitle: "Blanchisserie & pressing",
-    customDescription: "Demandez du linge, des serviettes supplementaires ou un service pressing.",
+    customTitle: "Serviettes & linge",
+    customDescription: "Demandez des serviettes, oreillers ou couvertures supplementaires pour votre chambre.",
     visibleInGuestApp: true,
     visibleAsCard: true,
     visibleInServicesPage: true,
-    actionLabel: "Faire une demande"
+    actionLabel: "Demander"
   },
   {
     serviceCode: "luggage_storage",
