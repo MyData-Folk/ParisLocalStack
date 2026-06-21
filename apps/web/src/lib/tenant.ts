@@ -1,4 +1,9 @@
 const tenantRoot = "welcomeparis.hotelmanager.fr";
+const platformHostnames = new Set([
+  tenantRoot,
+  `www.${tenantRoot}`,
+  `platform-demo.${tenantRoot}`
+]);
 export const neutralDemoHotelSlug = "demo-paris-local";
 
 export type TenantResolution =
@@ -15,7 +20,7 @@ export function resolveTenantFromHostname(hostname = window.location.hostname): 
     return { kind: "local", hostname: normalized, isLocal: true };
   }
 
-  if (normalized === tenantRoot || normalized === `www.${tenantRoot}`) {
+  if (platformHostnames.has(normalized)) {
     return { kind: "platform", hostname: normalized, isLocal: false };
   }
 
