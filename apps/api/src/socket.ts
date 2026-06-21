@@ -8,6 +8,8 @@ type JwtPayload = {
   sub: string;
 };
 
+const guestSocketStayStatuses = ["active", "checked_in"];
+
 export function staffRoom(hotelId: string) {
   return `hotel:${hotelId}:staff`;
 }
@@ -81,7 +83,7 @@ export function createSocketServer(httpServer: HttpServer) {
             id: stayId,
             guestId: guestId,
             hotelId: hotelId,
-            status: "active"
+            status: { in: guestSocketStayStatuses }
           }
         });
         if (!stay) {

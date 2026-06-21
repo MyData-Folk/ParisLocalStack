@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { Activity, AlertTriangle, Archive, BedDouble, CheckCircle, Clock, Copy, Download, Edit3, ExternalLink, Eye, FileJson, Image as ImageIcon, Inbox, Languages, Link2, ListChecks, Mail, MessageSquare, Phone, QrCode, Radio, Search, Send, Star, Upload, Users, X } from "lucide-react";
@@ -82,9 +82,9 @@ function ReceptionHome({ hotelId, token, basePath }: { hotelId: string; token: s
   const [reviews, setReviews] = useState<any[]>([]);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const loadDashboardData = useCallback(() => {
     setError("");
-    void Promise.all([
+    return Promise.all([
       api.hotelStays(hotelId, token, "active"),
       api.hotelMessages(hotelId, token),
       api.hotelRequests(hotelId, token),
@@ -99,6 +99,21 @@ function ReceptionHome({ hotelId, token, basePath }: { hotelId: string; token: s
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erreur de chargement"));
   }, [hotelId, token]);
+
+  useEffect(() => {
+    void loadDashboardData();
+  }, [loadDashboardData]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const refreshDashboard = () => void loadDashboardData();
+    socket.on("message:new", refreshDashboard);
+    socket.on("message:status", refreshDashboard);
+    return () => {
+      socket.off("message:new", refreshDashboard);
+      socket.off("message:status", refreshDashboard);
+    };
+  }, [loadDashboardData]);
 
   const openMessages = messages.filter((item) => openStatuses.has(item.status)).length;
   const openRequests = requests.filter((item) => openStatuses.has(item.status)).length;
@@ -770,11 +785,13 @@ function RequestDetailPanel({ request, hotelId, token, onClose, onUpdate, onOpen
   const [messageSuccess, setMessageSuccess] = useState("");
   const [messageError, setMessageError] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [sentMessages, setSentMessages] = useState<MessageItem[]>([]);
 
   useEffect(() => {
     setMessage("");
     setMessageSuccess("");
     setMessageError("");
+    setSentMessages([]);
   }, [request.id, request.source]);
 
   async function sendRequestMessage() {
@@ -785,7 +802,8 @@ function RequestDetailPanel({ request, hotelId, token, onClose, onUpdate, onOpen
     setMessageSuccess("");
     setMessageError("");
     try {
-      await api.sendHotelMessage(hotelId, { guestId: request.guestId, stayId: request.stayId, content, priority: "medium" }, token);
+      const created = await api.sendHotelMessage(hotelId, { guestId: request.guestId, stayId: request.stayId, content, priority: "medium" }, token);
+      setSentMessages((current) => upsertById(current, created).sort(sortMessagesDesc));
       setMessage("");
       setMessageSuccess("Message envoye au client");
     } catch {
@@ -871,6 +889,17 @@ function RequestDetailPanel({ request, hotelId, token, onClose, onUpdate, onOpen
               </label>
               {messageSuccess ? <p className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm text-emerald-100">{messageSuccess}</p> : null}
               {messageError ? <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{messageError}</p> : null}
+              {sentMessages.length > 0 ? (
+                <div className="mt-3 space-y-2 rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Messages envoyes</p>
+                  {sentMessages.map((sent) => (
+                    <div key={sent.id} className="rounded-lg border border-emerald-300/15 bg-emerald-300/5 px-3 py-2">
+                      <p className="whitespace-pre-wrap text-sm leading-5 text-slate-100">{sent.content}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">{formatTime(sent.createdAt)}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               <button
                 type="button"
                 onClick={() => void sendRequestMessage()}
