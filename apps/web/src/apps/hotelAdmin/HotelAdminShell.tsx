@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Hotel as HotelIcon, LayoutDashboard, LogOut, QrCode, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { receptionUrl } from "../../lib/hotelOnboarding";
 import { useAppStore } from "../../stores/appStore";
 
 type ShellProps = {
@@ -16,6 +17,7 @@ type ShellProps = {
 export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, isSuperAdminView, onHotelChange, basePath, children }: ShellProps) {
   const { currentUser, logout } = useAppStore();
   const route = (path = "") => `${basePath}${path}` || "/";
+  const receptionHref = activeHotel?.slug ? receptionUrl(activeHotel.slug) : "/reception";
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 lg:flex">
       <aside className="border-b border-white/[0.07] bg-[#111115]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-col lg:border-b-0 lg:border-r">
@@ -60,9 +62,9 @@ export function HotelAdminShell({ activeHotel, activeHotelId, availableHotels, i
         </div>
 
         <div className="mt-3 flex flex-col gap-2">
-          <Link to="/reception" className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-sky-300/10 px-4 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-300/20 focus:outline-none focus:ring-4 focus:ring-sky-400/15">
+          <a href={receptionHref} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-sky-300/10 px-4 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-300/20 focus:outline-none focus:ring-4 focus:ring-sky-400/15">
             Dashboard Reception
-          </Link>
+          </a>
           <div className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-white">{currentUser?.name}</p>
