@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Hotel, LogOut, Plus, QrCode, Rocket, Settings, ShieldCheck, SlidersHorizontal, Sparkles, Users } from "lucide-react";
+import { Home, Hotel, LogOut, Plus, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAppStore } from "../../stores/appStore";
 
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -25,12 +25,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </AdminNavGroup>
           <AdminNavGroup label="Outils">
             <AdminNavLink to="/generator" label="Generator" icon={<Sparkles className="h-4 w-4" />} />
-            <AdminNavLink to="/admin/qr-codes" label="QR Codes" icon={<QrCode className="h-4 w-4" />} />
-            <AdminNavLink to="/admin/deployments" label="Deploiements" icon={<Rocket className="h-4 w-4" />} />
           </AdminNavGroup>
           <AdminNavGroup label="Configuration">
             <AdminNavLink to="/admin/settings" label="Parametres" icon={<Settings className="h-4 w-4" />} />
-            <AdminNavLink to="/admin/integrations" label="Integrations" icon={<SlidersHorizontal className="h-4 w-4" />} />
           </AdminNavGroup>
         </nav>
         <div className="mt-5 rounded-2xl border border-amber-400/15 bg-amber-400/10 p-4 text-sm text-amber-100 lg:mt-auto">
