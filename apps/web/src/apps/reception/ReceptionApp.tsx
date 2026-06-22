@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { Activity, AlertTriangle, Archive, BedDouble, CheckCircle, Clock, Copy, Download, Edit3, ExternalLink, Eye, FileJson, Image as ImageIcon, Inbox, Languages, Link2, ListChecks, Mail, MessageSquare, Phone, QrCode, Radio, Search, Send, Star, Upload, Users, X } from "lucide-react";
+import { Activity, AlertTriangle, Archive, BedDouble, Bell, Car, CheckCircle, CircleHelp, Clock, Copy, Download, Edit3, ExternalLink, Eye, FileJson, Image as ImageIcon, Inbox, Languages, Link2, ListChecks, Mail, MessageSquare, Phone, QrCode, Radio, Search, Send, Shirt, Star, Upload, Users, Utensils, Waves, Wrench, X } from "lucide-react";
 import { AuthGate } from "../../components/auth/AuthGate";
 import { QrCodePdfButton } from "../../components/QrCodePdfButton";
 import { API_URL, api } from "../../lib/api";
@@ -2240,11 +2240,25 @@ function buildRequestCategoryCounts(items: any[]): Record<RequestCategoryFilter,
 
 function RequestCategoryBadge({ request }: { request: any }) {
   const tag = requestCategoryTag(request);
+  const Icon = requestCategoryIcon(requestCategoryFilterKey(request));
   return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${requestTagClass(tag.tone)}`}>
-      {tag.label}
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${requestTagClass(tag.tone)}`}>
+      <Icon className="h-3 w-3" />
+      <span>{tag.label}</span>
     </span>
   );
+}
+
+function requestCategoryIcon(category: RequestCategoryFilter) {
+  if (category === "message") return MessageSquare;
+  if (category === "taxi") return Car;
+  if (category === "restaurant") return Utensils;
+  if (category === "room_service") return Bell;
+  if (category === "towels") return Waves;
+  if (category === "laundry_pressing") return Shirt;
+  if (category === "maintenance") return Wrench;
+  if (category === "reception") return Phone;
+  return CircleHelp;
 }
 
 function RequestUrgencyBadge() {
