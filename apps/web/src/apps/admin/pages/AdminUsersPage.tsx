@@ -24,7 +24,7 @@ export function AdminUsersPage() {
   const [passwordTarget, setPasswordTarget] = useState<AdminHotelUser | null>(null);
   const [passwordForm, setPasswordForm] = useState({ newPassword: "", confirmPassword: "" });
   const [passwordMessage, setPasswordMessage] = useState("");
-  const [form, setForm] = useState({ name: "", email: "", role: "receptionist", status: "active", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", role: "receptionist", status: "active" });
 
   async function loadUsers() {
     if (!token) return;
@@ -53,8 +53,7 @@ export function AdminUsersPage() {
       name: entry.user.name,
       email: entry.user.email,
       role: entry.role || entry.user.role,
-      status: entry.user.status || "active",
-      password: ""
+      status: entry.user.status || "active"
     });
   }
 
@@ -64,18 +63,16 @@ export function AdminUsersPage() {
     setSaving(true);
     setMessage("");
     try {
-      const payload: { name: string; email: string; role: string; status: string; password?: string } = {
+      const payload: { name: string; email: string; role: string; status: string } = {
         name: form.name,
         email: form.email,
         role: form.role,
         status: form.status
       };
-      if (form.password.trim()) payload.password = form.password.trim();
       const updated = await api.updateHotelUser(selected.hotelId, selected.user.id, payload, token);
       setUsers((current) => current.map((entry) => entry.id === selected.id ? { ...entry, role: payload.role, user: { ...entry.user, ...updated } } : entry));
       setSelected((current) => current ? { ...current, role: payload.role, user: { ...current.user, ...updated } } : current);
-      setForm((current) => ({ ...current, password: "" }));
-      setMessage(form.password.trim() ? "Compte mis a jour. Nouveau mot de passe applique." : "Compte mis a jour.");
+      setMessage("Compte mis a jour.");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Mise a jour impossible");
     } finally {
@@ -266,7 +263,6 @@ export function AdminUsersPage() {
                   <option value="inactive">Desactive</option>
                 </select>
               </label>
-              <Field type="text" label="Nouveau mot de passe" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} placeholder="Laisser vide pour ne pas changer" helper="Minimum 8 caracteres. Utilisez un mot de passe unique, fort et temporaire, puis communiquez-le de maniere securisee a l'utilisateur." />
               {message ? <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{message}</p> : null}
               <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-200 focus:outline-none focus:ring-4 focus:ring-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
@@ -278,7 +274,7 @@ export function AdminUsersPage() {
               <div>
                 <Users className="mx-auto h-10 w-10 text-slate-500" />
                 <h2 className="mt-4 text-lg font-semibold tracking-tight text-white">Selectionnez un compte</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-400">Ouvrez un utilisateur pour modifier son identifiant, son role, son statut ou son mot de passe.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">Ouvrez un utilisateur pour modifier son identifiant, son role ou son statut. Les mots de passe se reinitialisent via l'action dediee.</p>
               </div>
             </div>
           )}
