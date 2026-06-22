@@ -622,6 +622,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [activeStayIds, setActiveStayIds] = useState<Set<string>>(new Set());
   const [requestFilter, setRequestFilter] = useState<"all" | "in_progress" | "urgent">("all");
+  const [categoryFilter, setCategoryFilter] = useState<RequestCategoryFilter>("all");
   const [profileTarget, setProfileTarget] = useState<{ guestId?: string; stayId?: string } | null>(null);
   const [messageTarget, setMessageTarget] = useState<GuestMessageTarget | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
@@ -695,10 +696,14 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
   }
 
   const visibleItems = useMemo(() => {
-    if (requestFilter === "in_progress") return items.filter((item) => item.status === "in_progress");
-    if (requestFilter === "urgent") return items.filter((item) => normalizeStatus(item.status, item.priority, item.senderType) === "urgent");
-    return items;
-  }, [items, requestFilter]);
+    const byStatus = requestFilter === "in_progress"
+      ? items.filter((item) => item.status === "in_progress")
+      : requestFilter === "urgent"
+        ? items.filter((item) => normalizeStatus(item.status, item.priority, item.senderType) === "urgent")
+        : items;
+    return byStatus.filter((item) => requestMatchesCategoryFilter(item, categoryFilter));
+  }, [items, requestFilter, categoryFilter]);
+  const categoryCounts = useMemo(() => buildRequestCategoryCounts(items), [items]);
 
   return (
     <div className="space-y-5">
@@ -712,6 +717,30 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
         <MetricCard icon={<ListChecks className="h-4 w-4" />} label="Total" value={items.length} tone="blue" active={requestFilter === "all"} onClick={() => setRequestFilter("all")} />
         <MetricCard icon={<Clock className="h-4 w-4" />} label="En cours" value={items.filter((item) => item.status === "in_progress").length} tone="amber" active={requestFilter === "in_progress"} onClick={() => setRequestFilter("in_progress")} />
         <MetricCard icon={<AlertTriangle className="h-4 w-4" />} label="Urgentes" value={items.filter((item) => normalizeStatus(item.status, item.priority, item.senderType) === "urgent").length} tone="red" active={requestFilter === "urgent"} onClick={() => setRequestFilter("urgent")} />
+      </div>
+      <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-4 shadow-lg shadow-black/20">
+        <div className="flex flex-wrap gap-2">
+          {REQUEST_CATEGORY_FILTERS.map((filter) => {
+            const count = categoryCounts[filter.key] ?? 0;
+            const active = categoryFilter === filter.key;
+            return (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setCategoryFilter(filter.key)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-4 focus:ring-sky-400/10 ${
+                  active
+                    ? "border-sky-300/45 bg-sky-300/15 text-sky-50"
+                    : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06]"
+                }`}
+              >
+                <span>{filter.label}</span>
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${active ? "bg-sky-200 text-slate-950" : "bg-white/10 text-slate-400"}`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#111115] shadow-lg shadow-black/20">
         {error && <p className="p-4 text-sm text-red-300">{error}</p>}
@@ -2152,6 +2181,61 @@ function requestPrimaryDetail(request: any) {
   if (request.type === "laundry_pressing") return `${laundryServiceKindLabel(String(details.serviceKind ?? "pressing"))} - ${details.itemCount ?? 1} article(s)`;
   if (request.type === "maintenance") return details.category ?? "Maintenance";
   return details.subject ?? request.description ?? "-";
+}
+
+type RequestCategoryFilter =
+  | "all"
+  | "message"
+  | "taxi"
+  | "restaurant"
+  | "room_service"
+  | "towels"
+  | "laundry_pressing"
+  | "maintenance"
+  | "reception"
+  | "other";
+
+const REQUEST_CATEGORY_FILTERS: Array<{ key: RequestCategoryFilter; label: string }> = [
+  { key: "all", label: "Tous" },
+  { key: "message", label: "Messages" },
+  { key: "taxi", label: "Transport" },
+  { key: "restaurant", label: "Restaurant" },
+  { key: "room_service", label: "Room service" },
+  { key: "towels", label: "Linge / serviettes" },
+  { key: "laundry_pressing", label: "Pressing" },
+  { key: "maintenance", label: "Maintenance" },
+  { key: "reception", label: "Réception" },
+  { key: "other", label: "Autres" }
+];
+
+const REQUEST_TYPE_FILTERS = new Set<RequestCategoryFilter>([
+  "taxi",
+  "restaurant",
+  "room_service",
+  "towels",
+  "laundry_pressing",
+  "maintenance",
+  "reception"
+]);
+
+function requestCategoryFilterKey(item: any): RequestCategoryFilter {
+  if (item.source === "message") return "message";
+  if (REQUEST_TYPE_FILTERS.has(item.type)) return item.type;
+  return "other";
+}
+
+function requestMatchesCategoryFilter(item: any, filter: RequestCategoryFilter) {
+  if (filter === "all") return true;
+  return requestCategoryFilterKey(item) === filter;
+}
+
+function buildRequestCategoryCounts(items: any[]): Record<RequestCategoryFilter, number> {
+  const counts = Object.fromEntries(REQUEST_CATEGORY_FILTERS.map((filter) => [filter.key, 0])) as Record<RequestCategoryFilter, number>;
+  counts.all = items.length;
+  for (const item of items) {
+    counts[requestCategoryFilterKey(item)] += 1;
+  }
+  return counts;
 }
 
 function RequestCategoryBadge({ request }: { request: any }) {
