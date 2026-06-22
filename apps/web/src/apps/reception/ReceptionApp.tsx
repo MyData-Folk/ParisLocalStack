@@ -771,7 +771,7 @@ function RequestsView({ hotelId, token }: { hotelId: string; token: string }) {
                     <td className="px-4 py-4 text-zinc-300">{requestDesiredTime(item)}</td>
                     <td className="px-4 py-4 text-zinc-300">{requestPrimaryDetail(item)}</td>
                     <td className="px-4 py-4"><StatusBadge status={normalizeStatus(item.status, item.priority, item.senderType)} /></td>
-                    <td className="px-4 py-4 text-zinc-300">{item.priority ?? "-"}</td>
+                    <td className="px-4 py-4"><RequestPriorityBadge priority={item.priority} /></td>
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
                         <button onClick={() => setSelectedRequest(item)} className="rounded-lg border border-sky-300/25 px-2.5 py-1.5 text-xs font-medium text-sky-100 transition hover:bg-sky-500/10 focus:outline-none focus:ring-4 focus:ring-sky-400/10">Detail</button>
@@ -2251,6 +2251,25 @@ function RequestUrgencyBadge() {
   return (
     <span className="inline-flex rounded-full border border-red-300/30 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-100">
       Urgent
+    </span>
+  );
+}
+
+function RequestPriorityBadge({ priority }: { priority?: string | null }) {
+  const key = String(priority ?? "").trim().toLowerCase();
+  const config = key === "urgent"
+    ? { label: "Urgent", className: "border-red-400/30 bg-red-500/10 text-red-100" }
+    : key === "high" || key === "important"
+      ? { label: "Important", className: "border-orange-400/30 bg-orange-500/10 text-orange-100" }
+      : key === "normal" || key === "medium"
+        ? { label: "Normal", className: "border-sky-400/25 bg-sky-500/10 text-sky-100" }
+        : key === "low"
+          ? { label: "Faible", className: "border-slate-400/25 bg-slate-500/10 text-slate-300" }
+          : { label: "Standard", className: "border-white/10 bg-white/[0.04] text-slate-400" };
+
+  return (
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${config.className}`}>
+      {config.label}
     </span>
   );
 }
