@@ -2,7 +2,7 @@ import type { Dispatch, FormEvent, ReactNode, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Palette, ShieldCheck, Sparkles, Trash2, Upload, Users, X } from "lucide-react";
-import { SERVICE_CATALOG, type CommercialPackage, type ServiceCatalogItem } from "@paris-local/shared";
+import { getHotelServiceLimitCategory, SERVICE_CATALOG, type CommercialPackage, type ServiceCatalogItem } from "@paris-local/shared";
 import { api, type CommercialPackageValue, type HotelPlanResponse, type HotelServiceConfig, type HotelServicesResponse } from "../../../lib/api";
 import { useAppStore } from "../../../stores/appStore";
 import { resolveGuestTheme, type GuestThemeId } from "../../../themes";
@@ -86,7 +86,14 @@ export function AdminHotelDetailPage() {
       const updatedPlan = await api.updateHotelPlan(hotel.id, selectedPlan, token);
       setHotelPlan(updatedPlan);
       setSelectedPlan(updatedPlan.commercialPackage);
-      setPlanMessage("Plan mis a jour.");
+      try {
+        const updatedServices = await api.getHotelServices(hotel.id, token);
+        setHotelServices(updatedServices);
+        setHotelServicesDraft(updatedServices.enabledServices);
+        setPlanMessage("Plan mis a jour.");
+      } catch {
+        setPlanMessage("Plan mis a jour. Rechargez la page pour actualiser les limites services.");
+      }
     } catch (err) {
       setPlanMessage(err instanceof Error ? err.message : "Impossible de mettre a jour le plan");
     } finally {
@@ -791,7 +798,8 @@ function HotelServicesCard({
   const eligible = (service: ServiceCatalogItem) => {
     if (PACKAGE_RANK[service.minPackage] > planRank) return { allowed: false, reason: `Min ${service.minPackage}` };
     if (service.isPartnerMonetizable && !allowPartner) return { allowed: false, reason: "Partenaire verrouille" };
-    if (allowedCategories.length && !allowedCategories.includes(service.category as never)) {
+    const limitCategory = getHotelServiceLimitCategory(service.id);
+    if (allowedCategories.length && !allowedCategories.includes(limitCategory)) {
       return { allowed: false, reason: "Categorie verrouillee" };
     }
     return { allowed: true, reason: "" };

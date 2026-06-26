@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CommercialPackage } from "./serviceCatalog.js";
+import type { CommercialPackage, ServiceId } from "./serviceCatalog.js";
 
 export const hotelServiceCategories = [
   "info",
@@ -10,6 +10,38 @@ export const hotelServiceCategories = [
   "custom"
 ] as const;
 export type HotelServiceCategory = (typeof hotelServiceCategories)[number];
+
+const SERVICE_LIMIT_CATEGORY_BY_CODE: Record<ServiceId, HotelServiceCategory> = {
+  wifi_info: "info",
+  breakfast_info: "info",
+  checkin_checkout: "info",
+  taxi: "transport",
+  airport_transfer: "transport",
+  restaurant_booking: "service",
+  room_service: "service",
+  towels: "service",
+  laundry_pressing: "service",
+  housekeeping: "service",
+  maintenance: "service",
+  reception_assistance: "hotel",
+  luggage_storage: "hotel",
+  late_checkout: "hotel",
+  local_recommendations: "info",
+  partner_restaurants: "service",
+  partner_bars: "service",
+  cruises: "service",
+  bus_tours: "service",
+  museums_tickets: "service",
+  local_experiences: "service",
+  review_feedback: "hotel",
+  crm_collection: "hotel",
+  post_stay_followup: "hotel",
+  analytics_dashboard: "hotel"
+};
+
+export function getHotelServiceLimitCategory(serviceCode: string): HotelServiceCategory {
+  return SERVICE_LIMIT_CATEGORY_BY_CODE[serviceCode as ServiceId] ?? "custom";
+}
 
 export const hotelServiceRequestTypes = [
   "taxi",
