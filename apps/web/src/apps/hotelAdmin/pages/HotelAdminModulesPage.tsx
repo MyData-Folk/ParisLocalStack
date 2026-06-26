@@ -3,6 +3,7 @@ import { ArrowUpRight, BadgeCheck, Crown, Gem, Mail, Plus, Save, Sparkles, Star,
 import {
   COMMERCIAL_PACKAGES,
   SERVICE_CATALOG,
+  getHotelServiceLimitCategory,
   getServicesByPackage,
   getPartnerMonetizableServices,
   type CommercialPackage,
@@ -1235,8 +1236,9 @@ function validateHotelServices(services: HotelServiceConfig[], limits?: HotelSer
     if (service.imageUrl?.trim() && !limits.allowCustomImages) {
       errors.push("Les images personnalisees ne sont pas incluses dans votre offre.");
     }
-    if (!limits.allowedCategories.includes(catalogService.category as never)) {
-      errors.push(`La categorie ${CATEGORY_LABELS[catalogService.category] ?? catalogService.category} n'est pas incluse dans votre offre.`);
+    const limitCategory = getHotelServiceLimitCategory(service.serviceCode);
+    if (!limits.allowedCategories.includes(limitCategory)) {
+      errors.push(`La categorie ${SERVICE_LIMIT_CATEGORY_LABELS[limitCategory] ?? limitCategory} n'est pas incluse dans votre offre.`);
     }
     if (catalogService.isPartnerMonetizable && !limits.allowPartnerServices) {
       errors.push("Les services partenaires ne sont pas inclus dans votre offre.");
