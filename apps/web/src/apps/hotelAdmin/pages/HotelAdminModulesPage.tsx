@@ -60,7 +60,17 @@ const SERVICE_LIMIT_CATEGORY_LABELS: Record<string, string> = {
   custom: "Sur mesure"
 };
 
+type ModulesTab = "overview" | "guestCards" | "services" | "offer";
+
+const MODULES_TABS: Array<{ id: ModulesTab; label: string; description: string }> = [
+  { id: "overview", label: "Apercu", description: "Offre actuelle et limites principales" },
+  { id: "guestCards", label: "Cartes Guest App", description: "Accueil client et raccourcis" },
+  { id: "services", label: "Services", description: "Services visibles cote client" },
+  { id: "offer", label: "Offre & options", description: "Packages et options disponibles" }
+];
+
 export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; hotelId: string; token: string }) {
+  const [activeTab, setActiveTab] = useState<ModulesTab>("overview");
   const [upgradeMessage, setUpgradeMessage] = useState("");
   const [hotelPlan, setHotelPlan] = useState<HotelPlanResponse | null>(null);
   const [planError, setPlanError] = useState("");
@@ -111,6 +121,32 @@ export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; h
       </section>
 
       {/* Section 1 — Votre offre actuelle */}
+      <div className="rounded-2xl border border-white/[0.07] bg-[#111115] p-2 shadow-lg shadow-black/20">
+        <div className="grid gap-2 md:grid-cols-4" role="tablist" aria-label="Sections de la page Modules">
+          {MODULES_TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-amber-300/15 ${
+                  active
+                    ? "border-amber-300/30 bg-amber-300/10 text-amber-100"
+                    : "border-transparent bg-white/[0.02] text-zinc-400 hover:border-white/[0.08] hover:bg-white/[0.05] hover:text-white"
+                }`}
+              >
+                <span className="block text-sm font-semibold">{tab.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-current opacity-70">{tab.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className={activeTab === "overview" ? "space-y-6" : "hidden"} role="tabpanel">
       {currentPackage ? (
         <section className="rounded-2xl border border-amber-300/20 bg-gradient-to-b from-amber-300/5 to-transparent p-6 shadow-lg shadow-black/20 md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -159,11 +195,18 @@ export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; h
         </section>
       ) : null}
 
-      <GuestCardsEditor hotelId={hotelId} token={token} currentPackageLabel={currentPackage?.labelFr ?? currentPackageId} />
+      </div>
 
-      <HotelServicesEditor hotelId={hotelId} token={token} currentPackageLabel={currentPackage?.labelFr ?? currentPackageId} />
+      <div className={activeTab === "guestCards" ? "space-y-6" : "hidden"} role="tabpanel">
+        <GuestCardsEditor hotelId={hotelId} token={token} currentPackageLabel={currentPackage?.labelFr ?? currentPackageId} />
+      </div>
+
+      <div className={activeTab === "services" ? "space-y-6" : "hidden"} role="tabpanel">
+        <HotelServicesEditor hotelId={hotelId} token={token} currentPackageLabel={currentPackage?.labelFr ?? currentPackageId} />
+      </div>
 
       {/* Section 2 — Packages disponibles */}
+      <div className={activeTab === "offer" ? "space-y-8" : "hidden"} role="tabpanel">
       <section className="space-y-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Packages disponibles</h2>
@@ -301,6 +344,7 @@ export function HotelAdminModulesPage({ hotel, hotelId, token }: { hotel: any; h
           </a>
         </div>
       </section>
+      </div>
     </div>
   );
 }
