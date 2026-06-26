@@ -1,4 +1,4 @@
-import type { Dispatch, FormEvent, SetStateAction } from "react";
+import type { Dispatch, FormEvent, ReactNode, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Palette, ShieldCheck, Sparkles, Trash2, Upload, Users, X } from "lucide-react";
@@ -220,6 +220,11 @@ export function AdminHotelDetailPage() {
               onPlanChange={setSelectedPlan}
               onSave={() => void savePlan()}
             />
+            <ModulesReadonlySummary
+              hotel={hotel}
+              plan={hotelPlan}
+              services={hotelServices}
+            />
             <HotelServicesCard
               plan={hotelPlan}
               services={hotelServices}
@@ -334,6 +339,175 @@ function HotelPlanCard({
       {message ? <p className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-amber-50">{message}</p> : null}
     </div>
   );
+}
+
+const MODULE_SETTINGS_LABELS: Record<string, string> = {
+  guide: "Guide local",
+  reviews: "Avis clients",
+  messages: "Messagerie",
+  requests: "Demandes",
+  service_requests: "Demandes de service",
+  services: "Services",
+  recommendations: "Recommandations",
+  wifi: "Wi-Fi",
+  breakfast: "Petit-dejeuner"
+};
+
+const HOTEL_ADMIN_CAPABILITIES = [
+  "Dashboard",
+  "Profil",
+  "Settings",
+  "Modules",
+  "QR",
+  "Analytics",
+  "CRM",
+  "Team"
+];
+
+function ModulesReadonlySummary({ hotel, plan, services }: { hotel: HotelRecord; plan: HotelPlanResponse | null; services: HotelServicesResponse | null }) {
+  const settings = (hotel.settings ?? {}) as Record<string, unknown>;
+  const modules = isRecord(settings.modules) ? settings.modules : {};
+  const moduleEntries = Object.entries(modules).sort(([a], [b]) => a.localeCompare(b));
+  const guestCards = Array.isArray(settings.guestCards) ? settings.guestCards.filter(isRecord) : [];
+  const enabledCards = guestCards.filter((card) => card.enabled === true);
+  const heroCards = enabledCards.filter((card) => card.slot === "hero").length;
+  const shortcutCards = enabledCards.filter((card) => card.slot === "shortcut").length;
+  const configuredServices = services?.enabledServices ?? [];
+  const activeServices = configuredServices.filter((service) => service.enabled);
+  const visibleServices = activeServices.filter((service) => service.visibleInGuestApp);
+  const visibleServiceLabels = visibleServices.slice(0, 6).map((service) => {
+    const catalog = SERVICE_CATALOG.find((item) => item.id === service.serviceCode);
+    return service.customTitle || catalog?.labelFr || service.serviceCode;
+  });
+
+  return (
+    <div className="mt-7 rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200/90">Lecture seule</p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">Modules & visibilite effective</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-cyan-50/75">
+            Synthese sans action. Les modules declares, les cartes Guest App, les services Guest et le pack commercial
+            restent des notions separees.
+          </p>
+        </div>
+        <span className="inline-flex w-fit items-center rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+          Aucun toggle
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <SummaryMetric label="Pack commercial" value={formatPlanLabel(plan?.commercialPackage ?? (hotel as any).commercialPackage as CommercialPackageValue)} />
+        <SummaryMetric label="Limite cartes" value={plan?.limits ? `${plan.limits.maxHeroCards} hero / ${plan.limits.maxShortcutCards} raccourcis` : "Non disponible"} />
+        <SummaryMetric label="Limite services" value={services?.limits ? `${services.limits.maxActiveServices} actifs` : "Non disponible"} />
+        <SummaryMetric label="Modules declares" value={moduleEntries.length ? String(moduleEntries.length) : "Aucun"} />
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-3">
+        <SummaryPanel title="Modules declares dans les settings" description="Ces flags existent deja, mais ne masquent pas encore automatiquement toutes les pages Hotel Admin.">
+          {moduleEntries.length ? (
+            <div className="flex flex-wrap gap-2">
+              {moduleEntries.map(([key, value]) => (
+                <StateBadge key={key} active={value === true} label={MODULE_SETTINGS_LABELS[key] ?? key} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Aucun module declare dans les settings de cet hotel.</p>
+          )}
+        </SummaryPanel>
+
+        <SummaryPanel title="Cartes Guest App" description="Resume du tableau guestCards actuellement charge avec la fiche hotel.">
+          {guestCards.length ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <MiniMetric label="Total" value={String(guestCards.length)} />
+                <MiniMetric label="Actives" value={String(enabledCards.length)} />
+                <MiniMetric label="Hero" value={String(heroCards)} />
+              </div>
+              <p className="text-xs text-slate-500">{shortcutCards} raccourci(s) actif(s). Les cartes restent editees dans les sections dediees.</p>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Cartes non disponibles dans ce resume.</p>
+          )}
+        </SummaryPanel>
+
+        <SummaryPanel title="Services Guest" description="Resume des services configures et visibles cote client.">
+          {services ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <MiniMetric label="Configures" value={String(configuredServices.length)} />
+                <MiniMetric label="Actifs" value={String(activeServices.length)} />
+                <MiniMetric label="Visibles" value={String(visibleServices.length)} />
+              </div>
+              {visibleServiceLabels.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {visibleServiceLabels.map((label) => <span key={label} className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-300">{label}</span>)}
+                  {visibleServices.length > visibleServiceLabels.length ? <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-400">+{visibleServices.length - visibleServiceLabels.length}</span> : null}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">Aucun service visible cote client.</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Services non disponibles dans ce resume.</p>
+          )}
+        </SummaryPanel>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Capacites Hotel Admin</p>
+        <p className="mt-2 text-sm leading-6 text-slate-400">
+          Les pages principales sont aujourd'hui pilotees surtout par les routes et les roles, pas par settings.modules.
+          Les futurs toggles devront distinguer pages Hotel Admin, services Guest, cartes Guest et pack commercial.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {HOTEL_ADMIN_CAPABILITIES.map((capability) => (
+            <span key={capability} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-slate-300">{capability}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function SummaryPanel({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+      <h3 className="text-sm font-semibold text-white">{title}</h3>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function StateBadge({ active, label }: { active: boolean; label: string }) {
+  return (
+    <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${active ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-slate-400"}`}>
+      {label}: {active ? "declare actif" : "declare inactif"}
+    </span>
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, any> {
+  return typeof value === "object" && value !== null;
 }
 
 const CATEGORY_SUGGESTIONS = [
