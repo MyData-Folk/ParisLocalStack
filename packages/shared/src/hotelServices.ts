@@ -110,7 +110,7 @@ export const HOTEL_SERVICE_PLAN_LIMITS: Record<CommercialPackage, HotelServicePl
   starter: {
     plan: "starter",
     maxActiveServices: 3,
-    allowedCategories: ["info", "service", "hotel"],
+    allowedCategories: ["info", "service", "hotel", "transport"],
     allowWellness: false,
     allowCustomImages: false,
     allowCustomServices: false,
