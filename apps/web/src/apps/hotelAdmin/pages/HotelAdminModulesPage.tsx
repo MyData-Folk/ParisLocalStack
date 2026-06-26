@@ -974,7 +974,7 @@ function HotelServicesEditor({
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Services de l'hotel</h2>
           <p className="mt-1 max-w-2xl text-sm text-zinc-400">
-            Personnalisez uniquement les services autorises par Paris Local pour votre offre.
+            Personnalisez les services deja actives pour votre hotel. L'activation de nouveaux services reste reservee a Paris Local.
           </p>
         </div>
         <button
@@ -1023,14 +1023,14 @@ function HotelServicesEditor({
 
             <div className="space-y-3">
               <div>
-                <h3 className="text-base font-semibold text-white">Services autorises</h3>
+                <h3 className="text-base font-semibold text-white">Services actifs et personnalisables</h3>
                 <p className="text-xs text-zinc-500">
-                  Ces services peuvent etre personnalises. L'ajout de nouveaux services reste reserve au Super Admin.
+                  Ces services sont deja actives pour votre hotel et peuvent etre personnalises ici. L'activation de nouveaux services reste reservee a Paris Local.
                 </p>
               </div>
               {editableServices.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-5 text-sm text-zinc-500">
-                  Aucun service autorise n'est configure pour cet hotel.
+                  Aucun service actif n'est configure pour cet hotel.
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1053,9 +1053,9 @@ function HotelServicesEditor({
 
             <div className="space-y-3">
               <div>
-                <h3 className="text-base font-semibold text-white">Services non autorises</h3>
+                <h3 className="text-base font-semibold text-white">Services non actives ou hors offre</h3>
                 <p className="text-xs text-zinc-500">
-                  Lecture seule. Contactez Paris Local pour changer le forfait ou les services autorises.
+                  Lecture seule. Cette liste peut inclure des services disponibles avec votre offre mais non encore actives, ainsi que des options reservees a une offre superieure. Contactez Paris Local pour activer un service ou faire evoluer votre offre.
                 </p>
               </div>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
