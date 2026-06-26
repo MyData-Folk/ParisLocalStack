@@ -7,6 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsup ./src/index.ts --format esm --dts",
+    "test:matrix": "tsx src/hotelServices.matrix.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
